@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build and test output
+.next/
+out/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Local environment files (examples are versioned)
+.env*
+!.env.example
+
+# Tooling and operating system files
+.vercel/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+*.pem
+*.log
+.pnpm-debug.log*

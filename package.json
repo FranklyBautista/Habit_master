@@ -1,0 +1,15 @@
+{
+  "name": "habit-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @habit-tracker/web dev",
+    "build": "pnpm --filter @habit-tracker/web build",
+    "lint": "pnpm --filter @habit-tracker/web lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

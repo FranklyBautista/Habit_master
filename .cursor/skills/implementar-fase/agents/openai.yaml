@@ -1,0 +1,6 @@
+interface:
+  display_name: "Implementar fase"
+  short_description: "Implementa una fase verificada del Habit Tracker"
+  default_prompt: "Usa $implementar-fase para trabajar la fase actual de la planificación."
+policy:
+  allow_implicit_invocation: false
