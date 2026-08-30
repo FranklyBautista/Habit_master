@@ -1,6 +1,6 @@
 ---
 name: implementar-fase
-description: "Implementa de forma progresiva y verificada una sola fase del Habit Tracker según PLANIFICACION_HABIT_TRACKER.md. Úsala únicamente cuando se solicite trabajar una fase concreta o la siguiente fase pendiente."
+description: "Implementa de forma progresiva y verificada una sola fase del Habit Tracker usando PLANIFICACION_HABIT_TRACKER.md como fuente de verdad. Úsala cuando el usuario invoque $implementar-fase para una fase concreta o para la siguiente fase pendiente."
 disable-model-invocation: true
 ---
 

@@ -9,6 +9,8 @@ workspace de pnpm.
 - Fase 0 de producto completada y documentada en [`docs/product`](docs/product).
 - Base web creada con Next.js, App Router, React, TypeScript estricto, Tailwind CSS
   y ESLint.
+- Interfaz responsive disponible en `/hoy`, `/habitos`, `/calendario`,
+  `/estadisticas` y `/ajustes`, con navegación móvil y de escritorio.
 - `packages/domain` preparado para la lógica compartida de fases posteriores.
 - Supabase, Expo y Tauri todavía no están instalados porque se incorporarán en sus
   fases correspondientes.

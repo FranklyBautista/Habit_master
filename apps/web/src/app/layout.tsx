@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Habit Tracker",
+  title: {
+    default: "Constancia — Habit Tracker",
+    template: "%s · Constancia",
+  },
   description: "Construye constancia, un día a la vez.",
 };
 

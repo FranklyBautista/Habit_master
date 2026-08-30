@@ -244,18 +244,18 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 ### Fase 2 — Diseño responsive y navegación (3–5 jornadas)
 
-- [ ] Crear el layout mobile-first.
-- [ ] Implementar navegación entre Hoy, Hábitos, Calendario, Estadísticas y Ajustes.
-- [ ] Crear componentes de botón, checkbox, tarjeta, diálogo, formulario, toast y skeleton.
-- [ ] Implementar modo claro; dejar modo oscuro como opcional posterior.
-- [ ] Diseñar estados vacíos y mensajes de error accionables.
-- [ ] Garantizar áreas táctiles cómodas y navegación por teclado.
-- [ ] Verificar contraste, etiquetas de formularios y foco visible.
-- [ ] Probar anchos aproximados de 360 px, tableta y escritorio.
+- [x] Crear el layout mobile-first.
+- [x] Implementar navegación entre Hoy, Hábitos, Calendario, Estadísticas y Ajustes.
+- [x] Crear componentes de botón, checkbox, tarjeta, diálogo, formulario, toast y skeleton.
+- [x] Implementar modo claro; dejar modo oscuro como opcional posterior.
+- [x] Diseñar estados vacíos y mensajes de error accionables.
+- [x] Garantizar áreas táctiles cómodas y navegación por teclado.
+- [x] Verificar contraste, etiquetas de formularios y foco visible.
+- [x] Probar anchos aproximados de 360 px, tableta y escritorio.
 
 **Criterio de salida**
 
-- [ ] Se puede recorrer toda la interfaz con datos ficticios desde teléfono y escritorio sin desbordamientos.
+- [x] Se puede recorrer toda la interfaz con datos ficticios desde teléfono y escritorio sin desbordamientos.
 
 
 
