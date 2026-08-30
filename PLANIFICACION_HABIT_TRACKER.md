@@ -17,6 +17,8 @@ La web responsive/PWA será la primera forma de usar la aplicación desde el tel
 
 ## 2. Alcance funcional
 
+
+
 ### MVP obligatorio
 
 - Crear, editar, ordenar y archivar hábitos.
@@ -30,6 +32,8 @@ La web responsive/PWA será la primera forma de usar la aplicación desde el tel
 - Funcionar correctamente en pantallas móviles y de escritorio.
 - Tener estados vacíos, de carga, de error y sin conexión comprensibles.
 
+
+
 ### Fuera del MVP
 
 - Hábitos compartidos, grupos, seguidores o funciones sociales.
@@ -41,6 +45,8 @@ La web responsive/PWA será la primera forma de usar la aplicación desde el tel
 - Gamificación avanzada, recompensas y avatares.
 - Sincronización offline con resolución compleja de conflictos.
 - Widgets nativos y smartwatch.
+
+
 
 ## 3. Decisiones de producto iniciales
 
@@ -56,23 +62,29 @@ La web responsive/PWA será la primera forma de usar la aplicación desde el tel
 - La app será personal: cada usuario solo puede acceder a sus propios datos.
 - La base de datos será la fuente de verdad cuando se active la sincronización.
 
+
+
 ## 4. Arquitectura recomendada
+
+
 
 ### Tecnologías
 
-| Área | Elección | Motivo |
-|---|---|---|
-| Lenguaje principal | TypeScript estricto | Permite compartir tipos y lógica entre plataformas. |
-| Web | Next.js con App Router | Es la tecnología que se desea aprender y permite una web moderna desplegable en Vercel. |
-| Estilos | Tailwind CSS + componentes accesibles | Acelera una interfaz responsive sin ocultar los fundamentos de CSS. |
-| Formularios y validación | React Hook Form + Zod | Validación reutilizable, tipada y visible para el usuario. |
-| Backend y persistencia | Supabase: Postgres, Auth y Row Level Security | Una base de datos y autenticación comunes para todas las plataformas. |
-| Gráficas web/escritorio | Recharts | Adecuado para barras, líneas y áreas en React. |
-| Fechas | date-fns | Cálculos explícitos y fáciles de probar. |
-| App móvil | Expo + React Native + Expo Router | Mantiene TypeScript y da acceso a funciones nativas de iOS/Android. |
-| App de escritorio | Tauri 2 + React/Vite | Binarios ligeros y reutilización de lógica/componentes web. |
-| Pruebas | Vitest, Testing Library y Playwright | Cubre lógica, componentes y recorridos completos de la web. |
-| Despliegue web | Vercel | Integración natural con Next.js y entornos de preview. |
+
+| Área                     | Elección                                      | Motivo                                                                                  |
+| ------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Lenguaje principal       | TypeScript estricto                           | Permite compartir tipos y lógica entre plataformas.                                     |
+| Web                      | Next.js con App Router                        | Es la tecnología que se desea aprender y permite una web moderna desplegable en Vercel. |
+| Estilos                  | Tailwind CSS + componentes accesibles         | Acelera una interfaz responsive sin ocultar los fundamentos de CSS.                     |
+| Formularios y validación | React Hook Form + Zod                         | Validación reutilizable, tipada y visible para el usuario.                              |
+| Backend y persistencia   | Supabase: Postgres, Auth y Row Level Security | Una base de datos y autenticación comunes para todas las plataformas.                   |
+| Gráficas web/escritorio  | Recharts                                      | Adecuado para barras, líneas y áreas en React.                                          |
+| Fechas                   | date-fns                                      | Cálculos explícitos y fáciles de probar.                                                |
+| App móvil                | Expo + React Native + Expo Router             | Mantiene TypeScript y da acceso a funciones nativas de iOS/Android.                     |
+| App de escritorio        | Tauri 2 + React/Vite                          | Binarios ligeros y reutilización de lógica/componentes web.                             |
+| Pruebas                  | Vitest, Testing Library y Playwright          | Cubre lógica, componentes y recorridos completos de la web.                             |
+| Despliegue web           | Vercel                                        | Integración natural con Next.js y entornos de preview.                                  |
+
 
 No se recomienda crear un backend Python para el MVP: Supabase ya cubre autenticación, base de datos y API. Python puede incorporarse más adelante para análisis de datos, importaciones o tareas especializadas que realmente lo necesiten.
 
@@ -86,6 +98,8 @@ No se recomienda crear un backend Python para el MVP: Supabase ya cubre autentic
 - Usar el runtime Node.js de Next.js salvo que aparezca un requisito concreto para Edge.
 - Nunca exponer una clave `service_role` en web, móvil o escritorio.
 - Fijar versiones de dependencias y guardar el lockfile.
+
+
 
 ### Estructura objetivo del repositorio
 
@@ -116,43 +130,55 @@ La web de Next.js podrá utilizar SSR y Server Actions. Tauri requiere un fronte
 
 ## 5. Modelo de datos inicial
 
+
+
 ### `profiles`
 
-| Campo | Propósito |
-|---|---|
-| `id uuid` | PK y referencia al usuario de Supabase Auth. |
-| `display_name text` | Nombre opcional. |
-| `timezone text` | Zona horaria IANA, por ejemplo `America/Los_Angeles`. |
-| `locale text` | Inicialmente `es`. |
-| `week_starts_on smallint` | Inicialmente lunes. |
-| `created_at`, `updated_at` | Auditoría. |
+
+| Campo                      | Propósito                                             |
+| -------------------------- | ----------------------------------------------------- |
+| `id uuid`                  | PK y referencia al usuario de Supabase Auth.          |
+| `display_name text`        | Nombre opcional.                                      |
+| `timezone text`            | Zona horaria IANA, por ejemplo `America/Los_Angeles`. |
+| `locale text`              | Inicialmente `es`.                                    |
+| `week_starts_on smallint`  | Inicialmente lunes.                                   |
+| `created_at`, `updated_at` | Auditoría.                                            |
+
+
+
 
 ### `habits`
 
-| Campo | Propósito |
-|---|---|
-| `id uuid` | Identificador del hábito. |
-| `user_id uuid` | Propietario. |
-| `name text` | Nombre requerido. |
-| `description text` | Detalle opcional. |
-| `color text` | Color para calendario y gráficas. |
-| `icon text` | Icono opcional. |
-| `frequency text` | En el MVP siempre `daily`, preparado para ampliarse. |
-| `start_date date` | Primer día en que el hábito cuenta para estadísticas. |
-| `position integer` | Orden en la lista diaria. |
-| `archived_at timestamptz` | Nulo mientras esté activo. |
-| `created_at`, `updated_at` | Auditoría y sincronización. |
+
+| Campo                      | Propósito                                             |
+| -------------------------- | ----------------------------------------------------- |
+| `id uuid`                  | Identificador del hábito.                             |
+| `user_id uuid`             | Propietario.                                          |
+| `name text`                | Nombre requerido.                                     |
+| `description text`         | Detalle opcional.                                     |
+| `color text`               | Color para calendario y gráficas.                     |
+| `icon text`                | Icono opcional.                                       |
+| `frequency text`           | En el MVP siempre `daily`, preparado para ampliarse.  |
+| `start_date date`          | Primer día en que el hábito cuenta para estadísticas. |
+| `position integer`         | Orden en la lista diaria.                             |
+| `archived_at timestamptz`  | Nulo mientras esté activo.                            |
+| `created_at`, `updated_at` | Auditoría y sincronización.                           |
+
+
+
 
 ### `habit_checkins`
 
-| Campo | Propósito |
-|---|---|
-| `id uuid` | Identificador del registro. |
-| `habit_id uuid` | Hábito completado. |
-| `user_id uuid` | Propietario, útil para RLS. |
-| `checkin_date date` | Fecha local a la que pertenece el cumplimiento. |
-| `completed_at timestamptz` | Momento exacto en UTC. |
-| `note text` | Reservado como opcional. |
+
+| Campo                      | Propósito                                       |
+| -------------------------- | ----------------------------------------------- |
+| `id uuid`                  | Identificador del registro.                     |
+| `habit_id uuid`            | Hábito completado.                              |
+| `user_id uuid`             | Propietario, útil para RLS.                     |
+| `checkin_date date`        | Fecha local a la que pertenece el cumplimiento. |
+| `completed_at timestamptz` | Momento exacto en UTC.                          |
+| `note text`                | Reservado como opcional.                        |
+
 
 Restricciones obligatorias:
 
@@ -162,6 +188,8 @@ Restricciones obligatorias:
 - RLS habilitado en todas las tablas expuestas.
 - Políticas de `SELECT`, `INSERT`, `UPDATE` y `DELETE` que validen `auth.uid() = user_id`; las de actualización deben incluir `USING` y `WITH CHECK`.
 - Verificación explícita de que las tablas necesarias estén expuestas a la Data API y tengan los permisos `GRANT` apropiados; esto es independiente de RLS.
+
+
 
 ## 6. Definición de métricas
 
@@ -175,6 +203,8 @@ Restricciones obligatorias:
 Los hábitos todavía no creados o ya archivados no entran en el denominador. Estas reglas deberán probarse especialmente en cambios de mes, año, horario de verano y zona horaria.
 
 ## 7. Fases de desarrollo
+
+
 
 ### Fase 0 — Cerrar el alcance y la experiencia (1–2 jornadas)
 
@@ -190,23 +220,27 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [x] Los cinco recorridos principales se entienden sin decidir nuevas funciones durante la implementación.
 
+
+
 ### Fase 1 — Fundamentos del repositorio y Next.js (2–3 jornadas)
 
-- [ ] Inicializar Git y crear un `.gitignore` adecuado.
-- [ ] Configurar el workspace con pnpm y `apps/web`.
-- [ ] Crear la app Next.js con App Router, TypeScript estricto y carpeta `src`.
-- [ ] Configurar Tailwind CSS y la base de componentes accesibles.
-- [ ] Configurar ESLint, Prettier y orden consistente de imports.
-- [ ] Crear `packages/domain` para lógica compartida sin dependencias de UI.
-- [ ] Configurar aliases, scripts de desarrollo, build, lint, typecheck y test.
-- [ ] Crear `.env.example` sin secretos y documentar variables.
-- [ ] Añadir estados globales `loading`, `error` y `not-found` de Next.js.
-- [ ] Crear un README con requisitos y comandos de inicio.
-- [ ] Configurar CI para lint, typecheck, pruebas y build.
+- [x] Inicializar Git y crear un `.gitignore` adecuado.
+- [x] Configurar el workspace con pnpm y `apps/web`.
+- [x] Crear la app Next.js con App Router, TypeScript estricto y carpeta `src`.
+- [x] Configurar Tailwind CSS y la base de componentes accesibles.
+- [x] Configurar ESLint, Prettier y orden consistente de imports.
+- [x] Crear `packages/domain` para lógica compartida sin dependencias de UI.
+- [x] Configurar aliases, scripts de desarrollo, build, lint, typecheck y test.
+- [x] Crear `.env.example` sin secretos y documentar variables.
+- [x] Añadir estados globales `loading`, `error` y `not-found` de Next.js.
+- [x] Crear un README con requisitos y comandos de inicio.
+- [x] Configurar CI para lint, typecheck, pruebas y build.
 
 **Criterio de salida**
 
-- [ ] Una instalación limpia puede ejecutar la web y todas las comprobaciones pasan.
+- [x] Una instalación limpia puede ejecutar la web y todas las comprobaciones pasan.
+
+
 
 ### Fase 2 — Diseño responsive y navegación (3–5 jornadas)
 
@@ -222,6 +256,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 **Criterio de salida**
 
 - [ ] Se puede recorrer toda la interfaz con datos ficticios desde teléfono y escritorio sin desbordamientos.
+
+
 
 ### Fase 3 — Núcleo funcional local (5–8 jornadas)
 
@@ -242,6 +278,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [ ] Una persona puede crear varios hábitos, recargar la página y seguir marcándolos localmente sin perder datos.
 
+
+
 ### Fase 4 — Calendario, gráficas y estadísticas (5–8 jornadas)
 
 - [ ] Implementar las funciones puras de cumplimiento, racha actual y mejor racha.
@@ -260,6 +298,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [ ] Las cifras del calendario, las tarjetas y las gráficas coinciden con un conjunto de datos calculado manualmente.
 
+
+
 ### Fase 5 — Calidad del prototipo web (3–5 jornadas)
 
 - [ ] Añadir pruebas de componentes para formulario, checkbox y filtros de fecha.
@@ -273,6 +313,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 **Criterio de salida**
 
 - [ ] El prototipo local es estable y la experiencia principal está validada antes de introducir cuentas y sincronización.
+
+
 
 ### Fase 6 — Supabase, autenticación y sincronización (6–10 jornadas)
 
@@ -302,6 +344,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [ ] Dos navegadores con la misma cuenta ven datos consistentes, y dos cuentas diferentes permanecen completamente aisladas.
 
+
+
 ### Fase 7 — PWA, Vercel y MVP web (3–5 jornadas)
 
 - [ ] Crear manifest, iconos, nombre, color de tema y pantalla de instalación.
@@ -319,6 +363,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 **Criterio de salida — MVP v1**
 
 - [ ] La PWA se puede instalar en un teléfono, registrar hábitos diariamente y ver los mismos datos desde otro dispositivo.
+
+
 
 ### Fase 8 — Aplicación móvil con Expo (8–14 jornadas)
 
@@ -342,6 +388,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [ ] Marcar un hábito en móvil actualiza el estado visible en web y viceversa, sin duplicados ni pérdida de historial.
 
+
+
 ### Fase 9 — Aplicación de escritorio con Tauri (5–9 jornadas)
 
 - [ ] Confirmar qué funciones nativas justifican la app frente a usar la PWA.
@@ -361,6 +409,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 - [ ] La aplicación instalada permite completar todo el recorrido principal y sincroniza con web/móvil.
 
+
+
 ### Fase 10 — Operación y mejoras posteriores (continuo)
 
 - [ ] Añadir monitoreo de errores respetando la privacidad.
@@ -375,18 +425,24 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 - [ ] Evaluar OAuth, biometría, widgets e integraciones de salud.
 - [ ] Revisar periódicamente dependencias y avisos de seguridad.
 
+
+
 ## 8. Matriz mínima de pruebas
 
-| Área | Casos imprescindibles |
-|---|---|
-| Hábitos | Crear, editar, ordenar, archivar, restaurar y validar entradas. |
-| Check-ins | Marcar, desmarcar, doble toque, reintento de red y restricción de duplicados. |
-| Fechas | Medianoche, cambio de mes/año, horario de verano y cambio de zona horaria. |
-| Métricas | Sin hábitos, hábito nuevo, archivado, periodos parciales y múltiples hábitos. |
-| Seguridad | Usuario A no puede leer ni modificar datos de B; claves secretas no llegan al cliente. |
-| Sincronización | Dos dispositivos, cambios consecutivos, reconexión y recarga. |
-| Accesibilidad | Teclado, foco, etiquetas, contraste, lector de pantalla y alternativa a gráficas. |
-| Responsive | Teléfono pequeño, tableta y escritorio. |
+
+| Área           | Casos imprescindibles                                                                  |
+| -------------- | -------------------------------------------------------------------------------------- |
+| Hábitos        | Crear, editar, ordenar, archivar, restaurar y validar entradas.                        |
+| Check-ins      | Marcar, desmarcar, doble toque, reintento de red y restricción de duplicados.          |
+| Fechas         | Medianoche, cambio de mes/año, horario de verano y cambio de zona horaria.             |
+| Métricas       | Sin hábitos, hábito nuevo, archivado, periodos parciales y múltiples hábitos.          |
+| Seguridad      | Usuario A no puede leer ni modificar datos de B; claves secretas no llegan al cliente. |
+| Sincronización | Dos dispositivos, cambios consecutivos, reconexión y recarga.                          |
+| Accesibilidad  | Teclado, foco, etiquetas, contraste, lector de pantalla y alternativa a gráficas.      |
+| Responsive     | Teléfono pequeño, tableta y escritorio.                                                |
+
+
+
 
 ## 9. Definición de terminado para cualquier tarea
 
@@ -400,19 +456,25 @@ Una tarea solo se considera terminada cuando:
 - [ ] No introduce secretos ni debilita RLS.
 - [ ] Actualiza documentación o decisiones si cambió el comportamiento.
 
+
+
 ## 10. Riesgos principales y mitigación
 
-| Riesgo | Mitigación |
-|---|---|
-| Intentar construir tres apps a la vez | Terminar y validar web/PWA antes de móvil y escritorio. |
-| Duplicar lógica entre plataformas | Centralizar dominio, validaciones, métricas y tipos. |
-| Forzar una UI universal difícil de mantener | Compartir UI solo entre web/escritorio; crear UI nativa en móvil. |
-| Errores de rachas por zona horaria | Separar `checkin_date` local de `completed_at` UTC y probar límites. |
-| Fuga de datos entre usuarios | RLS por propiedad, claves correctas y pruebas con dos usuarios. |
-| Conflictos de sincronización | Restricciones únicas, operaciones idempotentes y servidor como fuente de verdad. |
-| Pérdida de historial al borrar | Archivar hábitos y proteger relaciones en base de datos. |
-| Gráficas bonitas pero inaccesibles | Añadir resumen textual, leyendas y contraste suficiente. |
-| Complejidad de offline | Empezar online-first; agregar cola offline solo con reglas de conflicto definidas. |
+
+| Riesgo                                      | Mitigación                                                                         |
+| ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Intentar construir tres apps a la vez       | Terminar y validar web/PWA antes de móvil y escritorio.                            |
+| Duplicar lógica entre plataformas           | Centralizar dominio, validaciones, métricas y tipos.                               |
+| Forzar una UI universal difícil de mantener | Compartir UI solo entre web/escritorio; crear UI nativa en móvil.                  |
+| Errores de rachas por zona horaria          | Separar `checkin_date` local de `completed_at` UTC y probar límites.               |
+| Fuga de datos entre usuarios                | RLS por propiedad, claves correctas y pruebas con dos usuarios.                    |
+| Conflictos de sincronización                | Restricciones únicas, operaciones idempotentes y servidor como fuente de verdad.   |
+| Pérdida de historial al borrar              | Archivar hábitos y proteger relaciones en base de datos.                           |
+| Gráficas bonitas pero inaccesibles          | Añadir resumen textual, leyendas y contraste suficiente.                           |
+| Complejidad de offline                      | Empezar online-first; agregar cola offline solo con reglas de conflicto definidas. |
+
+
+
 
 ## 11. Orden de lanzamientos
 
@@ -421,6 +483,8 @@ Una tarea solo se considera terminada cuando:
 - [ ] **Móvil v1:** Fase 8, beta y publicación gradual.
 - [ ] **Escritorio v1:** Fase 9, comenzando por el sistema operativo prioritario.
 - [ ] **Mejoras:** Fase 10 guiada por uso real y feedback.
+
+
 
 ## 12. Estimación y ritmo recomendado
 
@@ -433,6 +497,8 @@ Ritmo sugerido:
 3. Ejecutar las comprobaciones y demostrar el resultado.
 4. Marcar `[x]` únicamente después de verificarlo.
 5. Registrar nuevos requisitos en la fase apropiada en vez de interrumpir el MVP.
+
+
 
 ## 13. Referencias oficiales para la implementación
 

@@ -10,6 +10,14 @@
     "dev": "pnpm --filter @habit-tracker/web dev",
     "build": "pnpm --filter @habit-tracker/web build",
     "lint": "pnpm --filter @habit-tracker/web lint",
-    "typecheck": "pnpm -r typecheck"
+    "lint:fix": "pnpm --filter @habit-tracker/web lint:fix",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.6",
+    "vitest": "4.1.11"
   }
 }

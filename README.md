@@ -39,8 +39,22 @@ La web queda disponible en <http://localhost:3000>.
 ```bash
 pnpm lint
 pnpm typecheck
+pnpm test
 pnpm build
 ```
+
+Para aplicar o comprobar el formato de Prettier:
+
+```bash
+pnpm format
+pnpm format:check
+```
+
+## Variables de entorno
+
+La Fase 1 no necesita variables de entorno. Usa [`.env.example`](.env.example)
+como referencia cuando una fase posterior añada una integración; nunca copies
+secretos al repositorio.
 
 ## Estructura actual
 
@@ -60,3 +74,6 @@ habit_tracker/
 
 Las carpetas de móvil, escritorio, base de datos y UI compartida se crearán al
 comenzar sus fases para evitar estructura vacía.
+
+GitHub Actions ejecuta formato, lint, typecheck, pruebas y build en cada pull
+request y en los cambios enviados a `main`.
