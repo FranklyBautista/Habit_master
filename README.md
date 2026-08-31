@@ -50,8 +50,18 @@ La web queda disponible en <http://localhost:3000>.
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:e2e
 pnpm build
 ```
+
+La primera ejecución E2E requiere instalar Chromium y sus dependencias:
+
+```bash
+pnpm --filter @habit-tracker/web exec playwright install --with-deps chromium
+```
+
+La revisión de calidad, accesibilidad, rendimiento y deuda conocida está en
+[`docs/quality/FASE_5.md`](docs/quality/FASE_5.md).
 
 Para aplicar o comprobar el formato de Prettier:
 

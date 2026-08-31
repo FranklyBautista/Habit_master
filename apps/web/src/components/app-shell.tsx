@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {snapshot.settings.displayName.slice(0, 1).toUpperCase()}
           </span>
         </div>
-        <main id="contenido" className="main-content">
+        <main id="contenido" className="main-content" tabIndex={-1}>
           {children}
         </main>
       </div>

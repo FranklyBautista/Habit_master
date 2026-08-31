@@ -13,6 +13,7 @@
     "lint:fix": "pnpm --filter @habit-tracker/web lint:fix",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:e2e": "pnpm build && pnpm --filter @habit-tracker/web test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

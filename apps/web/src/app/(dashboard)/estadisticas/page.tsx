@@ -10,9 +10,10 @@ import {
 } from "@habit-tracker/domain";
 import { CalendarDays, Flame, Medal, Target } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { PeriodTabs, type StatisticsPeriod } from "@/components/period-tabs";
 import { Card } from "@/components/ui/card";
 import { useHabitStore } from "@/lib/habit-store";
 
@@ -25,27 +26,31 @@ const StatisticsCharts = dynamic(
   },
 );
 
-const periods = [7, 30, 90] as const;
-type Period = (typeof periods)[number];
-
 export default function StatisticsPage() {
   const snapshot = useHabitStore();
-  const [period, setPeriod] = useState<Period>(30);
+  const [period, setPeriod] = useState<StatisticsPeriod>(30);
   const today = getLocalDateKey(new Date(), snapshot.settings.timezone);
-  const options = {
-    habits: snapshot.habits,
-    checkins: snapshot.checkins,
-    timezone: snapshot.settings.timezone,
-  };
-  const summaries = [1, 7, 30, 90].map((days) =>
-    calculatePeriodMetrics(getPeriodStartDate(today, days), today, options),
+  const options = useMemo(
+    () => ({
+      habits: snapshot.habits,
+      checkins: snapshot.checkins,
+      timezone: snapshot.settings.timezone,
+    }),
+    [snapshot.checkins, snapshot.habits, snapshot.settings.timezone],
+  );
+  const summaries = useMemo(
+    () =>
+      [1, 7, 30, 90].map((days) =>
+        calculatePeriodMetrics(getPeriodStartDate(today, days), today, options),
+      ),
+    [options, today],
   );
   const selected = calculatePeriodMetrics(
     getPeriodStartDate(today, period),
     today,
     options,
   );
-  const streaks = calculateStreaks(today, options);
+  const streaks = useMemo(() => calculateStreaks(today, options), [options, today]);
   const comparison = compareHabits(selected.startDate, today, options);
   const trend = selected.days.map((day) => ({
     date: day.date,
@@ -61,18 +66,7 @@ export default function StatisticsPage() {
         description="Las cifras cuentan solo los días en que cada hábito estaba activo."
       />
       <div className="view-grid view-grid--stats">
-        <div className="period-tabs" role="group" aria-label="Periodo de estadísticas">
-          {periods.map((days) => (
-            <button
-              key={days}
-              className={period === days ? "is-active" : undefined}
-              aria-pressed={period === days}
-              onClick={() => setPeriod(days)}
-            >
-              {days} días
-            </button>
-          ))}
-        </div>
+        <PeriodTabs value={period} onChange={setPeriod} />
         <div className="summary-grid">
           {summaries.map((summary, index) => (
             <Card className="summary-card" key={summary.startDate}>

@@ -22,8 +22,12 @@ const instantSchema = z.iso.datetime({ offset: true });
 
 export const habitSchema = z.object({
   id: z.uuid(),
-  name: z.string().trim().min(1, "Escribe un nombre.").max(60),
-  description: z.string().trim().max(160).nullable(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Escribe un nombre.")
+    .max(60, "Usa 60 caracteres o menos."),
+  description: z.string().trim().max(160, "Usa 160 caracteres o menos.").nullable(),
   color: z.enum(habitColors),
   icon: z.enum(habitIcons),
   frequency: z.literal("daily"),

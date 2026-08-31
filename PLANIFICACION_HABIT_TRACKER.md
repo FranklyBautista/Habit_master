@@ -302,17 +302,17 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 ### Fase 5 — Calidad del prototipo web (3–5 jornadas)
 
-- [ ] Añadir pruebas de componentes para formulario, checkbox y filtros de fecha.
-- [ ] Añadir recorridos Playwright: crear hábito, marcarlo, desmarcarlo, archivarlo y consultar estadísticas.
-- [ ] Probar entradas inválidas y nombres demasiado largos.
-- [ ] Revisar accesibilidad con teclado y lector de pantalla básico.
-- [ ] Medir rendimiento y eliminar renders o dependencias innecesarias.
-- [ ] Añadir confirmaciones solo en acciones realmente destructivas.
-- [ ] Documentar errores conocidos y deuda técnica.
+- [x] Añadir pruebas de componentes para formulario, checkbox y filtros de fecha.
+- [x] Añadir recorridos Playwright: crear hábito, marcarlo, desmarcarlo, archivarlo y consultar estadísticas.
+- [x] Probar entradas inválidas y nombres demasiado largos.
+- [x] Revisar accesibilidad con teclado y lector de pantalla básico.
+- [x] Medir rendimiento y eliminar renders o dependencias innecesarias.
+- [x] Añadir confirmaciones solo en acciones realmente destructivas.
+- [x] Documentar errores conocidos y deuda técnica.
 
 **Criterio de salida**
 
-- [ ] El prototipo local es estable y la experiencia principal está validada antes de introducir cuentas y sincronización.
+- [x] El prototipo local es estable y la experiencia principal está validada antes de introducir cuentas y sincronización.
 
 
 

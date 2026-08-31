@@ -132,7 +132,7 @@ export function HabitFormDialog({
           </p>
         ) : null}
         <div className="dialog-actions">
-          <Button variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit">

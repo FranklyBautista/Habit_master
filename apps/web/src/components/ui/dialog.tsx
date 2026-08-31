@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useId, useRef } from "react";
 
 import { Button } from "./button";
 
@@ -15,6 +15,8 @@ type DialogProps = {
 
 export function Dialog({ open, title, description, children, onClose }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -24,11 +26,17 @@ export function Dialog({ open, title, description, children, onClose }: DialogPr
   }, [open]);
 
   return (
-    <dialog ref={dialogRef} className="dialog" onClose={onClose}>
+    <dialog
+      ref={dialogRef}
+      className="dialog"
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      onClose={onClose}
+    >
       <div className="dialog__header">
         <div>
-          <h2>{title}</h2>
-          {description ? <p>{description}</p> : null}
+          <h2 id={titleId}>{title}</h2>
+          {description ? <p id={descriptionId}>{description}</p> : null}
         </div>
         <Button
           variant="ghost"
