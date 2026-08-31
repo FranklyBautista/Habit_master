@@ -11,7 +11,15 @@ workspace de pnpm.
   y ESLint.
 - Interfaz responsive disponible en `/hoy`, `/habitos`, `/calendario`,
   `/estadisticas` y `/ajustes`, con navegación móvil y de escritorio.
-- `packages/domain` preparado para la lógica compartida de fases posteriores.
+- Núcleo local disponible para crear, editar, ordenar, archivar, restaurar y marcar
+  hábitos; los datos se conservan en el almacenamiento local del navegador.
+- `packages/domain` contiene tipos, validaciones Zod, fechas y el contrato de
+  repositorio compartido.
+- Pruebas unitarias para validación, zona horaria, CRUD, archivado, persistencia y
+  check-ins idempotentes.
+- Calendario mensual general y por hábito con navegación entre meses.
+- Estadísticas reales para 7, 30 y 90 días, con cumplimiento, rachas, gráficas y
+  una tabla textual accesible.
 - Supabase, Expo y Tauri todavía no están instalados porque se incorporarán en sus
   fases correspondientes.
 

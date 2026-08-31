@@ -12,5 +12,9 @@
   },
   "devDependencies": {
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "date-fns": "4.4.0",
+    "zod": "4.5.4"
   }
 }

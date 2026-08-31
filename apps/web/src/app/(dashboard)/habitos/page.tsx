@@ -1,39 +1,58 @@
-import {
-  Archive,
-  BookOpen,
-  Brain,
-  Footprints,
-  GripVertical,
-  ListChecks,
-  type LucideIcon,
-  NotebookPen,
-  RotateCcw,
-} from "lucide-react";
+"use client";
 
-import { CreateHabitDemo } from "@/components/create-habit-demo";
+import type { Habit } from "@habit-tracker/domain";
+import { Archive, ArrowDown, ArrowUp, Pencil, Plus, RotateCcw } from "lucide-react";
+import { useState } from "react";
+
+import { HabitFormDialog } from "@/components/habit-form-dialog";
+import { habitIconComponents } from "@/components/habit-icons";
 import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/status-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { type DemoHabit, demoHabits } from "@/lib/demo-data";
-
-const icons: Record<DemoHabit["icon"], LucideIcon> = {
-  brain: Brain,
-  "book-open": BookOpen,
-  footprints: Footprints,
-  "list-checks": ListChecks,
-  "notebook-pen": NotebookPen,
-};
+import { Toast } from "@/components/ui/toast";
+import { habitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function HabitsPage() {
-  const activeHabits = demoHabits.filter((habit) => !habit.archived);
-  const archivedHabits = demoHabits.filter((habit) => habit.archived);
+  const snapshot = useHabitStore();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const activeHabits = snapshot.habits
+    .filter((habit) => !habit.archivedAt)
+    .sort((a, b) => a.position - b.position);
+  const archivedHabits = snapshot.habits
+    .filter((habit) => habit.archivedAt)
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+  function openCreate() {
+    setEditingHabit(null);
+    setDialogOpen(true);
+  }
+  function openEdit(habit: Habit) {
+    setEditingHabit(habit);
+    setDialogOpen(true);
+  }
+  function archive(habit: Habit) {
+    habitActions.archiveHabit(habit.id);
+    setToast(`${habit.name} se archivó sin perder su historial.`);
+  }
+  function restore(habit: Habit) {
+    habitActions.restoreHabit(habit.id);
+    setToast(`${habit.name} vuelve a estar activo.`);
+  }
+
   return (
     <>
       <PageHeader
         eyebrow="Tu rutina"
         title="Hábitos"
-        description="Organiza lo que quieres repetir cada día."
-        action={<CreateHabitDemo compact />}
+        description="Crea, ordena y cuida lo que quieres repetir cada día."
+        action={
+          <Button onClick={openCreate}>
+            <Plus size={18} /> Crear
+          </Button>
+        }
       />
       <div className="view-grid view-grid--habits">
         <Card className="habits-manage-card">
@@ -44,55 +63,91 @@ export default function HabitsPage() {
                 Activos <span className="count">{activeHabits.length}</span>
               </h2>
             </div>
-            <div className="desktop-only">
-              <CreateHabitDemo />
+            <Button className="desktop-only" onClick={openCreate}>
+              <Plus size={18} /> Crear hábito
+            </Button>
+          </div>
+          {activeHabits.length ? (
+            <div className="habit-manage-list">
+              {activeHabits.map((habit, index) => {
+                const Icon = habitIconComponents[habit.icon];
+                return (
+                  <article className="habit-manage-row" key={habit.id}>
+                    <div className="order-actions">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => habitActions.moveHabit(habit.id, -1)}
+                        disabled={index === 0}
+                        aria-label={`Subir ${habit.name}`}
+                      >
+                        <ArrowUp size={17} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => habitActions.moveHabit(habit.id, 1)}
+                        disabled={index === activeHabits.length - 1}
+                        aria-label={`Bajar ${habit.name}`}
+                      >
+                        <ArrowDown size={17} />
+                      </Button>
+                    </div>
+                    <span
+                      className="habit-icon"
+                      style={{
+                        backgroundColor: `${habit.color}18`,
+                        color: habit.color,
+                      }}
+                    >
+                      <Icon size={20} />
+                    </span>
+                    <div className="habit-manage-copy">
+                      <strong>{habit.name}</strong>
+                      <span>{habit.description ?? "Hábito diario"}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEdit(habit)}
+                      aria-label={`Editar ${habit.name}`}
+                      title="Editar"
+                    >
+                      <Pencil size={18} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => archive(habit)}
+                      aria-label={`Archivar ${habit.name}`}
+                      title="Archivar"
+                    >
+                      <Archive size={18} />
+                    </Button>
+                  </article>
+                );
+              })}
             </div>
-          </div>
-          <div className="habit-manage-list">
-            {activeHabits.map((habit) => {
-              const Icon = icons[habit.icon];
-              return (
-                <article className="habit-manage-row" key={habit.id}>
-                  <button
-                    className="drag-handle"
-                    aria-label={`Reordenar ${habit.name}`}
-                  >
-                    <GripVertical size={20} />
-                  </button>
-                  <span
-                    className="habit-icon"
-                    style={{ backgroundColor: `${habit.color}18`, color: habit.color }}
-                  >
-                    <Icon size={20} />
-                  </span>
-                  <div>
-                    <strong>{habit.name}</strong>
-                    <span>{habit.description ?? "Hábito diario"}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Archivar ${habit.name}`}
-                    title="Archivar"
-                  >
-                    <Archive size={19} />
-                  </Button>
-                </article>
-              );
-            })}
-          </div>
+          ) : (
+            <div className="inline-empty">
+              <p>No tienes hábitos activos.</p>
+              <Button onClick={openCreate}>
+                <Plus size={18} /> Crear el primero
+              </Button>
+            </div>
+          )}
         </Card>
-        <div className="aside-stack">
-          <Card className="archive-card">
-            <div className="section-heading">
-              <div>
-                <span className="section-kicker">Historial</span>
-                <h2>Archivados</h2>
-              </div>
-              <span className="quiet-badge">{archivedHabits.length}</span>
+        <Card className="archive-card">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Historial</span>
+              <h2>Archivados</h2>
             </div>
-            {archivedHabits.map((habit) => {
-              const Icon = icons[habit.icon];
+            <span className="quiet-badge">{archivedHabits.length}</span>
+          </div>
+          {archivedHabits.length ? (
+            archivedHabits.map((habit) => {
+              const Icon = habitIconComponents[habit.icon];
               return (
                 <article className="archived-row" key={habit.id}>
                   <span className="habit-icon is-muted" style={{ color: habit.color }}>
@@ -102,6 +157,7 @@ export default function HabitsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => restore(habit)}
                     aria-label={`Restaurar ${habit.name}`}
                     title="Restaurar"
                   >
@@ -109,10 +165,20 @@ export default function HabitsPage() {
                   </Button>
                 </article>
               );
-            })}
-          </Card>
-        </div>
+            })
+          ) : (
+            <EmptyState />
+          )}
+        </Card>
       </div>
+      <HabitFormDialog
+        key={editingHabit?.id ?? "create"}
+        open={dialogOpen}
+        habit={editingHabit}
+        onClose={() => setDialogOpen(false)}
+        onSaved={setToast}
+      />
+      {toast ? <Toast message={toast} onClose={() => setToast(null)} /> : null}
     </>
   );
 }

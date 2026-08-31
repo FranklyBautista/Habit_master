@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useHabitStore } from "@/lib/habit-store";
 
 const navigation: Array<{
   href: string;
@@ -32,6 +33,7 @@ const navigation: Array<{
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const snapshot = useHabitStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -73,10 +75,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="profile-chip">
-          <span className="avatar avatar--small">A</span>
+          <span className="avatar avatar--small">
+            {snapshot.settings.displayName.slice(0, 1).toUpperCase()}
+          </span>
           <span>
-            <strong>Alex</strong>
-            <small>alex@example.com</small>
+            <strong>{snapshot.settings.displayName}</strong>
+            <small>Datos locales</small>
           </span>
           <MoreHorizontal size={18} aria-hidden="true" />
         </div>
@@ -101,7 +105,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="mobile-brand">
             <CheckCircle2 size={20} /> Constancia
           </span>
-          <span className="avatar avatar--small">A</span>
+          <span className="avatar avatar--small">
+            {snapshot.settings.displayName.slice(0, 1).toUpperCase()}
+          </span>
         </div>
         <main id="contenido" className="main-content">
           {children}

@@ -261,42 +261,42 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 ### Fase 3 — Núcleo funcional local (5–8 jornadas)
 
-- [ ] Definir tipos y esquemas Zod para `Habit`, `HabitCheckin` y ajustes del usuario.
-- [ ] Crear una interfaz de repositorio de hábitos independiente de la persistencia.
-- [ ] Implementar un adaptador local sencillo para el prototipo.
-- [ ] Implementar creación de hábitos con nombre requerido.
-- [ ] Implementar edición de nombre, descripción, color e icono.
-- [ ] Implementar orden de hábitos.
-- [ ] Implementar archivado y restauración sin perder check-ins.
-- [ ] Mostrar los hábitos activos en la vista Hoy.
-- [ ] Marcar y desmarcar el día actual con respuesta visual inmediata.
-- [ ] Evitar check-ins duplicados.
-- [ ] Manejar correctamente fecha local y zona horaria.
-- [ ] Añadir pruebas unitarias de CRUD, archivado y marcado idempotente.
+- [x] Definir tipos y esquemas Zod para `Habit`, `HabitCheckin` y ajustes del usuario.
+- [x] Crear una interfaz de repositorio de hábitos independiente de la persistencia.
+- [x] Implementar un adaptador local sencillo para el prototipo.
+- [x] Implementar creación de hábitos con nombre requerido.
+- [x] Implementar edición de nombre, descripción, color e icono.
+- [x] Implementar orden de hábitos.
+- [x] Implementar archivado y restauración sin perder check-ins.
+- [x] Mostrar los hábitos activos en la vista Hoy.
+- [x] Marcar y desmarcar el día actual con respuesta visual inmediata.
+- [x] Evitar check-ins duplicados.
+- [x] Manejar correctamente fecha local y zona horaria.
+- [x] Añadir pruebas unitarias de CRUD, archivado y marcado idempotente.
 
 **Criterio de salida**
 
-- [ ] Una persona puede crear varios hábitos, recargar la página y seguir marcándolos localmente sin perder datos.
+- [x] Una persona puede crear varios hábitos, recargar la página y seguir marcándolos localmente sin perder datos.
 
 
 
 ### Fase 4 — Calendario, gráficas y estadísticas (5–8 jornadas)
 
-- [ ] Implementar las funciones puras de cumplimiento, racha actual y mejor racha.
-- [ ] Probar días sin hábitos, hábitos nuevos, hábitos archivados y periodos incompletos.
-- [ ] Crear calendario mensual general con intensidad por porcentaje.
-- [ ] Crear calendario de detalle por hábito.
-- [ ] Permitir navegar entre meses sin perder el contexto.
-- [ ] Crear tarjetas de resumen para hoy, 7, 30 y 90 días.
-- [ ] Crear gráfica de línea o área del cumplimiento diario.
-- [ ] Crear gráfica de barras para comparar hábitos.
-- [ ] Añadir leyendas, tooltips y una alternativa textual accesible para las gráficas.
-- [ ] Evitar cargar la librería de gráficas donde no se utiliza.
-- [ ] Añadir pruebas en límites de semana, mes, año y horario de verano.
+- [x] Implementar las funciones puras de cumplimiento, racha actual y mejor racha.
+- [x] Probar días sin hábitos, hábitos nuevos, hábitos archivados y periodos incompletos.
+- [x] Crear calendario mensual general con intensidad por porcentaje.
+- [x] Crear calendario de detalle por hábito.
+- [x] Permitir navegar entre meses sin perder el contexto.
+- [x] Crear tarjetas de resumen para hoy, 7, 30 y 90 días.
+- [x] Crear gráfica de línea o área del cumplimiento diario.
+- [x] Crear gráfica de barras para comparar hábitos.
+- [x] Añadir leyendas, tooltips y una alternativa textual accesible para las gráficas.
+- [x] Evitar cargar la librería de gráficas donde no se utiliza.
+- [x] Añadir pruebas en límites de semana, mes, año y horario de verano.
 
 **Criterio de salida**
 
-- [ ] Las cifras del calendario, las tarjetas y las gráficas coinciden con un conjunto de datos calculado manualmente.
+- [x] Las cifras del calendario, las tarjetas y las gráficas coinciden con un conjunto de datos calculado manualmente.
 
 
 
