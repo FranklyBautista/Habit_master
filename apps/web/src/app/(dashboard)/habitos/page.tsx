@@ -11,10 +11,11 @@ import { EmptyState } from "@/components/status-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Toast } from "@/components/ui/toast";
-import { habitActions, useHabitStore } from "@/lib/habit-store";
+import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function HabitsPage() {
   const snapshot = useHabitStore();
+  const actions = useHabitActions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -33,13 +34,15 @@ export default function HabitsPage() {
     setEditingHabit(habit);
     setDialogOpen(true);
   }
-  function archive(habit: Habit) {
-    habitActions.archiveHabit(habit.id);
-    setToast(`${habit.name} se archivó sin perder su historial.`);
+  async function archive(habit: Habit) {
+    if (await actions.archiveHabit(habit.id)) {
+      setToast(`${habit.name} se archivó sin perder su historial.`);
+    }
   }
-  function restore(habit: Habit) {
-    habitActions.restoreHabit(habit.id);
-    setToast(`${habit.name} vuelve a estar activo.`);
+  async function restore(habit: Habit) {
+    if (await actions.restoreHabit(habit.id)) {
+      setToast(`${habit.name} vuelve a estar activo.`);
+    }
   }
 
   return (
@@ -77,7 +80,7 @@ export default function HabitsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => habitActions.moveHabit(habit.id, -1)}
+                        onClick={() => void actions.moveHabit(habit.id, -1)}
                         disabled={index === 0}
                         aria-label={`Subir ${habit.name}`}
                       >
@@ -86,7 +89,7 @@ export default function HabitsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => habitActions.moveHabit(habit.id, 1)}
+                        onClick={() => void actions.moveHabit(habit.id, 1)}
                         disabled={index === activeHabits.length - 1}
                         aria-label={`Bajar ${habit.name}`}
                       >
@@ -118,7 +121,7 @@ export default function HabitsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => archive(habit)}
+                      onClick={() => void archive(habit)}
                       aria-label={`Archivar ${habit.name}`}
                       title="Archivar"
                     >
@@ -157,7 +160,7 @@ export default function HabitsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => restore(habit)}
+                    onClick={() => void restore(habit)}
                     aria-label={`Restaurar ${habit.name}`}
                     title="Restaurar"
                   >

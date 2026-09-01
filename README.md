@@ -11,8 +11,8 @@ workspace de pnpm.
   y ESLint.
 - Interfaz responsive disponible en `/hoy`, `/habitos`, `/calendario`,
   `/estadisticas` y `/ajustes`, con navegación móvil y de escritorio.
-- Núcleo local disponible para crear, editar, ordenar, archivar, restaurar y marcar
-  hábitos; los datos se conservan en el almacenamiento local del navegador.
+- Registro, acceso, recuperación de contraseña y datos sincronizados mediante
+  Supabase; las rutas privadas validan la identidad en el servidor.
 - `packages/domain` contiene tipos, validaciones Zod, fechas y el contrato de
   repositorio compartido.
 - Pruebas unitarias para validación, zona horaria, CRUD, archivado, persistencia y
@@ -20,13 +20,17 @@ workspace de pnpm.
 - Calendario mensual general y por hábito con navegación entre meses.
 - Estadísticas reales para 7, 30 y 90 días, con cumplimiento, rachas, gráficas y
   una tabla textual accesible.
-- Supabase, Expo y Tauri todavía no están instalados porque se incorporarán en sus
-  fases correspondientes.
+- La base de Supabase incluye CLI fijada, configuración local, migración, seed,
+  tipos generados y pruebas pgTAP de aislamiento y permisos de Data API.
+- Expo y Tauri todavía no están instalados porque se incorporarán en sus fases
+  correspondientes.
 
 ## Requisitos
 
-- Node.js 20.9 o superior (se verificó con Node.js 24.20.0).
+- Node.js 22 o superior (se verificó con Node.js 24.20.0).
 - Corepack habilitado para utilizar pnpm 11.24.0.
+- Docker Engine o Docker Desktop con integración habilitada para la distribución
+  WSL donde se ejecutan los comandos.
 
 ## Instalación
 
@@ -39,6 +43,7 @@ pnpm install
 ## Desarrollo
 
 ```bash
+pnpm supabase:start
 pnpm dev
 ```
 
@@ -70,11 +75,11 @@ pnpm format
 pnpm format:check
 ```
 
-## Variables de entorno
+## Supabase local
 
-La Fase 1 no necesita variables de entorno. Usa [`.env.example`](.env.example)
-como referencia cuando una fase posterior añada una integración; nunca copies
-secretos al repositorio.
+La guía reproducible de base de datos, separación de entornos y variables está en
+[`docs/setup/SUPABASE.md`](docs/setup/SUPABASE.md). Usa [`.env.example`](.env.example)
+solo como referencia; nunca copies secretos al repositorio.
 
 ## Estructura actual
 
@@ -83,7 +88,9 @@ habit_tracker/
 ├── apps/
 │   └── web/                 # Next.js con App Router
 ├── packages/
+│   ├── database/            # Tipos TypeScript generados desde Supabase
 │   └── domain/              # Lógica compartida sin dependencias de UI
+├── supabase/                # Configuración, migraciones, seed y pruebas pgTAP
 ├── docs/
 │   └── product/             # Alcance, wireframes, sistema visual y fixtures
 ├── package.json

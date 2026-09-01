@@ -1,11 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { login } from "./helpers/auth";
+
 const routes = ["/hoy", "/habitos", "/calendario", "/estadisticas", "/ajustes"];
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/hoy");
+  await page.goto("/login");
   await page.evaluate(() => localStorage.clear());
+  await login(page);
 });
 
 for (const route of routes) {
@@ -13,6 +16,7 @@ for (const route of routes) {
     page,
   }) => {
     await page.goto(route);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -20,8 +24,11 @@ for (const route of routes) {
 
 test("supports the main keyboard path and dialog focus", async ({ page }) => {
   await page.goto("/habitos");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Hábitos", exact: true }),
+  ).toBeVisible();
 
-  await page.keyboard.press("Tab");
+  await page.locator("body").press("Tab");
   await expect(page.getByRole("link", { name: "Saltar al contenido" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#contenido")).toBeFocused();

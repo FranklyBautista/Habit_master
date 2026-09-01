@@ -1,0 +1,9 @@
+import type { Database } from "@habit-tracker/database";
+import { createBrowserClient } from "@supabase/ssr";
+
+import { getSupabaseEnvironment } from "./env";
+
+export function createClient() {
+  const { url, publishableKey } = getSupabaseEnvironment();
+  return createBrowserClient<Database>(url, publishableKey);
+}

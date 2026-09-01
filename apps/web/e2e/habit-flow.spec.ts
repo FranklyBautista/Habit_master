@@ -1,35 +1,37 @@
 import { expect, test } from "@playwright/test";
 
+import { login } from "./helpers/auth";
+
 test.beforeEach(async ({ page }) => {
-  await page.goto("/hoy");
+  await page.goto("/login");
   await page.evaluate(() => localStorage.clear());
+  await login(page);
 });
 
 test("creates, checks, unchecks, archives and reviews statistics", async ({ page }) => {
+  const habitName = `Hidratarse ${crypto.randomUUID().slice(0, 8)}`;
   await page.goto("/habitos");
 
   await page.getByRole("button", { name: "Crear hábito", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Crear hábito" });
-  await dialog.getByLabel("Nombre").fill("Hidratarse E2E");
+  await dialog.getByLabel("Nombre").fill(habitName);
   await dialog.getByLabel("Descripción").fill("Un vaso al despertar");
   await dialog.getByRole("button", { name: "Crear hábito" }).click();
-  await expect(page.getByText("Hidratarse E2E", { exact: true })).toBeVisible();
+  await expect(page.getByText(habitName, { exact: true })).toBeVisible();
 
   await page.goto("/hoy");
-  const checkbox = page.getByRole("checkbox", { name: /Hidratarse E2E/ });
-  await checkbox.check();
+  const checkbox = page.getByRole("checkbox", { name: habitName });
+  await checkbox.click();
   await expect(checkbox).toBeChecked();
   await page.reload();
-  await expect(page.getByRole("checkbox", { name: /Hidratarse E2E/ })).toBeChecked();
-  await page.getByRole("checkbox", { name: /Hidratarse E2E/ }).uncheck();
-  await expect(
-    page.getByRole("checkbox", { name: /Hidratarse E2E/ }),
-  ).not.toBeChecked();
+  await expect(page.getByRole("checkbox", { name: habitName })).toBeChecked();
+  await page.getByRole("checkbox", { name: habitName }).click();
+  await expect(page.getByRole("checkbox", { name: habitName })).not.toBeChecked();
 
   await page.goto("/habitos");
-  await page.getByRole("button", { name: "Archivar Hidratarse E2E" }).click();
+  await page.getByRole("button", { name: `Archivar ${habitName}` }).click();
   await expect(
-    page.getByRole("button", { name: "Restaurar Hidratarse E2E" }),
+    page.getByRole("button", { name: `Restaurar ${habitName}` }),
   ).toBeVisible();
 
   await page.goto("/estadisticas");

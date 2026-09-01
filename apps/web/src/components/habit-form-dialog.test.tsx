@@ -9,7 +9,7 @@ const actionMocks = vi.hoisted(() => ({
   updateHabit: vi.fn(),
 }));
 
-vi.mock("@/lib/habit-store", () => ({ habitActions: actionMocks }));
+vi.mock("@/lib/habit-store", () => ({ useHabitActions: () => actionMocks }));
 
 function renderForm() {
   const onClose = vi.fn();
@@ -26,7 +26,11 @@ function submitForm() {
 }
 
 describe("HabitFormDialog", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    actionMocks.createHabit.mockResolvedValue(true);
+    actionMocks.updateHabit.mockResolvedValue(true);
+  });
 
   it("creates a valid habit and reports success", async () => {
     const user = userEvent.setup();

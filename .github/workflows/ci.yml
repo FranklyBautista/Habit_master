@@ -31,6 +31,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Start local Supabase
+        run: |
+          pnpm supabase:start
+          eval "$(pnpm exec supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+
+      - name: Rebuild and verify database
+        run: |
+          pnpm db:reset
+          pnpm db:test
+          pnpm db:lint
+          pnpm db:advisors
+
       - name: Check formatting
         run: pnpm format:check
 

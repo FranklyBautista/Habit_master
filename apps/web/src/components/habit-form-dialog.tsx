@@ -13,7 +13,7 @@ import { habitIconComponents } from "@/components/habit-icons";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
-import { habitActions } from "@/lib/habit-store";
+import { useHabitActions } from "@/lib/habit-store";
 
 type HabitFormDialogProps = {
   open: boolean;
@@ -29,11 +29,12 @@ export function HabitFormDialog({
   onSaved,
 }: HabitFormDialogProps) {
   const fieldId = useId();
+  const actions = useHabitActions();
   const [error, setError] = useState<string | null>(null);
   const nameId = `${fieldId}-name`;
   const descriptionId = `${fieldId}-description`;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const result = createHabitInputSchema.safeParse({
@@ -46,8 +47,13 @@ export function HabitFormDialog({
       setError(result.error.issues[0]?.message ?? "Revisa los datos del hábito.");
       return;
     }
-    if (habit) habitActions.updateHabit(habit.id, result.data);
-    else habitActions.createHabit(result.data);
+    const saved = habit
+      ? await actions.updateHabit(habit.id, result.data)
+      : await actions.createHabit(result.data);
+    if (!saved) {
+      setError("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.");
+      return;
+    }
     setError(null);
     onSaved(habit ? "Hábito actualizado." : "Hábito creado y añadido a Hoy.");
     onClose();
@@ -58,7 +64,7 @@ export function HabitFormDialog({
       open={open}
       onClose={onClose}
       title={habit ? "Editar hábito" : "Crear hábito"}
-      description="Los cambios se guardan en este navegador."
+      description="Los cambios se guardan en tu cuenta."
     >
       <form className="habit-form" onSubmit={submit}>
         <FormField htmlFor={nameId} label="Nombre">

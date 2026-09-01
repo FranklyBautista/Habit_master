@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { login } from "./helpers/auth";
+
 type RouteMetrics = {
   domContentLoadedMs: number;
   firstContentfulPaintMs: number;
@@ -32,6 +34,7 @@ for (const route of ["/hoy", "/estadisticas"]) {
   test(`${route} stays inside the prototype performance budget`, async ({
     page,
   }, testInfo) => {
+    await login(page);
     const metrics = await measureRoute(page, route);
     await testInfo.attach(`performance-${route.slice(1)}`, {
       body: JSON.stringify(metrics, null, 2),

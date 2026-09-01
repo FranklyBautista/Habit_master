@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@11.24.0",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev": "pnpm --filter @habit-tracker/web dev",
@@ -14,11 +14,19 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:e2e": "pnpm build && pnpm --filter @habit-tracker/web test:e2e",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "db:reset": "supabase db reset --local",
+    "db:test": "supabase test db --local",
+    "db:lint": "supabase db lint --local --schema public --level warning --fail-on error",
+    "db:advisors": "supabase db advisors --local --type all --level info --fail-on error",
+    "db:types": "supabase gen types --local --schema public > packages/database/src/database.types.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "prettier": "3.9.6",
+    "supabase": "2.116.0",
     "vitest": "4.1.11"
   }
 }

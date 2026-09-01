@@ -1,5 +1,6 @@
 "use client";
 
+import type { HabitTrackerState } from "@habit-tracker/domain";
 import {
   BarChart3,
   CalendarDays,
@@ -16,7 +17,12 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useHabitStore } from "@/lib/habit-store";
+import {
+  HabitStoreProvider,
+  useHabitActions,
+  useHabitStore,
+  useLocalDataMigration,
+} from "@/lib/habit-store";
 
 const navigation: Array<{
   href: string;
@@ -31,9 +37,31 @@ const navigation: Array<{
   { href: "/ajustes", label: "Ajustes", Icon: Settings },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+type AppShellProps = {
+  children: ReactNode;
+  initialState: HabitTrackerState;
+  userEmail: string;
+  userId: string;
+};
+
+export function AppShell({ children, initialState, userEmail, userId }: AppShellProps) {
+  return (
+    <HabitStoreProvider initialState={initialState} userId={userId}>
+      <AppShellContent userEmail={userEmail}>{children}</AppShellContent>
+    </HabitStoreProvider>
+  );
+}
+
+function AppShellContent({
+  children,
+  userEmail,
+}: {
+  children: ReactNode;
+  userEmail: string;
+}) {
   const pathname = usePathname();
   const snapshot = useHabitStore();
+  const actions = useHabitActions();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -80,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           <span>
             <strong>{snapshot.settings.displayName}</strong>
-            <small>Datos locales</small>
+            <small>{userEmail}</small>
           </span>
           <MoreHorizontal size={18} aria-hidden="true" />
         </div>
@@ -110,6 +138,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </div>
         <main id="contenido" className="main-content" tabIndex={-1}>
+          {snapshot.error ? (
+            <div className="sync-error" role="alert">
+              <span>{snapshot.error}</span>
+              <Button variant="secondary" onClick={() => void actions.refresh()}>
+                Reintentar
+              </Button>
+            </div>
+          ) : null}
+          <LocalDataMigration />
           {children}
         </main>
       </div>
@@ -127,5 +164,45 @@ export function AppShell({ children }: { children: ReactNode }) {
         ))}
       </nav>
     </div>
+  );
+}
+
+function LocalDataMigration() {
+  const { actions, localDataAvailable } = useLocalDataMigration();
+  const [message, setMessage] = useState<string | null>(null);
+
+  if (!localDataAvailable)
+    return message ? <p className="migration-message">{message}</p> : null;
+
+  async function migrate() {
+    const imported = await actions.importLocalData();
+    if (imported) setMessage("Tus datos locales se importaron a la cuenta.");
+  }
+
+  function discard() {
+    if (
+      !window.confirm("¿Descartar definitivamente los datos locales de este navegador?")
+    ) {
+      return;
+    }
+    actions.discardLocalData();
+    setMessage(
+      "Los datos locales se descartaron. Tus datos sincronizados no cambiaron.",
+    );
+  }
+
+  return (
+    <section className="migration-banner" aria-labelledby="migration-title">
+      <div>
+        <strong id="migration-title">Encontramos datos locales</strong>
+        <p>Impórtalos a esta cuenta o descártalos de este navegador.</p>
+      </div>
+      <div>
+        <Button onClick={() => void migrate()}>Importar</Button>
+        <Button variant="danger" onClick={discard}>
+          Descartar
+        </Button>
+      </div>
+    </section>
   );
 }

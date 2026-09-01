@@ -7,10 +7,11 @@ import { type CSSProperties } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getTodaySnapshot, habitActions, useHabitStore } from "@/lib/habit-store";
+import { getTodaySnapshot, useHabitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function TodayPage() {
   const snapshot = useHabitStore();
+  const actions = useHabitActions();
   const { activeHabits, completedIds } = getTodaySnapshot(snapshot);
   const completed = activeHabits.filter((habit) => completedIds.has(habit.id)).length;
   const percentage = activeHabits.length
@@ -66,7 +67,7 @@ export default function TodayPage() {
                   description={habit.description}
                   color={habit.color}
                   checked={completedIds.has(habit.id)}
-                  onChange={() => habitActions.toggleToday(habit.id)}
+                  onChange={() => void actions.toggleToday(habit.id)}
                 />
               ))}
             </div>
@@ -78,8 +79,8 @@ export default function TodayPage() {
             <div>
               <strong>Vas construyendo constancia</strong>
               <p>
-                Los cambios se guardan al instante en este navegador y seguirán aquí
-                cuando vuelvas.
+                Los cambios confirmados por el servidor estarán disponibles en tus otros
+                navegadores.
               </p>
             </div>
           </Card>

@@ -318,31 +318,31 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 ### Fase 6 — Supabase, autenticación y sincronización (6–10 jornadas)
 
-- [ ] Revisar el changelog y la documentación vigente de Supabase antes de instalar o configurar paquetes.
-- [ ] Crear proyectos/entornos separados para desarrollo y producción.
-- [ ] Instalar y fijar versiones de Supabase CLI, `supabase-js` y `@supabase/ssr`.
-- [ ] Inicializar migraciones y datos seed reproducibles.
-- [ ] Implementar las tablas, restricciones e índices de la sección 5.
-- [ ] Generar los tipos TypeScript desde la base de datos.
-- [ ] Implementar registro, login, logout y recuperación de contraseña.
-- [ ] Crear clientes Supabase separados para navegador y servidor en Next.js.
-- [ ] Implementar renovación segura de sesión con el mecanismo vigente de Next.js/Supabase.
-- [ ] Proteger páginas verificando la identidad; no confiar en datos de sesión sin validar para autorización.
-- [ ] Habilitar RLS en cada tabla expuesta.
-- [ ] Crear y probar políticas de propiedad para todas las operaciones.
-- [ ] Verificar permisos de Data API además de RLS.
-- [ ] Sustituir el adaptador local por el repositorio Supabase.
-- [ ] Implementar operaciones idempotentes para marcar/desmarcar.
-- [ ] Refrescar datos al volver a enfocar la app y después de una mutación.
-- [ ] Definir estrategia de conflicto inicial: servidor como fuente de verdad y `updated_at` para detectar cambios.
-- [ ] Ofrecer una migración explícita de los datos locales a la primera cuenta, o descartarlos con confirmación.
-- [ ] Probar aislamiento con dos usuarios distintos intentando acceder a los datos del otro.
-- [ ] Ejecutar asesores de seguridad/rendimiento y corregir hallazgos relevantes.
-- [ ] Verificar las migraciones desde una base limpia.
+- [x] Revisar el changelog y la documentación vigente de Supabase antes de instalar o configurar paquetes.
+- [x] Crear el proyecto remoto de producción (`habit_master`). **Cambio de alcance (2026-09-01):** se descarta crear un segundo proyecto remoto de desarrollo. Para un proyecto personal, el plan gratuito y la fricción de administrar una segunda organización no lo justifican: Supabase local (Docker) cubre el desarrollo diario y CI levanta su propio Supabase local desechable en cada push, así que ningún flujo automatizado toca `habit_master`. Se reevaluará si el proyecto suma colaboradores, necesita que los Preview de Vercel golpeen datos remotos reales, o pasa a un plan de pago. Detalle en `docs/setup/SUPABASE.md`.
+- [x] Instalar y fijar versiones de Supabase CLI, `supabase-js` y `@supabase/ssr`.
+- [x] Inicializar migraciones y datos seed reproducibles.
+- [x] Implementar las tablas, restricciones e índices de la sección 5.
+- [x] Generar los tipos TypeScript desde la base de datos.
+- [x] Implementar registro, login, logout y recuperación de contraseña.
+- [x] Crear clientes Supabase separados para navegador y servidor en Next.js.
+- [x] Implementar renovación segura de sesión con el mecanismo vigente de Next.js/Supabase.
+- [x] Proteger páginas verificando la identidad; no confiar en datos de sesión sin validar para autorización.
+- [x] Habilitar RLS en cada tabla expuesta.
+- [x] Crear y probar políticas de propiedad para todas las operaciones.
+- [x] Verificar permisos de Data API además de RLS.
+- [x] Sustituir el adaptador local por el repositorio Supabase.
+- [x] Implementar operaciones idempotentes para marcar/desmarcar.
+- [x] Refrescar datos al volver a enfocar la app y después de una mutación.
+- [x] Definir estrategia de conflicto inicial: servidor como fuente de verdad y `updated_at` para detectar cambios.
+- [x] Ofrecer una migración explícita de los datos locales a la primera cuenta, o descartarlos con confirmación.
+- [x] Probar aislamiento con dos usuarios distintos intentando acceder a los datos del otro.
+- [x] Ejecutar asesores de seguridad/rendimiento y corregir hallazgos relevantes.
+- [x] Verificar las migraciones desde una base limpia.
 
 **Criterio de salida**
 
-- [ ] Dos navegadores con la misma cuenta ven datos consistentes, y dos cuentas diferentes permanecen completamente aisladas.
+- [x] Dos navegadores con la misma cuenta ven datos consistentes, y dos cuentas diferentes permanecen completamente aisladas.
 
 
 
