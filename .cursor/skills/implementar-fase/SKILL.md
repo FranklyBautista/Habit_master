@@ -125,3 +125,18 @@ Usa esta estructura y omite **Acciones manuales para el usuario** si no aplica:
 
 [Próxima tarea pendiente de la misma fase o indicación de que la fase terminó]
 ```
+
+## Reglas importantes
+
+- `PLANIFICACION_HABIT_TRACKER.md` es la fuente de verdad del alcance; el
+  código y las pruebas son la fuente de verdad del estado real.
+- Una casilla marcada representa trabajo terminado y verificado, nunca una
+  intención.
+- Nunca asumas que una tarea está terminada solo porque existe un archivo con
+  un nombre relacionado: compruébala en ejecución antes de marcarla.
+- Nunca empieces la fase siguiente sin una nueva invocación explícita.
+- Si el plan y el proyecto se contradicen, detén esa parte, expón la
+  evidencia y pide dirección; no cambies el alcance en silencio.
+- Distingue los fallos preexistentes de las regresiones introducidas durante
+  la sesión.
+- Mantén este `SKILL.md` conciso y por debajo de 500 líneas.

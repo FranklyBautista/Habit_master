@@ -348,17 +348,17 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 
 ### Fase 7 — PWA, Vercel y MVP web (3–5 jornadas)
 
-- [ ] Crear manifest, iconos, nombre, color de tema y pantalla de instalación.
-- [ ] Añadir service worker con una estrategia de caché segura y mantenida.
-- [ ] No almacenar en caché respuestas autenticadas que puedan mezclar sesiones entre usuarios.
-- [ ] Definir una experiencia offline de solo lectura o un mensaje claro; no prometer sincronización offline todavía.
+- [x] Crear manifest, iconos, nombre, color de tema y pantalla de instalación.
+- [x] Añadir service worker con una estrategia de caché segura y mantenida.
+- [x] No almacenar en caché respuestas autenticadas que puedan mezclar sesiones entre usuarios.
+- [x] Definir una experiencia offline de solo lectura o un mensaje claro; no prometer sincronización offline todavía.
 - [ ] Verificar instalación en Android/iOS y escritorio cuando el navegador lo permita.
 - [ ] Conectar el repositorio a Vercel con entornos Preview y Production.
 - [ ] Configurar variables de entorno sin exponer secretos.
 - [ ] Configurar URLs de redirección de Supabase para local, previews y producción.
-- [ ] Ejecutar build de producción, pruebas E2E y auditoría Lighthouse.
+- [x] Ejecutar build de producción, pruebas E2E y auditoría Lighthouse.
 - [ ] Probar el flujo completo en Chrome, Edge, Firefox y Safari.
-- [ ] Crear una lista breve de verificación para despliegues y rollback.
+- [x] Crear una lista breve de verificación para despliegues y rollback.
 
 **Criterio de salida — MVP v1**
 

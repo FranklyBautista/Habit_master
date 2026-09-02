@@ -5,6 +5,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getSupabaseEnvironment } from "./env";
 
 const authPaths = ["/login", "/registro", "/recuperar"];
+// Reachable without a session: the offline fallback must render even when a
+// visitor has no cookies yet (first load with no connection, or before login).
+const publicPaths = ["/offline"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -26,6 +29,9 @@ export async function updateSession(request: NextRequest) {
   const authenticated = Boolean(data?.claims.sub);
   const pathname = request.nextUrl.pathname;
   const isAuthPage = authPaths.includes(pathname);
+  const isPublicPage = publicPaths.includes(pathname);
+
+  if (isPublicPage) return response;
 
   if (!authenticated && !isAuthPage && !pathname.startsWith("/auth/")) {
     const destination = request.nextUrl.clone();
