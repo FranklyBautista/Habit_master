@@ -43,6 +43,23 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (authenticated && isAuthPage) {
+    // `getClaims()` only verifies the JWT signature; it can still be true
+    // for a session the auth server no longer honors (revoked, user
+    // deleted, signed out elsewhere). Confirm with `getUser()` before
+    // bouncing away from the login page — otherwise a stale-but-valid-
+    // looking cookie sends the visitor to /hoy, the dashboard layout's own
+    // getUser() check rejects it and redirects back to /login, and this
+    // branch sends them to /hoy again: an infinite redirect loop the
+    // visitor cannot break out of on their own. If the session turns out
+    // to be invalid, sign out to clear the stale cookie instead of looping.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      await supabase.auth.signOut();
+      return response;
+    }
+
     const destination = request.nextUrl.clone();
     destination.pathname = "/hoy";
     destination.search = "";

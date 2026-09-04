@@ -12,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
 type CheckinRow = Database["public"]["Tables"]["habit_checkins"]["Row"];
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 function mapHabit(row: HabitRow): Habit {
   return {
@@ -45,8 +46,13 @@ export class SupabaseHabitRepository {
   ) {}
 
   async getState(): Promise<HabitTrackerState> {
+    // `maybeSingle()`, not `single()`: a signed-in user with no `profiles`
+    // row (the row-creation trigger only fires on `auth.users` insert, so
+    // any account that predates the trigger — or a future edge case where
+    // it fails to fire — has none) must not crash the whole dashboard.
+    // `ensureProfile()` below creates the missing row on the fly instead.
     const [profileResult, habitsResult, checkinsResult] = await Promise.all([
-      this.client.from("profiles").select("*").eq("id", this.userId).single(),
+      this.client.from("profiles").select("*").eq("id", this.userId).maybeSingle(),
       this.client.from("habits").select("*").order("position"),
       this.client.from("habit_checkins").select("*").order("checkin_date"),
     ]);
@@ -55,17 +61,29 @@ export class SupabaseHabitRepository {
     if (habitsResult.error) throw habitsResult.error;
     if (checkinsResult.error) throw checkinsResult.error;
 
+    const profile = profileResult.data ?? (await this.ensureProfile());
+
     return habitTrackerStateSchema.parse({
       version: 1,
       habits: habitsResult.data.map(mapHabit),
       checkins: checkinsResult.data.map(mapCheckin),
       settings: {
-        displayName: profileResult.data.display_name ?? "Tú",
-        timezone: profileResult.data.timezone,
+        displayName: profile.display_name ?? "Tú",
+        timezone: profile.timezone,
         locale: "es",
         weekStartsOn: 1,
       },
     });
+  }
+
+  private async ensureProfile(): Promise<ProfileRow> {
+    const { data, error } = await this.client
+      .from("profiles")
+      .upsert({ id: this.userId }, { onConflict: "id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return data;
   }
 
   async createHabit(input: CreateHabitInput, startDate: string): Promise<void> {
