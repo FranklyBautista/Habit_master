@@ -353,8 +353,8 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 - [x] No almacenar en caché respuestas autenticadas que puedan mezclar sesiones entre usuarios.
 - [x] Definir una experiencia offline de solo lectura o un mensaje claro; no prometer sincronización offline todavía.
 - [ ] Verificar instalación en Android/iOS y escritorio cuando el navegador lo permita.
-- [ ] Conectar el repositorio a Vercel con entornos Preview y Production.
-- [ ] Configurar variables de entorno sin exponer secretos.
+- [x] Conectar el repositorio a Vercel con entornos Preview y Production.
+- [x] Configurar variables de entorno sin exponer secretos.
 - [ ] Configurar URLs de redirección de Supabase para local, previews y producción.
 - [x] Ejecutar build de producción, pruebas E2E y auditoría Lighthouse.
 - [ ] Probar el flujo completo en Chrome, Edge, Firefox y Safari.
