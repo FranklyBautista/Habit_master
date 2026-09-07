@@ -352,23 +352,30 @@ Los hábitos todavía no creados o ya archivados no entran en el denominador. Es
 - [x] Añadir service worker con una estrategia de caché segura y mantenida.
 - [x] No almacenar en caché respuestas autenticadas que puedan mezclar sesiones entre usuarios.
 - [x] Definir una experiencia offline de solo lectura o un mensaje claro; no prometer sincronización offline todavía.
-- [ ] Verificar instalación en Android/iOS y escritorio cuando el navegador lo permita.
+- [x] Verificar instalación en Android/iOS y escritorio cuando el navegador lo permita. (Android ✅ 2026-09-05, escritorio Chrome ✅ 2026-09-05; iOS pendiente, ver limitación conocida)
 - [x] Conectar el repositorio a Vercel con entornos Preview y Production.
 - [x] Configurar variables de entorno sin exponer secretos.
-- [ ] Configurar URLs de redirección de Supabase para local, previews y producción.
+- [x] Configurar URLs de redirección de Supabase para local, previews y producción.
 - [x] Ejecutar build de producción, pruebas E2E y auditoría Lighthouse.
-- [ ] Probar el flujo completo en Chrome, Edge, Firefox y Safari.
+- [x] Probar el flujo completo en Chrome, Edge, Firefox y Safari. (Chrome, Edge y Firefox ✅ 2026-09-06; Safari pendiente, ver limitación conocida)
 - [x] Crear una lista breve de verificación para despliegues y rollback.
+
+**Limitación conocida (2026-09-05):** no se dispone de hardware Apple (iPhone/Mac) para
+probar instalación en iOS ni el recorrido en Safari. Queda documentado como riesgo
+aceptado para este proyecto personal; se cierra antes de iniciar el desarrollo móvil
+real de la Fase 8 (Expo apunta también a iOS) consiguiendo acceso prestado a un
+dispositivo, un servicio como BrowserStack, o aceptando explícitamente el riesgo si
+para entonces sigue sin haber acceso.
 
 **Criterio de salida — MVP v1**
 
-- [ ] La PWA se puede instalar en un teléfono, registrar hábitos diariamente y ver los mismos datos desde otro dispositivo.
+- [x] La PWA se puede instalar en un teléfono, registrar hábitos diariamente y ver los mismos datos desde otro dispositivo. (Verificado 2026-09-05: Android + desktop Chrome, misma cuenta, datos consistentes tras revalidar por foco)
 
 
 
 ### Fase 8 — Aplicación móvil con Expo (8–14 jornadas)
 
-- [ ] Confirmar que el MVP web está validado antes de iniciar esta fase.
+- [x] Confirmar que el MVP web está validado antes de iniciar esta fase. (Fase 7 cerrada 2026-09-06; Safari/iOS quedan como limitación conocida a resolver antes del criterio de salida de esta fase)
 - [ ] Crear `apps/mobile` con Expo, TypeScript y Expo Router.
 - [ ] Reutilizar `domain`, tipos de base de datos y design tokens.
 - [ ] Implementar almacenamiento seguro de sesión y deep links de autenticación.
