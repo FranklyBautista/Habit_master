@@ -253,7 +253,7 @@ otp_expiry = 3600
 # correo de verdad (ver docs/setup/SUPABASE.md). `user`/`pass` sí se resuelven
 # desde el `.env` de la raíz del repo (nunca se commitea; ver `.env.example`).
 [auth.email.smtp]
-enabled = false
+enabled = true
 host = "smtp.gmail.com"
 port = 587
 user = "env(GMAIL_SMTP_USER)"
