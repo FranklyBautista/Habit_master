@@ -15,12 +15,14 @@ import { HabitFormModal } from "@/components/habit-form-modal";
 import { habitIconComponents } from "@/components/habit-icons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function HabitsScreen() {
   const snapshot = useHabitStore();
   const actions = useHabitActions();
+  const theme = useTheme();
   const [formOpen, setFormOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export default function HabitsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Crear hábito"
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: theme.tint }]}
             onPress={openCreate}
           >
             <Plus size={18} color="white" />
@@ -77,7 +79,16 @@ export default function HabitsScreen() {
             activeHabits.map((habit, index) => {
               const Icon = habitIconComponents[habit.icon];
               return (
-                <View key={habit.id} style={styles.row}>
+                <View
+                  key={habit.id}
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
                   <View style={styles.orderActions}>
                     <Pressable
                       accessibilityRole="button"
@@ -148,7 +159,16 @@ export default function HabitsScreen() {
             archivedHabits.map((habit) => {
               const Icon = habitIconComponents[habit.icon];
               return (
-                <View key={habit.id} style={styles.row}>
+                <View
+                  key={habit.id}
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
                   <View style={styles.habitIcon}>
                     <Icon size={19} color={habit.color} opacity={0.6} />
                   </View>
@@ -191,29 +211,35 @@ export default function HabitsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  safeArea: { flex: 1, gap: Spacing.two, padding: Spacing.four },
+  safeArea: {
+    flex: 1,
+    gap: Spacing.two,
+    padding: Spacing.four,
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   createButton: {
-    backgroundColor: "#047857",
     borderRadius: 20,
     width: 40,
     height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  scrollContent: { gap: Spacing.two, paddingBottom: Spacing.four },
+  scrollContent: { gap: Spacing.two, paddingBottom: Spacing.six },
   sectionSpacing: { marginTop: Spacing.four },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    padding: Spacing.two,
-    borderRadius: Spacing.two,
-    backgroundColor: "#F0F0F3",
+    padding: Spacing.three,
+    borderRadius: Spacing.three,
+    borderWidth: 1,
   },
   orderActions: { gap: 2 },
   iconButton: { padding: Spacing.one },

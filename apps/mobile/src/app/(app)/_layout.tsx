@@ -1,6 +1,12 @@
 import type { HabitTrackerState } from "@habit-tracker/domain";
 import { Tabs } from "expo-router";
-import { ListChecks, Sparkles } from "lucide-react-native";
+import {
+  BarChart3,
+  CalendarDays,
+  ListChecks,
+  Settings,
+  Sparkles,
+} from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
@@ -77,6 +83,27 @@ export default function AppLayout() {
           options={{
             title: "Hábitos",
             tabBarIcon: ({ color, size }) => <ListChecks color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="calendario"
+          options={{
+            title: "Calendario",
+            tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="estadisticas"
+          options={{
+            title: "Estadísticas",
+            tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="ajustes"
+          options={{
+            title: "Ajustes",
+            tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
           }}
         />
       </Tabs>

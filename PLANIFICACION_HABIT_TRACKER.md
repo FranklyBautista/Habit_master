@@ -376,13 +376,13 @@ para entonces sigue sin haber acceso.
 ### Fase 8 — Aplicación móvil con Expo (8–14 jornadas)
 
 - [x] Confirmar que el MVP web está validado antes de iniciar esta fase. (Fase 7 cerrada 2026-09-06; Safari/iOS quedan como limitación conocida a resolver antes del criterio de salida de esta fase)
-- [ ] Crear `apps/mobile` con Expo, TypeScript y Expo Router.
-- [ ] Reutilizar `domain`, tipos de base de datos y design tokens.
-- [ ] Implementar almacenamiento seguro de sesión y deep links de autenticación.
-- [ ] Implementar las pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes.
+- [x] Crear `apps/mobile` con Expo, TypeScript y Expo Router.
+- [ ] Reutilizar `domain`, tipos de base de datos y design tokens. (`@habit-tracker/domain` y los tipos de `@habit-tracker/database` se reutilizan en todas las pantallas; **no** existe `packages/design-tokens` — móvil usa `src/constants/theme.ts` + `components/card.tsx` propios. Pendiente decidir si se extrae un paquete compartido o se ajusta el alcance.)
+- [ ] Implementar almacenamiento seguro de sesión y deep links de autenticación. (Sesión segura verificada; deep link de recuperación por email en móvil aún sin probar de extremo a extremo.)
+- [x] Implementar las pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes. (2026-09-08; verificadas visualmente con datos sembrados en claro/oscuro y ancho móvil/escritorio.)
 - [ ] Adaptar componentes a controles nativos y accesibles.
-- [ ] Conectar la app directamente a Supabase bajo las mismas políticas RLS.
-- [ ] Implementar actualización al enfocar y estados de conectividad.
+- [x] Conectar la app directamente a Supabase bajo las mismas políticas RLS. (`SupabaseHabitRepository` móvil; aislamiento por usuario verificado con dos cuentas distintas.)
+- [ ] Implementar actualización al enfocar y estados de conectividad. (Revalidación por `AppState`/`NetInfo` implementada; falta UI explícita de estado de conexión.)
 - [ ] Añadir respuesta optimista e idempotencia al marcar hábitos.
 - [ ] Añadir recordatorios locales configurables después de estabilizar el tracking.
 - [ ] Probar en al menos un dispositivo Android y uno iOS, reales o mediante acceso verificable.
