@@ -85,11 +85,18 @@ export class SupabaseHabitRepository {
   }
 
   async createHabit(input: CreateHabitInput, startDate: string): Promise<void> {
-    const { count, error: countError } = await this.client
+    // Derived from the highest active position, not a count: archiving a
+    // middle habit shrinks the count without shifting the remaining
+    // positions down, so a count-based next position collides with an
+    // existing one. Same pattern setArchived's restore path already uses.
+    const { data: lastActive, error: lastActiveError } = await this.client
       .from("habits")
-      .select("id", { count: "exact", head: true })
-      .is("archived_at", null);
-    if (countError) throw countError;
+      .select("position")
+      .is("archived_at", null)
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lastActiveError) throw lastActiveError;
     const { error } = await this.client.from("habits").insert({
       user_id: this.userId,
       name: input.name,
@@ -97,7 +104,7 @@ export class SupabaseHabitRepository {
       color: input.color,
       icon: input.icon,
       start_date: startDate,
-      position: count ?? 0,
+      position: lastActive ? lastActive.position + 1 : 0,
     });
     if (error) throw error;
   }

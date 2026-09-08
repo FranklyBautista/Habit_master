@@ -72,6 +72,15 @@ export function HabitStoreProvider({
   });
   const snapshotRef = useRef(snapshot);
   const pendingCheckins = useRef(new Set<string>());
+  // refresh() (triggered independently by AppState/NetInfo) and mutate()
+  // both call repository.getState() and commit whatever comes back. Without
+  // this, two overlapping calls can resolve out of order — a refresh
+  // started before a mutation's own post-write getState() can resolve
+  // after it and silently overwrite the fresher, post-mutation snapshot.
+  // Guarding each commit against the latest issued request id makes only
+  // the most recently *started* call allowed to write the snapshot (and
+  // its syncing/error state); anything superseded is discarded quietly.
+  const requestIdRef = useRef(0);
   const repository = useMemo(
     () => new SupabaseHabitRepository(supabase, userId),
     [userId],
@@ -82,12 +91,15 @@ export function HabitStoreProvider({
   }, [snapshot]);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setSnapshot((current) => ({ ...current, syncing: true, error: null }));
     try {
       const state = await repository.getState();
+      if (requestIdRef.current !== requestId) return true;
       setSnapshot({ ...state, hydrated: true, syncing: false, error: null });
       return true;
     } catch (reason) {
+      if (requestIdRef.current !== requestId) return false;
       setSnapshot((current) => ({
         ...current,
         syncing: false,
@@ -99,13 +111,19 @@ export function HabitStoreProvider({
 
   const mutate = useCallback(
     async (operation: () => Promise<void>) => {
+      const requestId = ++requestIdRef.current;
       setSnapshot((current) => ({ ...current, syncing: true, error: null }));
       try {
         await operation();
         const state = await repository.getState();
+        // A newer request already committed a fresher snapshot (which, since
+        // the server is the source of truth, already reflects this write) —
+        // the mutation itself still succeeded, just don't clobber it.
+        if (requestIdRef.current !== requestId) return true;
         setSnapshot({ ...state, hydrated: true, syncing: false, error: null });
         return true;
       } catch (reason) {
+        if (requestIdRef.current !== requestId) return false;
         setSnapshot((current) => ({
           ...current,
           syncing: false,
