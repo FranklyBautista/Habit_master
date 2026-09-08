@@ -14,15 +14,15 @@ UI copy, routes, and locale are Spanish (`es`). Route folders are lowercase Span
 
 Run from the repo root. Requires Node 22+ (CI and README use 24) and pnpm 11.24.0 via Corepack; Docker must be running for Supabase.
 
-| Task | Command |
-| --- | --- |
-| Dev server (`localhost:3000`) | `pnpm dev` |
-| Production build | `pnpm build` |
-| Lint / autofix | `pnpm lint` / `pnpm lint:fix` |
-| Typecheck (all packages) | `pnpm typecheck` |
-| Unit/component tests (all packages) | `pnpm test` |
-| E2E (builds first) | `pnpm test:e2e` |
-| Format / check | `pnpm format` / `pnpm format:check` |
+| Task                                | Command                             |
+| ----------------------------------- | ----------------------------------- |
+| Dev server (`localhost:3000`)       | `pnpm dev`                          |
+| Production build                    | `pnpm build`                        |
+| Lint / autofix                      | `pnpm lint` / `pnpm lint:fix`       |
+| Typecheck (all packages)            | `pnpm typecheck`                    |
+| Unit/component tests (all packages) | `pnpm test`                         |
+| E2E (builds first)                  | `pnpm test:e2e`                     |
+| Format / check                      | `pnpm format` / `pnpm format:check` |
 
 Prettier and ESLint (with `simple-import-sort`) are enforced in CI — run `pnpm format` before committing.
 
@@ -93,6 +93,7 @@ Consume state via `useHabitStore()` (snapshot) / `useHabitActions()` (mutations)
 ### Database
 
 Single migration `supabase/migrations/20260831192001_*.sql` defines the whole schema: `profiles`, `habits`, `habit_checkins`. Key properties:
+
 - RLS on every table, owner-only (`(select auth.uid()) = user_id`), explicit `GRANT`s to `authenticated` only (`auto_expose_new_tables = false`).
 - `habit_checkins` references `habits (id, user_id)` (composite FK) and is unique on `(habit_id, checkin_date)`.
 - `updated_at` maintained by triggers; helper functions live in a locked-down `private` schema.

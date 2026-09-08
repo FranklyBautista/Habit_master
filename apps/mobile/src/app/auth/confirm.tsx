@@ -11,7 +11,9 @@ import { supabase } from "@/lib/supabase/client";
 // pattern as src/lib/auth/auth-gate.tsx's `segments` cast.
 function safeNext(value: string | string[] | undefined): Href {
   const next = Array.isArray(value) ? value[0] : value;
-  return (next && next.startsWith("/") && !next.startsWith("//") ? next : "/(app)") as Href;
+  return (
+    next && next.startsWith("/") && !next.startsWith("//") ? next : "/(app)"
+  ) as Href;
 }
 
 export default function ConfirmScreen() {
