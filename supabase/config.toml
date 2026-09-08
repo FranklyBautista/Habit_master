@@ -164,6 +164,11 @@ additional_redirect_urls = [
   "http://localhost:3000/**",
   "http://127.0.0.1:3100/**",
   "http://localhost:3100/**",
+  # apps/mobile (Fase 8): esquema personalizado para builds standalone/dev-client...
+  "habittracker://**",
+  # ...y el esquema exp:// que usa Expo Go en desarrollo (ver
+  # src/lib/auth/redirect.ts, Linking.createURL).
+  "exp://**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -237,15 +242,24 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# SMTP real para desarrollo local (opcional, 2026-09-06): con `enabled = false`
+# (el valor comiteado), Supabase local sigue capturando el correo en Mailpit
+# (http://127.0.0.1:54324) — esto es lo que necesitan CI y cualquier otra
+# máquina sin credenciales propias; el e2e de recuperación de contraseña
+# depende de este comportamiento. `enabled` es booleano y Supabase CLI no
+# soporta `env(...)` en campos booleanos (falla al arrancar si se intenta,
+# verificado), así que activarlo es un cambio *local, sin commitear*: pon
+# `enabled = true` solo en tu copia de trabajo cuando quieras recibir el
+# correo de verdad (ver docs/setup/SUPABASE.md). `user`/`pass` sí se resuelven
+# desde el `.env` de la raíz del repo (nunca se commitea; ver `.env.example`).
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "env(GMAIL_SMTP_USER)"
+pass = "env(GMAIL_SMTP_APP_PASSWORD)"
+admin_email = "env(GMAIL_SMTP_USER)"
+sender_name = "Constancia (local)"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

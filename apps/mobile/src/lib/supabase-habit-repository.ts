@@ -10,6 +10,9 @@ import {
 } from "@habit-tracker/domain";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+// Mirrors apps/web/src/lib/supabase-habit-repository.ts (already verified in
+// Fase 6). Mobile has no local-data prototype to migrate from, so
+// `importState` is intentionally omitted here.
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
 type CheckinRow = Database["public"]["Tables"]["habit_checkins"]["Row"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -46,11 +49,6 @@ export class SupabaseHabitRepository {
   ) {}
 
   async getState(): Promise<HabitTrackerState> {
-    // `maybeSingle()`, not `single()`: a signed-in user with no `profiles`
-    // row (the row-creation trigger only fires on `auth.users` insert, so
-    // any account that predates the trigger — or a future edge case where
-    // it fails to fire — has none) must not crash the whole dashboard.
-    // `ensureProfile()` below creates the missing row on the fly instead.
     const [profileResult, habitsResult, checkinsResult] = await Promise.all([
       this.client.from("profiles").select("*").eq("id", this.userId).maybeSingle(),
       this.client.from("habits").select("*").order("position"),
@@ -178,52 +176,5 @@ export class SupabaseHabitRepository {
       })
       .eq("id", this.userId);
     if (error) throw error;
-  }
-
-  async importState(state: HabitTrackerState): Promise<void> {
-    const validState = habitTrackerStateSchema.parse(state);
-    const { error: profileError } = await this.client
-      .from("profiles")
-      .update({
-        display_name: validState.settings.displayName,
-        timezone: validState.settings.timezone,
-      })
-      .eq("id", this.userId);
-    if (profileError) throw profileError;
-
-    if (validState.habits.length) {
-      const { error } = await this.client.from("habits").upsert(
-        validState.habits.map((habit) => ({
-          id: habit.id,
-          user_id: this.userId,
-          name: habit.name,
-          description: habit.description,
-          color: habit.color,
-          icon: habit.icon,
-          frequency: habit.frequency,
-          start_date: habit.startDate,
-          position: habit.position,
-          archived_at: habit.archivedAt,
-          created_at: habit.createdAt,
-          updated_at: habit.updatedAt,
-        })),
-        { onConflict: "id" },
-      );
-      if (error) throw error;
-    }
-
-    if (validState.checkins.length) {
-      const { error } = await this.client.from("habit_checkins").upsert(
-        validState.checkins.map((checkin) => ({
-          id: checkin.id,
-          habit_id: checkin.habitId,
-          user_id: this.userId,
-          checkin_date: checkin.checkinDate,
-          completed_at: checkin.completedAt,
-        })),
-        { onConflict: "habit_id,checkin_date", ignoreDuplicates: true },
-      );
-      if (error) throw error;
-    }
   }
 }

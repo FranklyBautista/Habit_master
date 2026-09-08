@@ -1,17 +1,15 @@
-"use client";
-
 import {
   type CreateHabitInput,
   getLocalDateKey,
   type HabitTrackerState,
-  habitTrackerStateSchema,
   isHabitActiveOnDate,
   type UpdateHabitInput,
   type UserSettings,
 } from "@habit-tracker/domain";
+import NetInfo from "@react-native-community/netinfo";
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
@@ -19,11 +17,16 @@ import {
   useRef,
   useState,
 } from "react";
+import { AppState } from "react-native";
 
-import { habitStorageKey } from "./local-habit-repository";
-import { createClient } from "./supabase/client";
+import { supabase } from "@/lib/supabase/client";
+
 import { SupabaseHabitRepository } from "./supabase-habit-repository";
 
+// Mirrors apps/web/src/lib/habit-store.tsx. Two differences from the web
+// version: no `importLocalData`/`discardLocalData` (mobile never had a
+// local-only prototype to migrate from), and revalidation triggers off
+// `AppState`/`NetInfo` instead of `window` "focus"/"online" events.
 export type HabitSnapshot = HabitTrackerState & {
   hydrated: boolean;
   syncing: boolean;
@@ -39,14 +42,11 @@ type HabitActions = {
   restoreHabit(id: string): Promise<boolean>;
   toggleToday(habitId: string): Promise<boolean>;
   updateSettings(settings: UserSettings): Promise<boolean>;
-  importLocalData(): Promise<boolean>;
-  discardLocalData(): void;
 };
 
 type HabitStoreValue = {
   snapshot: HabitSnapshot;
   actions: HabitActions;
-  localDataAvailable: boolean;
 };
 
 const HabitStoreContext = createContext<HabitStoreValue | null>(null);
@@ -60,21 +60,19 @@ export function HabitStoreProvider({
   children,
   initialState,
   userId,
-}: {
-  children: ReactNode;
+}: PropsWithChildren<{
   initialState: HabitTrackerState;
   userId: string;
-}) {
+}>) {
   const [snapshot, setSnapshot] = useState<HabitSnapshot>({
     ...initialState,
     hydrated: true,
     syncing: false,
     error: null,
   });
-  const [localDataAvailable, setLocalDataAvailable] = useState(false);
   const snapshotRef = useRef(snapshot);
   const pendingCheckins = useRef(new Set<string>());
-  // refresh() (triggered independently by window focus/online) and mutate()
+  // refresh() (triggered independently by AppState/NetInfo) and mutate()
   // both call repository.getState() and commit whatever comes back. Without
   // this, two overlapping calls can resolve out of order — a refresh
   // started before a mutation's own post-write getState() can resolve
@@ -84,7 +82,7 @@ export function HabitStoreProvider({
   // its syncing/error state); anything superseded is discarded quietly.
   const requestIdRef = useRef(0);
   const repository = useMemo(
-    () => new SupabaseHabitRepository(createClient(), userId),
+    () => new SupabaseHabitRepository(supabase, userId),
     [userId],
   );
 
@@ -196,45 +194,25 @@ export function HabitStoreProvider({
       updateSettings(settings) {
         return mutate(() => repository.updateSettings(settings));
       },
-      async importLocalData() {
-        const stored = window.localStorage.getItem(habitStorageKey);
-        if (!stored) return false;
-        try {
-          const state = habitTrackerStateSchema.parse(JSON.parse(stored));
-          const imported = await mutate(() => repository.importState(state));
-          if (imported) {
-            window.localStorage.removeItem(habitStorageKey);
-            setLocalDataAvailable(false);
-          }
-          return imported;
-        } catch (reason) {
-          setSnapshot((current) => ({ ...current, error: errorMessage(reason) }));
-          return false;
-        }
-      },
-      discardLocalData() {
-        window.localStorage.removeItem(habitStorageKey);
-        setLocalDataAvailable(false);
-      },
     }),
     [mutate, refresh, repository],
   );
 
   useEffect(() => {
-    setLocalDataAvailable(Boolean(window.localStorage.getItem(habitStorageKey)));
     const revalidate = () => void refresh();
-    window.addEventListener("focus", revalidate);
-    window.addEventListener("online", revalidate);
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") revalidate();
+    });
+    const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected) revalidate();
+    });
     return () => {
-      window.removeEventListener("focus", revalidate);
-      window.removeEventListener("online", revalidate);
+      appStateSubscription.remove();
+      netInfoUnsubscribe();
     };
   }, [refresh]);
 
-  const value = useMemo(
-    () => ({ snapshot, actions, localDataAvailable }),
-    [actions, localDataAvailable, snapshot],
-  );
+  const value = useMemo(() => ({ snapshot, actions }), [actions, snapshot]);
 
   return (
     <HabitStoreContext.Provider value={value}>{children}</HabitStoreContext.Provider>
@@ -253,11 +231,6 @@ export function useHabitStore() {
 
 export function useHabitActions() {
   return useHabitStoreContext().actions;
-}
-
-export function useLocalDataMigration() {
-  const { actions, localDataAvailable } = useHabitStoreContext();
-  return { actions, localDataAvailable };
 }
 
 export function getTodaySnapshot(currentSnapshot: HabitSnapshot) {
