@@ -387,7 +387,7 @@ para entonces sigue sin haber acceso.
 - [ ] Añadir recordatorios locales configurables después de estabilizar el tracking.
 - [ ] Probar en al menos un dispositivo Android y uno iOS, reales o mediante acceso verificable.
 - [x] Añadir pruebas unitarias y de componentes móviles.
-- [ ] Crear development builds y configurar el proceso de distribución con EAS.
+- [ ] Crear development builds y configurar el proceso de distribución con EAS. (2026-09-14: `eas.json` con perfiles `development`/`preview`/`production`, proyecto enlazado en EAS bajo la cuenta `franklyb` (`projectId` en `app.json`), `android.package`/`ios.bundleIdentifier` = `dev.constancia.app`, `eas-cli` fijado como devDependency. Falta lanzar el primer `eas build` real y probarlo en un dispositivo.)
 - [ ] Preparar iconos, splash screen, permisos y textos de privacidad.
 - [ ] Hacer una beta interna antes de preparar App Store/Play Store.
 

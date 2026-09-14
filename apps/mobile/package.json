@@ -36,6 +36,7 @@
     "@types/aes-js": "3.1.4",
     "@types/react": "~19.2.2",
     "@vitejs/plugin-react": "6.1.1",
+    "eas-cli": "24.4.0",
     "eslint": "9.39.5",
     "eslint-config-expo": "~57.0.2",
     "eslint-plugin-simple-import-sort": "14.0.0",
@@ -51,7 +52,9 @@
     "lint": "expo lint",
     "lint:fix": "expo lint --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "build:dev": "eas build --profile development --platform android",
+    "build:preview": "eas build --profile preview --platform all"
   },
   "private": true
 }

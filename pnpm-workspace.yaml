@@ -2,5 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  dtrace-provider: false
+  protobufjs: false
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - eas-cli@24.4.0
