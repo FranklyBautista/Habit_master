@@ -2,7 +2,10 @@
 
 ## Estado
 
-Aceptada para la fase 6.
+Aceptada para la fase 6. Vigente también para la app móvil (fase 8): sustituye a
+la mención de "respuesta optimista" del plan, que queda descartada. Móvil espera
+la respuesta del servidor, re-consulta el estado completo y muestra un error
+recuperable ante un fallo, igual que la web.
 
 ## Decisión
 

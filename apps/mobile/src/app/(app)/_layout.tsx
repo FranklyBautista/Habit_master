@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
+import { ConnectionBanner } from "@/components/connection-banner";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useSession } from "@/lib/auth/session-provider";
@@ -70,43 +71,48 @@ export default function AppLayout() {
 
   return (
     <HabitStoreProvider initialState={initialState} userId={session.user.id}>
-      <Tabs screenOptions={{ headerShown: false }}>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Hoy",
-            tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
-          }}
-        />
-        <Tabs.Screen
-          name="habitos"
-          options={{
-            title: "Hábitos",
-            tabBarIcon: ({ color, size }) => <ListChecks color={color} size={size} />,
-          }}
-        />
-        <Tabs.Screen
-          name="calendario"
-          options={{
-            title: "Calendario",
-            tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
-          }}
-        />
-        <Tabs.Screen
-          name="estadisticas"
-          options={{
-            title: "Estadísticas",
-            tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} />,
-          }}
-        />
-        <Tabs.Screen
-          name="ajustes"
-          options={{
-            title: "Ajustes",
-            tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
-          }}
-        />
-      </Tabs>
+      <ThemedView style={{ flex: 1 }}>
+        <ConnectionBanner />
+        <Tabs screenOptions={{ headerShown: false }}>
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Hoy",
+              tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
+            }}
+          />
+          <Tabs.Screen
+            name="habitos"
+            options={{
+              title: "Hábitos",
+              tabBarIcon: ({ color, size }) => <ListChecks color={color} size={size} />,
+            }}
+          />
+          <Tabs.Screen
+            name="calendario"
+            options={{
+              title: "Calendario",
+              tabBarIcon: ({ color, size }) => (
+                <CalendarDays color={color} size={size} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="estadisticas"
+            options={{
+              title: "Estadísticas",
+              tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} />,
+            }}
+          />
+          <Tabs.Screen
+            name="ajustes"
+            options={{
+              title: "Ajustes",
+              tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+            }}
+          />
+        </Tabs>
+      </ThemedView>
     </HabitStoreProvider>
   );
 }

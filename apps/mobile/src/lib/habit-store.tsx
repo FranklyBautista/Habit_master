@@ -31,6 +31,11 @@ export type HabitSnapshot = HabitTrackerState & {
   hydrated: boolean;
   syncing: boolean;
   error: string | null;
+  // Device connectivity as last reported by NetInfo. Starts optimistic (`true`)
+  // and is corrected by the listener, which fires with the current state right
+  // after it subscribes. The server stays the source of truth (ADR 0001) — this
+  // only drives the "sin conexión" banner and re-fetch-on-reconnect.
+  online: boolean;
 };
 
 type HabitActions = {
@@ -69,8 +74,10 @@ export function HabitStoreProvider({
     hydrated: true,
     syncing: false,
     error: null,
+    online: true,
   });
   const snapshotRef = useRef(snapshot);
+  const wasOnlineRef = useRef(true);
   const pendingCheckins = useRef(new Set<string>());
   // refresh() (triggered independently by AppState/NetInfo) and mutate()
   // both call repository.getState() and commit whatever comes back. Without
@@ -96,7 +103,13 @@ export function HabitStoreProvider({
     try {
       const state = await repository.getState();
       if (requestIdRef.current !== requestId) return true;
-      setSnapshot({ ...state, hydrated: true, syncing: false, error: null });
+      setSnapshot((current) => ({
+        ...state,
+        hydrated: true,
+        syncing: false,
+        error: null,
+        online: current.online,
+      }));
       return true;
     } catch (reason) {
       if (requestIdRef.current !== requestId) return false;
@@ -120,7 +133,13 @@ export function HabitStoreProvider({
         // the server is the source of truth, already reflects this write) —
         // the mutation itself still succeeded, just don't clobber it.
         if (requestIdRef.current !== requestId) return true;
-        setSnapshot({ ...state, hydrated: true, syncing: false, error: null });
+        setSnapshot((current) => ({
+          ...state,
+          hydrated: true,
+          syncing: false,
+          error: null,
+          online: current.online,
+        }));
         return true;
       } catch (reason) {
         if (requestIdRef.current !== requestId) return false;
@@ -204,7 +223,16 @@ export function HabitStoreProvider({
       if (state === "active") revalidate();
     });
     const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isConnected) revalidate();
+      // `isConnected` is `boolean | null` — treat "unknown" (null) as online so
+      // a slow first probe doesn't flash the offline banner.
+      const online = state.isConnected !== false;
+      setSnapshot((current) =>
+        current.online === online ? current : { ...current, online },
+      );
+      // Re-fetch only when connectivity is actually regained, not on every
+      // network change (e.g. wifi -> cellular) while already online.
+      if (online && !wasOnlineRef.current) revalidate();
+      wasOnlineRef.current = online;
     });
     return () => {
       appStateSubscription.remove();

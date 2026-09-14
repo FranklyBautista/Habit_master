@@ -382,11 +382,11 @@ para entonces sigue sin haber acceso.
 - [x] Implementar las pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes. (2026-09-08; verificadas visualmente con datos sembrados en claro/oscuro y ancho móvil/escritorio.)
 - [ ] Adaptar componentes a controles nativos y accesibles.
 - [x] Conectar la app directamente a Supabase bajo las mismas políticas RLS. (`SupabaseHabitRepository` móvil; aislamiento por usuario verificado con dos cuentas distintas.)
-- [ ] Implementar actualización al enfocar y estados de conectividad. (Revalidación por `AppState`/`NetInfo` implementada; falta UI explícita de estado de conexión.)
-- [ ] Añadir respuesta optimista e idempotencia al marcar hábitos.
+- [x] Implementar actualización al enfocar y estados de conectividad. (2026-09-09: revalidación por `AppState` al recuperar foco y re-consulta al recuperar conexión. `HabitStoreProvider` expone `online` desde `NetInfo` — `null` cuenta como conectado — y `src/components/connection-banner.tsx` muestra una barra fija arriba: "Sin conexión…" cuando no hay red y el error de sincronización con botón "Reintentar" cuando falla una escritura, coherente con "sin UI optimista" del ADR 0001. Montado en `app/(app)/_layout.tsx`. Cubierto por `connection-status.test.ts`, `connection-banner.test.tsx` y los casos de conectividad de `habit-store.test.tsx`. Pendiente: repaso visual en dispositivo real junto con el resto de pruebas en dispositivos.)
+- [x] Garantizar idempotencia y reintentos seguros al marcar y desmarcar hábitos, sin respuesta optimista. **Cambio de alcance (2026-09-09):** el texto original pedía "respuesta optimista", pero ADR 0001 (aceptado en la Fase 6) fijó el servidor como fuente de verdad y descartó de forma explícita presentar datos sin confirmar como definitivos. Web y móvil siguen el ADR: cada escritura espera la respuesta del servidor y luego re-consulta el estado completo. La tarea se reformula como idempotencia + deduplicación. Implementado en móvil: `setCheckin` es `upsert` sobre `(habit_id, checkin_date)` con `ignoreDuplicates` al marcar y `delete` filtrado por ambas columnas al desmarcar; `toggleToday` deduplica peticiones en vuelo por `(habitId, date)`. Verificado en `apps/mobile/src/lib/supabase-habit-repository.test.ts` y `apps/mobile/src/lib/habit-store.test.tsx`.
 - [ ] Añadir recordatorios locales configurables después de estabilizar el tracking.
 - [ ] Probar en al menos un dispositivo Android y uno iOS, reales o mediante acceso verificable.
-- [ ] Añadir pruebas unitarias y de componentes móviles.
+- [x] Añadir pruebas unitarias y de componentes móviles.
 - [ ] Crear development builds y configurar el proceso de distribución con EAS.
 - [ ] Preparar iconos, splash screen, permisos y textos de privacidad.
 - [ ] Hacer una beta interna antes de preparar App Store/Play Store.
