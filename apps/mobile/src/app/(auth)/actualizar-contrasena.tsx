@@ -2,17 +2,13 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { z } from "zod";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { newPasswordSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { supabase } from "@/lib/supabase/client";
-
-const passwordSchema = z
-  .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres.");
 
 export default function UpdatePasswordScreen() {
   const router = useRouter();
@@ -22,7 +18,7 @@ export default function UpdatePasswordScreen() {
 
   async function handleSubmit() {
     setError(undefined);
-    const parsed = passwordSchema.safeParse(password);
+    const parsed = newPasswordSchema.safeParse(password);
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message);
       return;

@@ -8,11 +8,12 @@ import {
   Sparkles,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, Pressable } from "react-native";
 
 import { ConnectionBanner } from "@/components/connection-banner";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { HabitStoreProvider } from "@/lib/habit-store";
 import { supabase } from "@/lib/supabase/client";
@@ -22,6 +23,8 @@ export default function AppLayout() {
   const { session, loading } = useSession();
   const [initialState, setInitialState] = useState<HabitTrackerState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const theme = useTheme();
 
   useEffect(() => {
     if (!session) return;
@@ -43,20 +46,41 @@ export default function AppLayout() {
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, loadAttempt]);
 
   // AuthGate (see src/lib/auth/auth-gate.tsx) redirects away when there is
   // no session — this just needs to avoid rendering the tabs prematurely.
   if (loading || !session) return null;
 
+  // Sin esto, abrir la app sin conexión (o que la primera carga falle por
+  // cualquier otro motivo) dejaba una pantalla de error sin salida: no había
+  // forma de reintentar sin forzar el cierre de la app.
   if (error) {
     return (
       <ThemedView
-        style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16 }}
       >
         <ThemedText style={{ textAlign: "center", paddingHorizontal: 24 }}>
           {error}
         </ThemedText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Reintentar"
+          onPress={() => {
+            setError(null);
+            setLoadAttempt((attempt) => attempt + 1);
+          }}
+          style={{
+            borderRadius: 8,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            backgroundColor: theme.tint,
+          }}
+        >
+          <ThemedText type="smallBold" style={{ color: "white" }}>
+            Reintentar
+          </ThemedText>
+        </Pressable>
       </ThemedView>
     );
   }

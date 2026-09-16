@@ -106,7 +106,10 @@ export default function HoyScreen() {
               </ThemedText>
               <Link href="/(app)/habitos" asChild>
                 <Pressable
-                  style={[styles.emptyButton, { backgroundColor: theme.tint }]}
+                  style={StyleSheet.flatten([
+                    styles.emptyButton,
+                    { backgroundColor: theme.tint },
+                  ])}
                 >
                   <Plus size={18} color="white" />
                   <ThemedText type="smallBold" style={{ color: "white" }}>

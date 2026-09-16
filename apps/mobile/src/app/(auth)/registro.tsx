@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { credentialsSchema } from "@/lib/auth/credentials-schema";
+import { registerSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
@@ -21,7 +21,7 @@ export default function RegisterScreen() {
   async function handleSubmit() {
     setError(undefined);
     setMessage(undefined);
-    const parsed = credentialsSchema.safeParse({ email, password });
+    const parsed = registerSchema.safeParse({ email, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message);
       return;

@@ -16,6 +16,22 @@ const credentialsSchema = z.object({
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
 });
 
+// Mirrors supabase/config.toml's `[auth] password_requirements = "letters_digits"` —
+// only applied where a *new* password is being set (register, update), never on
+// login, so an existing account's password never needs to satisfy today's policy.
+const newPasswordSchema = z
+  .string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres.")
+  .regex(
+    /(?=.*[A-Za-z])(?=.*\d)/,
+    "La contraseña debe incluir al menos una letra y un número.",
+  );
+
+const registerSchema = z.object({
+  email: z.email("Escribe un correo válido."),
+  password: newPasswordSchema,
+});
+
 function values(formData: FormData) {
   return {
     email: formData.get("email"),
@@ -35,6 +51,9 @@ function authError(message: string) {
   }
   if (message.includes("User already registered")) {
     return "Ya existe una cuenta con este correo.";
+  }
+  if (message.includes("Password should contain at least one character")) {
+    return "La contraseña debe incluir al menos una letra y un número.";
   }
   return "No se pudo completar la solicitud. Inténtalo de nuevo.";
 }
@@ -65,7 +84,7 @@ export async function register(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const parsed = credentialsSchema.safeParse(values(formData));
+  const parsed = registerSchema.safeParse(values(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const supabase = await createClient();
@@ -97,10 +116,7 @@ export async function updatePassword(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const parsed = z
-    .string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres.")
-    .safeParse(formData.get("password"));
+  const parsed = newPasswordSchema.safeParse(formData.get("password"));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const supabase = await createClient();

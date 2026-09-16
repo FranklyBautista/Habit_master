@@ -378,22 +378,22 @@ para entonces sigue sin haber acceso.
 - [x] Confirmar que el MVP web está validado antes de iniciar esta fase. (Fase 7 cerrada 2026-09-06; Safari/iOS quedan como limitación conocida a resolver antes del criterio de salida de esta fase)
 - [x] Crear `apps/mobile` con Expo, TypeScript y Expo Router.
 - [ ] Reutilizar `domain`, tipos de base de datos y design tokens. (`@habit-tracker/domain` y los tipos de `@habit-tracker/database` se reutilizan en todas las pantallas; **no** existe `packages/design-tokens` — móvil usa `src/constants/theme.ts` + `components/card.tsx` propios. Pendiente decidir si se extrae un paquete compartido o se ajusta el alcance.)
-- [ ] Implementar almacenamiento seguro de sesión y deep links de autenticación. (Sesión segura verificada; deep link de recuperación por email en móvil aún sin probar de extremo a extremo.)
+- [x] Implementar almacenamiento seguro de sesión y deep links de autenticación. (2026-09-16: deep link de recuperación de contraseña probado de extremo a extremo en un Android real — `resetPasswordForEmail` → correo → `habittracker://auth/confirm` → `exchangeCodeForSession` → `actualizar-contrasena`. Requiere que el recovery se inicie **desde el propio dispositivo** por el flujo PKCE — el `code_verifier` vive en el `SecureStore` del cliente que lo pidió. De paso se corrigió `newPasswordSchema`, que no exigía letras+dígitos como sí lo hace `supabase/config.toml` (`password_requirements = "letters_digits"`), y ahora coincide en web y móvil.)
 - [x] Implementar las pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes. (2026-09-08; verificadas visualmente con datos sembrados en claro/oscuro y ancho móvil/escritorio.)
 - [ ] Adaptar componentes a controles nativos y accesibles.
 - [x] Conectar la app directamente a Supabase bajo las mismas políticas RLS. (`SupabaseHabitRepository` móvil; aislamiento por usuario verificado con dos cuentas distintas.)
 - [x] Implementar actualización al enfocar y estados de conectividad. (2026-09-09: revalidación por `AppState` al recuperar foco y re-consulta al recuperar conexión. `HabitStoreProvider` expone `online` desde `NetInfo` — `null` cuenta como conectado — y `src/components/connection-banner.tsx` muestra una barra fija arriba: "Sin conexión…" cuando no hay red y el error de sincronización con botón "Reintentar" cuando falla una escritura, coherente con "sin UI optimista" del ADR 0001. Montado en `app/(app)/_layout.tsx`. Cubierto por `connection-status.test.ts`, `connection-banner.test.tsx` y los casos de conectividad de `habit-store.test.tsx`. Pendiente: repaso visual en dispositivo real junto con el resto de pruebas en dispositivos.)
 - [x] Garantizar idempotencia y reintentos seguros al marcar y desmarcar hábitos, sin respuesta optimista. **Cambio de alcance (2026-09-09):** el texto original pedía "respuesta optimista", pero ADR 0001 (aceptado en la Fase 6) fijó el servidor como fuente de verdad y descartó de forma explícita presentar datos sin confirmar como definitivos. Web y móvil siguen el ADR: cada escritura espera la respuesta del servidor y luego re-consulta el estado completo. La tarea se reformula como idempotencia + deduplicación. Implementado en móvil: `setCheckin` es `upsert` sobre `(habit_id, checkin_date)` con `ignoreDuplicates` al marcar y `delete` filtrado por ambas columnas al desmarcar; `toggleToday` deduplica peticiones en vuelo por `(habitId, date)`. Verificado en `apps/mobile/src/lib/supabase-habit-repository.test.ts` y `apps/mobile/src/lib/habit-store.test.tsx`.
 - [ ] Añadir recordatorios locales configurables después de estabilizar el tracking.
-- [ ] Probar en al menos un dispositivo Android y uno iOS, reales o mediante acceso verificable.
+- [ ] Probar en al menos un dispositivo Android y uno iOS, reales o mediante acceso verificable. (Android ✅ 2026-09-16, development build vía EAS instalado en un dispositivo real: login/registro, CRUD de hábitos, check-ins idempotentes, archivar/restaurar, aislamiento entre cuentas, offline/reconexión, background/foreground y recuperación de contraseña probados de extremo a extremo. iOS pendiente — mismo riesgo aceptado que Safari en la Fase 7, sin hardware Apple disponible.)
 - [x] Añadir pruebas unitarias y de componentes móviles.
-- [ ] Crear development builds y configurar el proceso de distribución con EAS. (2026-09-14: `eas.json` con perfiles `development`/`preview`/`production`, proyecto enlazado en EAS bajo la cuenta `franklyb` (`projectId` en `app.json`), `android.package`/`ios.bundleIdentifier` = `dev.constancia.app`, `eas-cli` fijado como devDependency. Falta lanzar el primer `eas build` real y probarlo en un dispositivo.)
+- [x] Crear development builds y configurar el proceso de distribución con EAS. (2026-09-14: `eas.json` con perfiles `development`/`preview`/`production`, proyecto enlazado en EAS bajo la cuenta `franklyb` (`projectId` en `app.json`), `android.package`/`ios.bundleIdentifier` = `dev.constancia.app`, `eas-cli` fijado como devDependency. 2026-09-16: primer `eas build --profile development --platform android` compilado e instalado en un Android real; requirió además fijar `expo-secure-store`/`expo`/etc. a las versiones alineadas con el SDK — ver `expo install --check`.)
 - [ ] Preparar iconos, splash screen, permisos y textos de privacidad.
 - [ ] Hacer una beta interna antes de preparar App Store/Play Store.
 
 **Criterio de salida — v1 móvil**
 
-- [ ] Marcar un hábito en móvil actualiza el estado visible en web y viceversa, sin duplicados ni pérdida de historial.
+- [x] Marcar un hábito en móvil actualiza el estado visible en web y viceversa, sin duplicados ni pérdida de historial. (Verificado 2026-09-16 con la misma cuenta en Android real + web local: check-ins idempotentes ante toques repetidos, sin duplicados en `habit_checkins`; queda abierto el bug de archivar/restaurar de `EXTRAS_IMPROVEMENT` §Seguridad y datos, que sí puede corromper el historial de rachas.)
 
 
 
@@ -519,5 +519,42 @@ Ritmo sugerido:
 - [Vercel para Next.js](https://vercel.com/docs/frameworks/nextjs)
 
 ---
+
+## 14. EXTRAS_IMPROVEMENT
+
+> Auditoría del proyecto completo (2026-09-14): solo problemas concretos y necesarios —
+> bugs reales, huecos de seguridad o inconsistencias que ya causan o pueden causar un
+> fallo observable. No incluye preferencias de estilo, refactors especulativos ni
+> funcionalidad fuera del MVP. Marcar `[x]` solo cuando esté corregido y verificado.
+
+### Seguridad y datos (prioridad alta)
+
+- [ ] **Enumeración de usuarios en registro web.** `apps/web/src/app/(auth)/actions.ts:36-38` — cuando Supabase devuelve `"User already registered"`, `register()` responde `"Ya existe una cuenta con este correo."`, revelando si un email tiene cuenta. Contradice el propio diseño anti-enumeración de `recoverPassword()` (línea 93, mensaje deliberadamente ambiguo). Fix: devolver el mismo mensaje genérico en ambos flujos.
+- [ ] **Nada impide backdatear/forward-datear check-ins a nivel de base de datos.** Las políticas `habit_checkins_insert_own`/`_update_own` solo validan `user_id = auth.uid()`; `checkin_date`/`completed_at` quedan libres. La regla "solo se marca el día actual" (sección 3) hoy solo se aplica en el cliente — una request directa a la Data API con sesión propia puede insertar check-ins en cualquier fecha y corromper rachas/estadísticas sin que RLS lo impida.
+- [ ] **Archivar y restaurar un hábito corrompe retroactivamente sus rachas.** El dominio solo guarda un `archivedAt` único (`isHabitActiveOnDate` en `dates.ts:28-36`); al restaurar (`archivedAt: null`) el hábito vuelve a contarse activo desde `startDate`, incluyendo los días en que estuvo archivado, rompiendo tanto la racha previa como el cumplimiento del periodo. El modelo no soporta ventanas de actividad separadas.
+- [ ] **pgTAP no cubre mutaciones cruzadas en `habit_checkins` ni `profiles`.** `supabase/tests/ownership_rls.test.sql` prueba INSERT cruzado rechazado en check-ins y UPDATE/DELETE cruzado en `habits`, pero nunca UPDATE/DELETE cruzado en check-ins ni en `profiles` (solo SELECT cruzado). La matriz de pruebas (sección 8) exige explícitamente "Usuario A no puede leer ni modificar datos de B" para las tres tablas.
+
+### Datos y modelo (prioridad media)
+
+- [ ] **`habits.position` sin restricción de unicidad por usuario.** Solo se exige `position >= 0` (schema). Nada en la BD evita que dos hábitos del mismo usuario terminen con la misma posición ante una condición de carrera; el fallo sería silencioso (sin error) y rompería el orden mostrado en Hoy/Hábitos.
+- [ ] **`habit_checkins.note` existe en la BD pero es invisible en el dominio.** La columna está en la migración y en `database.types.ts`, pero `habitCheckinSchema` no la incluye y ningún repositorio (web/mobile) la lee o escribe — cualquier valor ahí queda huérfano y Zod lo descarta al parsear. Conectarla mínimamente o quitar la columna hasta que se use.
+- [ ] **El schema no valida que cada check-in referencie un hábito existente.** `habitTrackerStateSchema` (`entities.ts:65-85`) solo detecta duplicados `(habitId, checkinDate)`, no huérfanos. La BD lo garantiza vía FK, pero el flujo de migración de datos locales pasa por este mismo schema y podría colar check-ins huérfanos que simplemente desaparecen de las métricas en silencio en vez de fallar visiblemente en la importación.
+
+### Cobertura de tests (prioridad media)
+
+- [ ] **Sin tests unitarios de `supabase-habit-repository.ts`/`habit-store.tsx` en web.** A diferencia de mobile (24 tests cubriendo mapeo, idempotencia, dedupe y error recuperable), web solo tiene cobertura indirecta vía `e2e/supabase-flow.spec.ts`, que no aísla esta lógica — justo el área que CLAUDE.md marca como prioritaria.
+- [ ] **El único test de "DST" no ejercita código con zona horaria real.** `metrics.test.ts:121-128` llama `getDateRange` (aritmética pura de strings, sin `Intl`/timezone) y pasaría aunque `getLocalDateKey` estuviera roto. Falta un test que cubra un día real de cambio de horario (spring-forward/fall-back) contra `getLocalDateKey`, tal como pide la sección 6 del plan.
+
+### Mobile — accesibilidad (bloquea el checkbox "controles nativos y accesibles" de Fase 8)
+
+- [ ] **Áreas táctiles por debajo del mínimo.** `apps/mobile/src/app/(app)/habitos.tsx:98,107,129,137` — botones Subir/Bajar/Editar/Archivar con `padding: Spacing.one` (4px) sobre iconos de 16–20px terminan en ~24–28px de área táctil, bajo el mínimo de 44×44pt/48×48dp, en una fila compacta con 4 botones seguidos.
+- [ ] **Botones primarios sin `accessibilityRole`/`accessibilityLabel`.** `habit-form-modal.tsx:139-157` (Cancelar/Guardar), `login.tsx:57`, `registro.tsx:69`, `recuperar.tsx:60-68`, `actualizar-contrasena.tsx:57-65` — inconsistente con otros controles de los mismos archivos que sí los tienen; VoiceOver/TalkBack no los anuncia como botones.
+- [ ] **Controles deshabilitados sin `accessibilityState={{ disabled: true }}`.** `habitos.tsx:96,105`, `connection-banner.tsx:45`, `ajustes.tsx:171` — el lector de pantalla sigue anunciándolos como interactivos aunque `disabled` bloquee el `onPress`.
+
+### Tooling / housekeeping (prioridad baja, barato de cerrar)
+
+- [ ] **CI nunca lintea `apps/mobile` ni `packages/*`.** `.github/workflows/ci.yml` corre `pnpm lint`, que en la raíz solo apunta a `@habit-tracker/web`. `typecheck`/`test` sí son recursivos y cubren mobile — solo lint queda fuera, dejando pasar errores de import-order/estilo de `eslint-config-expo` sin detección.
+- [ ] **Falta `apps/mobile/.env.example`.** Las variables `EXPO_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` solo están documentadas en prosa en el README de mobile, no en un archivo versionado — inconsistente con el criterio de Fase 1.
+- [ ] **~450 KB de assets del scaffold sin usar en cada build nativo.** `assets/images/logo-glow.png`, `tutorial-web.png`, `react-logo*.png`, `expo-logo.png`, `expo-badge*.png` — sin referencias en `src/` ni `app.json`, sobras de `create-expo-app`; trivial de borrar antes del primer build real.
 
 **Próximo paso recomendado:** comenzar la Fase 1 usando los entregables confirmados de la Fase 0 en `docs/product/`.
