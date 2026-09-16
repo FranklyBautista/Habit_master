@@ -66,6 +66,9 @@ export default function RegisterScreen() {
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         {message ? <ThemedText>{message}</ThemedText> : null}
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Crear cuenta"
+          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}

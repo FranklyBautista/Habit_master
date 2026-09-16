@@ -51,6 +51,9 @@ export default function UpdatePasswordScreen() {
         />
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Guardar contraseña"
+          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}

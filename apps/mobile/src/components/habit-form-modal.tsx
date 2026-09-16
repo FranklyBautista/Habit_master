@@ -137,12 +137,17 @@ export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModal
 
           <View style={styles.actions}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar"
               style={[styles.button, styles.buttonSecondary]}
               onPress={resetAndClose}
             >
               <ThemedText type="smallBold">Cancelar</ThemedText>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={habit ? "Guardar" : "Crear hábito"}
+              accessibilityState={{ disabled: submitting }}
               disabled={submitting}
               style={[
                 styles.button,

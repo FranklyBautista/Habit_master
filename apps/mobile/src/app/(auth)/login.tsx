@@ -54,6 +54,9 @@ export default function LoginScreen() {
         />
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Entrar"
+          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}

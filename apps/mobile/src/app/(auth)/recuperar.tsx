@@ -58,6 +58,9 @@ export default function RecoverPasswordScreen() {
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         {message ? <ThemedText>{message}</ThemedText> : null}
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Enviar enlace"
+          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}

@@ -42,6 +42,7 @@ export function ConnectionBanner() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Reintentar sincronización"
+          accessibilityState={{ disabled: snapshot.syncing }}
           disabled={snapshot.syncing}
           onPress={() => void actions.refresh()}
           style={({ pressed }) => [

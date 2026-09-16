@@ -19,6 +19,11 @@ import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
+// Expande el área táctil de los botones de icono (visualmente compactos, con
+// solo Spacing.one de padding) hasta el mínimo recomendado de 44x44pt/48x48dp,
+// sin agrandar el layout de la fila.
+const ICON_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
+
 export default function HabitsScreen() {
   const snapshot = useHabitStore();
   const actions = useHabitActions();
@@ -93,7 +98,9 @@ export default function HabitsScreen() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Subir ${habit.name}`}
+                      accessibilityState={{ disabled: index === 0 }}
                       disabled={index === 0}
+                      hitSlop={ICON_HIT_SLOP}
                       onPress={() => void actions.moveHabit(habit.id, -1)}
                       style={styles.iconButton}
                     >
@@ -102,7 +109,11 @@ export default function HabitsScreen() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Bajar ${habit.name}`}
+                      accessibilityState={{
+                        disabled: index === activeHabits.length - 1,
+                      }}
                       disabled={index === activeHabits.length - 1}
+                      hitSlop={ICON_HIT_SLOP}
                       onPress={() => void actions.moveHabit(habit.id, 1)}
                       style={styles.iconButton}
                     >
@@ -126,6 +137,7 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Editar ${habit.name}`}
+                    hitSlop={ICON_HIT_SLOP}
                     style={styles.iconButton}
                     onPress={() => openEdit(habit)}
                   >
@@ -134,6 +146,7 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Archivar ${habit.name}`}
+                    hitSlop={ICON_HIT_SLOP}
                     style={styles.iconButton}
                     onPress={() => void archive(habit)}
                   >
@@ -178,6 +191,7 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Restaurar ${habit.name}`}
+                    hitSlop={ICON_HIT_SLOP}
                     style={styles.iconButton}
                     onPress={() => void restore(habit)}
                   >

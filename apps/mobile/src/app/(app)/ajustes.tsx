@@ -168,6 +168,7 @@ export default function AjustesScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Guardar cambios"
+              accessibilityState={{ disabled: snapshot.syncing }}
               disabled={snapshot.syncing}
               onPress={() => void save()}
               style={[
