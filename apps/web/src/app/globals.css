@@ -735,6 +735,37 @@ p {
 .state-card .button {
   margin-top: 13px;
 }
+.privacy-policy {
+  display: grid;
+  gap: 10px;
+  max-width: 720px;
+  padding: 24px;
+  line-height: 1.6;
+}
+.privacy-policy h1 {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.privacy-policy h2 {
+  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.privacy-policy ul {
+  padding-left: 20px;
+  list-style: disc;
+}
+.privacy-policy a,
+.privacy-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.privacy-updated {
+  color: var(--muted);
+  font-size: 14px;
+}
 .state-card--error {
   border-color: #fecaca;
 }

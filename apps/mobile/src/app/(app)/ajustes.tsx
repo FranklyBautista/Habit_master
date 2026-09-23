@@ -1,7 +1,15 @@
 import { userSettingsSchema } from "@habit-tracker/domain";
-import { Bell, Check, Cloud, LogOut, SlidersHorizontal } from "lucide-react-native";
+import {
+  Bell,
+  Check,
+  Cloud,
+  ExternalLink,
+  LogOut,
+  SlidersHorizontal,
+} from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -35,6 +43,10 @@ const REMINDER_TIME_OPTIONS = [
   { hour: 20, minute: 0, label: "8:00 p. m." },
   { hour: 21, minute: 30, label: "9:30 p. m." },
 ] as const;
+
+// La política vive en la web de producción (`/privacidad`, pública). Es la
+// misma URL que se declara en las fichas de Play Store/App Store.
+const PRIVACY_URL = "https://habit-master-web.vercel.app/privacidad";
 
 // Same fixed shortlist the web Ajustes screen offers; the profile's current
 // timezone is prepended when it isn't already one of these so it never
@@ -336,6 +348,19 @@ export default function AjustesScreen() {
               </ThemedText>
             </View>
           </Card>
+
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Política de privacidad"
+            onPress={() => void Linking.openURL(PRIVACY_URL)}
+            style={[
+              styles.signOutButton,
+              { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+            ]}
+          >
+            <ExternalLink size={18} color={theme.text} />
+            <ThemedText type="smallBold">Política de privacidad</ThemedText>
+          </Pressable>
 
           <Pressable
             accessibilityRole="button"

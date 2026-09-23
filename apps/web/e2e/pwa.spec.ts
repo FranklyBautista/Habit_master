@@ -20,6 +20,14 @@ test("renders a clear, read-only offline page", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Sin conexión" })).toBeVisible();
 });
 
+test("serves the privacy policy without a session", async ({ page }) => {
+  await page.goto("/privacidad");
+  await expect(page).toHaveURL(/\/privacidad$/);
+  await expect(
+    page.getByRole("heading", { name: "Política de privacidad" }),
+  ).toBeVisible();
+});
+
 test("registers the service worker in production", async ({ page }) => {
   await page.goto("/login");
   const registered = await page.evaluate(async () => {

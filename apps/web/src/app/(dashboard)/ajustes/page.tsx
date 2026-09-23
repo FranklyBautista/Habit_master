@@ -2,6 +2,7 @@
 
 import { userSettingsSchema } from "@habit-tracker/domain";
 import { Cloud, LogOut, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
@@ -129,6 +130,11 @@ export default function SettingsPage() {
             </div>
           </Card>
         </form>
+        <Card>
+          <Link className="privacy-link" href="/privacidad">
+            Política de privacidad
+          </Link>
+        </Card>
         <Card>
           <form action={logout}>
             <Button type="submit" variant="secondary">

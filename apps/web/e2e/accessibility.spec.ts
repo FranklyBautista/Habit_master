@@ -3,7 +3,14 @@ import { expect, test } from "@playwright/test";
 
 import { login } from "./helpers/auth";
 
-const routes = ["/hoy", "/habitos", "/calendario", "/estadisticas", "/ajustes"];
+const routes = [
+  "/hoy",
+  "/habitos",
+  "/calendario",
+  "/estadisticas",
+  "/ajustes",
+  "/privacidad",
+];
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/login");

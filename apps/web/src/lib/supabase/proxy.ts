@@ -6,8 +6,9 @@ import { getSupabaseEnvironment } from "./env";
 
 const authPaths = ["/login", "/registro", "/recuperar"];
 // Reachable without a session: the offline fallback must render even when a
-// visitor has no cookies yet (first load with no connection, or before login).
-const publicPaths = ["/offline"];
+// visitor has no cookies yet (first load with no connection, or before login),
+// and the privacy policy is linked from the app stores for anonymous visitors.
+const publicPaths = ["/offline", "/privacidad"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
