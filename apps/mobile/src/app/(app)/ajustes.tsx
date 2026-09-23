@@ -1,7 +1,14 @@
 import { userSettingsSchema } from "@habit-tracker/domain";
-import { Check, Cloud, LogOut, SlidersHorizontal } from "lucide-react-native";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Bell, Check, Cloud, LogOut, SlidersHorizontal } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/card";
@@ -11,7 +18,21 @@ import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
+import {
+  getReminderPreference,
+  requestReminderPermission,
+  setReminderPreference,
+} from "@/lib/notifications/reminders";
 import { supabase } from "@/lib/supabase/client";
+
+// Horas preestablecidas en vez de un selector libre: cubre los momentos
+// típicos para revisar hábitos sin necesitar un componente de reloj nuevo.
+const REMINDER_TIME_OPTIONS = [
+  { hour: 8, minute: 0, label: "8:00 a. m." },
+  { hour: 13, minute: 0, label: "1:00 p. m." },
+  { hour: 20, minute: 0, label: "8:00 p. m." },
+  { hour: 21, minute: 30, label: "9:30 p. m." },
+] as const;
 
 // Same fixed shortlist the web Ajustes screen offers; the profile's current
 // timezone is prepended when it isn't already one of these so it never
@@ -33,6 +54,46 @@ export default function AjustesScreen() {
   const [timezone, setTimezone] = useState(snapshot.settings.timezone);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState(false);
+
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState<{ hour: number; minute: number }>(
+    REMINDER_TIME_OPTIONS[2],
+  );
+  const [reminderError, setReminderError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getReminderPreference().then((preference) => {
+      if (cancelled) return;
+      setReminderEnabled(preference.enabled);
+      setReminderTime({ hour: preference.hour, minute: preference.minute });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function toggleReminder(nextEnabled: boolean) {
+    setReminderError(null);
+    if (nextEnabled) {
+      const granted = await requestReminderPermission();
+      if (!granted) {
+        setReminderError(
+          "Activa las notificaciones para Constancia en los ajustes del sistema.",
+        );
+        return;
+      }
+    }
+    setReminderEnabled(nextEnabled);
+    await setReminderPreference({ enabled: nextEnabled, ...reminderTime });
+  }
+
+  async function selectReminderTime(time: { hour: number; minute: number }) {
+    setReminderTime(time);
+    if (reminderEnabled) {
+      await setReminderPreference({ enabled: true, ...time });
+    }
+  }
 
   const timezoneOptions = BASE_TIMEZONES.includes(snapshot.settings.timezone)
     ? BASE_TIMEZONES
@@ -183,6 +244,71 @@ export default function AjustesScreen() {
             </Pressable>
           </Card>
 
+          <Card style={styles.card}>
+            <View style={styles.sectionHeading}>
+              <View style={styles.sectionCopy}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  MANTENTE AL DÍA
+                </ThemedText>
+                <ThemedText type="smallBold">Recordatorio diario</ThemedText>
+              </View>
+              <Bell size={20} color={theme.textSecondary} />
+            </View>
+
+            <View style={styles.reminderToggleRow}>
+              <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+                Recibir una notificación para marcar tus hábitos.
+              </ThemedText>
+              <Switch
+                accessibilityLabel="Recordatorio diario"
+                value={reminderEnabled}
+                onValueChange={(value) => void toggleReminder(value)}
+                trackColor={{ true: theme.tint }}
+              />
+            </View>
+
+            {reminderError ? (
+              <ThemedText type="small" style={styles.error} accessibilityRole="alert">
+                {reminderError}
+              </ThemedText>
+            ) : null}
+
+            {reminderEnabled ? (
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Hora del recordatorio"
+                style={styles.timezoneList}
+              >
+                {REMINDER_TIME_OPTIONS.map((option) => {
+                  const selected =
+                    option.hour === reminderTime.hour &&
+                    option.minute === reminderTime.minute;
+                  return (
+                    <Pressable
+                      key={option.label}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={option.label}
+                      onPress={() => void selectReminderTime(option)}
+                      style={[
+                        styles.timezoneOption,
+                        {
+                          borderColor: selected ? theme.tint : theme.border,
+                          backgroundColor: selected
+                            ? theme.tint + "1A"
+                            : theme.background,
+                        },
+                      ]}
+                    >
+                      <ThemedText type="small">{option.label}</ThemedText>
+                      {selected ? <Check size={16} color={theme.tint} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </Card>
+
           <Card style={[styles.card, styles.noteCard]}>
             <Cloud size={20} color={theme.textSecondary} />
             <View style={styles.noteCopy}>
@@ -254,6 +380,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionCopy: { gap: 2 },
+  reminderToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+  },
   field: { gap: Spacing.one },
   input: {
     borderWidth: 1,
