@@ -7,7 +7,7 @@ import { z } from "zod";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
+import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -18,6 +18,7 @@ export default function RecoverPasswordScreen() {
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const inputStyle = useAuthInputStyle();
 
   async function handleSubmit() {
     setError(undefined);
@@ -51,7 +52,8 @@ export default function RecoverPasswordScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Correo electrónico"
-          style={styles.input}
+          placeholderTextColor={inputStyle.placeholderTextColor}
+          style={inputStyle.style}
           value={email}
           onChangeText={setEmail}
         />

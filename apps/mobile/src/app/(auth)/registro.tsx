@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { registerSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
+import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -17,6 +17,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const inputStyle = useAuthInputStyle();
 
   async function handleSubmit() {
     setError(undefined);
@@ -33,6 +34,12 @@ export default function RegisterScreen() {
     });
     setSubmitting(false);
     if (signUpError) {
+      // Mismo mensaje genérico que un registro nuevo — revelar "ya existe"
+      // permitiría enumerar correos, igual que en recuperar.tsx.
+      if (signUpError.message.includes("User already registered")) {
+        setMessage("Revisa tu correo para confirmar la cuenta.");
+        return;
+      }
       setError(authErrorMessage(signUpError.message));
       return;
     }
@@ -51,15 +58,17 @@ export default function RegisterScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Correo electrónico"
-          style={styles.input}
+          placeholderTextColor={inputStyle.placeholderTextColor}
+          style={inputStyle.style}
           value={email}
           onChangeText={setEmail}
         />
         <TextInput
           accessibilityLabel="Contraseña"
           placeholder="Contraseña"
+          placeholderTextColor={inputStyle.placeholderTextColor}
           secureTextEntry
-          style={styles.input}
+          style={inputStyle.style}
           value={password}
           onChangeText={setPassword}
         />

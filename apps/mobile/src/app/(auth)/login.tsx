@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { credentialsSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
+import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginScreen() {
@@ -15,6 +15,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const inputStyle = useAuthInputStyle();
 
   async function handleSubmit() {
     setError(undefined);
@@ -40,15 +41,17 @@ export default function LoginScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Correo electrónico"
-          style={styles.input}
+          placeholderTextColor={inputStyle.placeholderTextColor}
+          style={inputStyle.style}
           value={email}
           onChangeText={setEmail}
         />
         <TextInput
           accessibilityLabel="Contraseña"
           placeholder="Contraseña"
+          placeholderTextColor={inputStyle.placeholderTextColor}
           secureTextEntry
-          style={styles.input}
+          style={inputStyle.style}
           value={password}
           onChangeText={setPassword}
         />

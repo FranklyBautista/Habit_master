@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { newPasswordSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
+import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
 import { supabase } from "@/lib/supabase/client";
 
 export default function UpdatePasswordScreen() {
@@ -15,6 +15,7 @@ export default function UpdatePasswordScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const inputStyle = useAuthInputStyle();
 
   async function handleSubmit() {
     setError(undefined);
@@ -44,8 +45,9 @@ export default function UpdatePasswordScreen() {
         <TextInput
           accessibilityLabel="Nueva contraseña"
           placeholder="Nueva contraseña"
+          placeholderTextColor={inputStyle.placeholderTextColor}
           secureTextEntry
-          style={styles.input}
+          style={inputStyle.style}
           value={password}
           onChangeText={setPassword}
         />

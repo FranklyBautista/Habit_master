@@ -49,9 +49,6 @@ function authError(message: string) {
   if (message.includes("Invalid login credentials")) {
     return "El correo o la contraseña no coinciden.";
   }
-  if (message.includes("User already registered")) {
-    return "Ya existe una cuenta con este correo.";
-  }
   if (message.includes("Password should contain at least one character")) {
     return "La contraseña debe incluir al menos una letra y un número.";
   }
@@ -92,7 +89,15 @@ export async function register(
     ...parsed.data,
     options: { emailRedirectTo: `${await origin()}/auth/confirm?next=/hoy` },
   });
-  if (error) return { error: authError(error.message) };
+  if (error) {
+    // Same generic message as a new signup — revealing "already registered"
+    // here would let an attacker enumerate emails, contradicting the
+    // deliberately ambiguous message recoverPassword() already uses below.
+    if (error.message.includes("User already registered")) {
+      return { message: "Revisa tu correo para confirmar la cuenta." };
+    }
+    return { error: authError(error.message) };
+  }
   if (data.session) redirect("/hoy");
   return { message: "Revisa tu correo para confirmar la cuenta." };
 }
