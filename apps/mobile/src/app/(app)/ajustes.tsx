@@ -20,6 +20,8 @@ import { useSession } from "@/lib/auth/session-provider";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 import {
   getReminderPreference,
+  hasReminderPermission,
+  remindersSupported,
   requestReminderPermission,
   setReminderPreference,
 } from "@/lib/notifications/reminders";
@@ -62,12 +64,19 @@ export default function AjustesScreen() {
   const [reminderError, setReminderError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!remindersSupported) return;
     let cancelled = false;
-    getReminderPreference().then((preference) => {
-      if (cancelled) return;
-      setReminderEnabled(preference.enabled);
-      setReminderTime({ hour: preference.hour, minute: preference.minute });
-    });
+    void Promise.all([getReminderPreference(), hasReminderPermission()])
+      .then(([preference, granted]) => {
+        if (cancelled) return;
+        // Si el permiso se revocó desde el sistema, el recordatorio ya no llega:
+        // el toggle debe reflejarlo en vez de mostrarse activo.
+        setReminderEnabled(preference.enabled && granted);
+        setReminderTime({ hour: preference.hour, minute: preference.minute });
+      })
+      .catch(() => {
+        if (!cancelled) setReminderError("No se pudo leer el recordatorio.");
+      });
     return () => {
       cancelled = true;
     };
@@ -75,23 +84,29 @@ export default function AjustesScreen() {
 
   async function toggleReminder(nextEnabled: boolean) {
     setReminderError(null);
-    if (nextEnabled) {
-      const granted = await requestReminderPermission();
-      if (!granted) {
+    try {
+      if (nextEnabled && !(await requestReminderPermission())) {
         setReminderError(
           "Activa las notificaciones para Constancia en los ajustes del sistema.",
         );
         return;
       }
+      await setReminderPreference({ enabled: nextEnabled, ...reminderTime });
+      setReminderEnabled(nextEnabled);
+    } catch {
+      setReminderError("No se pudo actualizar el recordatorio. Inténtalo de nuevo.");
     }
-    setReminderEnabled(nextEnabled);
-    await setReminderPreference({ enabled: nextEnabled, ...reminderTime });
   }
 
   async function selectReminderTime(time: { hour: number; minute: number }) {
+    setReminderError(null);
+    const previous = reminderTime;
     setReminderTime(time);
-    if (reminderEnabled) {
-      await setReminderPreference({ enabled: true, ...time });
+    try {
+      await setReminderPreference({ enabled: reminderEnabled, ...time });
+    } catch {
+      setReminderTime(previous);
+      setReminderError("No se pudo cambiar la hora del recordatorio.");
     }
   }
 
@@ -244,70 +259,72 @@ export default function AjustesScreen() {
             </Pressable>
           </Card>
 
-          <Card style={styles.card}>
-            <View style={styles.sectionHeading}>
-              <View style={styles.sectionCopy}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  MANTENTE AL DÍA
+          {remindersSupported ? (
+            <Card style={styles.card}>
+              <View style={styles.sectionHeading}>
+                <View style={styles.sectionCopy}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    MANTENTE AL DÍA
+                  </ThemedText>
+                  <ThemedText type="smallBold">Recordatorio diario</ThemedText>
+                </View>
+                <Bell size={20} color={theme.textSecondary} />
+              </View>
+
+              <View style={styles.reminderToggleRow}>
+                <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+                  Recibir una notificación para marcar tus hábitos.
                 </ThemedText>
-                <ThemedText type="smallBold">Recordatorio diario</ThemedText>
+                <Switch
+                  accessibilityLabel="Recordatorio diario"
+                  value={reminderEnabled}
+                  onValueChange={(value) => void toggleReminder(value)}
+                  trackColor={{ true: theme.tint }}
+                />
               </View>
-              <Bell size={20} color={theme.textSecondary} />
-            </View>
 
-            <View style={styles.reminderToggleRow}>
-              <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
-                Recibir una notificación para marcar tus hábitos.
-              </ThemedText>
-              <Switch
-                accessibilityLabel="Recordatorio diario"
-                value={reminderEnabled}
-                onValueChange={(value) => void toggleReminder(value)}
-                trackColor={{ true: theme.tint }}
-              />
-            </View>
+              {reminderError ? (
+                <ThemedText type="small" style={styles.error} accessibilityRole="alert">
+                  {reminderError}
+                </ThemedText>
+              ) : null}
 
-            {reminderError ? (
-              <ThemedText type="small" style={styles.error} accessibilityRole="alert">
-                {reminderError}
-              </ThemedText>
-            ) : null}
-
-            {reminderEnabled ? (
-              <View
-                accessibilityRole="radiogroup"
-                accessibilityLabel="Hora del recordatorio"
-                style={styles.timezoneList}
-              >
-                {REMINDER_TIME_OPTIONS.map((option) => {
-                  const selected =
-                    option.hour === reminderTime.hour &&
-                    option.minute === reminderTime.minute;
-                  return (
-                    <Pressable
-                      key={option.label}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={option.label}
-                      onPress={() => void selectReminderTime(option)}
-                      style={[
-                        styles.timezoneOption,
-                        {
-                          borderColor: selected ? theme.tint : theme.border,
-                          backgroundColor: selected
-                            ? theme.tint + "1A"
-                            : theme.background,
-                        },
-                      ]}
-                    >
-                      <ThemedText type="small">{option.label}</ThemedText>
-                      {selected ? <Check size={16} color={theme.tint} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
-          </Card>
+              {reminderEnabled ? (
+                <View
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel="Hora del recordatorio"
+                  style={styles.timezoneList}
+                >
+                  {REMINDER_TIME_OPTIONS.map((option) => {
+                    const selected =
+                      option.hour === reminderTime.hour &&
+                      option.minute === reminderTime.minute;
+                    return (
+                      <Pressable
+                        key={option.label}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={option.label}
+                        onPress={() => void selectReminderTime(option)}
+                        style={[
+                          styles.timezoneOption,
+                          {
+                            borderColor: selected ? theme.tint : theme.border,
+                            backgroundColor: selected
+                              ? theme.tint + "1A"
+                              : theme.background,
+                          },
+                        ]}
+                      >
+                        <ThemedText type="small">{option.label}</ThemedText>
+                        {selected ? <Check size={16} color={theme.tint} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </Card>
+          ) : null}
 
           <Card style={[styles.card, styles.noteCard]}>
             <Cloud size={20} color={theme.textSecondary} />

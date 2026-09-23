@@ -18,6 +18,11 @@ const STORAGE_KEY = "habit-tracker:reminder";
 // Fijo a propósito: solo existe un recordatorio diario, así que reprogramar
 // con el mismo identificador reemplaza el anterior en vez de acumular.
 const NOTIFICATION_ID = "habit-tracker-daily-reminder";
+const ANDROID_CHANNEL_ID = "reminders";
+
+// expo-notifications no programa notificaciones locales en web (Expo web se usa
+// solo como banco de pruebas), así que la sección se oculta ahí.
+export const remindersSupported = Platform.OS !== "web";
 
 export type ReminderPreference = {
   enabled: boolean;
@@ -42,14 +47,22 @@ export async function getReminderPreference(): Promise<ReminderPreference> {
 
 async function ensureAndroidChannel() {
   if (Platform.OS !== "android") return;
-  await Notifications.setNotificationChannelAsync("reminders", {
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: "Recordatorios de hábitos",
     importance: Notifications.AndroidImportance.DEFAULT,
   });
 }
 
+export async function hasReminderPermission(): Promise<boolean> {
+  const current = await Notifications.getPermissionsAsync();
+  return current.granted;
+}
+
 // false si el usuario niega el permiso — quien llama debe revertir el toggle.
 export async function requestReminderPermission(): Promise<boolean> {
+  // En Android 13+ el diálogo de permiso solo aparece si ya existe al menos un
+  // canal, así que se crea antes de pedirlo.
+  await ensureAndroidChannel();
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
   const requested = await Notifications.requestPermissionsAsync();
@@ -72,6 +85,7 @@ export async function setReminderPreference(
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      channelId: ANDROID_CHANNEL_ID,
       hour: preference.hour,
       minute: preference.minute,
     },

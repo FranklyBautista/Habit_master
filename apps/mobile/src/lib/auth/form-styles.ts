@@ -36,7 +36,11 @@ export function useAuthInputStyle() {
   return {
     style: [
       authFormStyles.input,
-      { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border },
+      {
+        color: theme.text,
+        backgroundColor: theme.backgroundElement,
+        borderColor: theme.border,
+      },
     ],
     placeholderTextColor: theme.textSecondary,
   };
