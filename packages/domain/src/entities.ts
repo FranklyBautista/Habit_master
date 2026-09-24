@@ -20,6 +20,19 @@ export const habitIcons = [
 const localDateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
 
+// Ventana ya cerrada en la que el hábito estuvo archivado: [archivedAt,
+// restoredAt). Esos días no cuentan como esperados. El archivado vigente, si lo
+// hay, sigue en `Habit.archivedAt`.
+export const archivePeriodSchema = z
+  .object({
+    archivedAt: instantSchema,
+    restoredAt: instantSchema,
+  })
+  .refine(
+    (period) => Date.parse(period.restoredAt) >= Date.parse(period.archivedAt),
+    "Un periodo de archivado no puede terminar antes de empezar.",
+  );
+
 export const habitSchema = z.object({
   id: z.uuid(),
   name: z
@@ -34,6 +47,9 @@ export const habitSchema = z.object({
   startDate: localDateSchema,
   position: z.number().int().nonnegative(),
   archivedAt: instantSchema.nullable(),
+  // `default([])`: el estado guardado antes de existir el historial (p. ej. en
+  // localStorage) sigue siendo válido.
+  archivePeriods: z.array(archivePeriodSchema).default([]),
   createdAt: instantSchema,
   updatedAt: instantSchema,
 });
@@ -92,6 +108,7 @@ export const createHabitInputSchema = habitSchema.pick({
 });
 export const updateHabitInputSchema = createHabitInputSchema.partial();
 
+export type ArchivePeriod = z.infer<typeof archivePeriodSchema>;
 export type Habit = z.infer<typeof habitSchema>;
 export type HabitCheckin = z.infer<typeof habitCheckinSchema>;
 export type UserSettings = z.infer<typeof userSettingsSchema>;

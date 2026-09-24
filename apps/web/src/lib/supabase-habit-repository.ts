@@ -1,5 +1,6 @@
 import type { Database } from "@habit-tracker/database";
 import {
+  type ArchivePeriod,
   type CreateHabitInput,
   type Habit,
   type HabitCheckin,
@@ -12,9 +13,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
 type CheckinRow = Database["public"]["Tables"]["habit_checkins"]["Row"];
+type ArchivePeriodRow = Database["public"]["Tables"]["habit_archive_periods"]["Row"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
-function mapHabit(row: HabitRow): Habit {
+function mapHabit(row: HabitRow, archivePeriods: ArchivePeriod[]): Habit {
   return {
     id: row.id,
     name: row.name,
@@ -25,9 +27,22 @@ function mapHabit(row: HabitRow): Habit {
     startDate: row.start_date,
     position: row.position,
     archivedAt: row.archived_at,
+    archivePeriods,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+// Agrupa el historial de archivado (lo escribe un trigger al restaurar, ver
+// la migración 20260924120000) por hábito.
+function groupArchivePeriods(rows: ArchivePeriodRow[]): Map<string, ArchivePeriod[]> {
+  const byHabit = new Map<string, ArchivePeriod[]>();
+  for (const row of rows) {
+    const periods = byHabit.get(row.habit_id) ?? [];
+    periods.push({ archivedAt: row.archived_at, restoredAt: row.restored_at });
+    byHabit.set(row.habit_id, periods);
+  }
+  return byHabit;
 }
 
 function mapCheckin(row: CheckinRow): HabitCheckin {
@@ -51,21 +66,27 @@ export class SupabaseHabitRepository {
     // any account that predates the trigger — or a future edge case where
     // it fails to fire — has none) must not crash the whole dashboard.
     // `ensureProfile()` below creates the missing row on the fly instead.
-    const [profileResult, habitsResult, checkinsResult] = await Promise.all([
-      this.client.from("profiles").select("*").eq("id", this.userId).maybeSingle(),
-      this.client.from("habits").select("*").order("position"),
-      this.client.from("habit_checkins").select("*").order("checkin_date"),
-    ]);
+    const [profileResult, habitsResult, checkinsResult, periodsResult] =
+      await Promise.all([
+        this.client.from("profiles").select("*").eq("id", this.userId).maybeSingle(),
+        this.client.from("habits").select("*").order("position"),
+        this.client.from("habit_checkins").select("*").order("checkin_date"),
+        this.client.from("habit_archive_periods").select("*").order("archived_at"),
+      ]);
 
     if (profileResult.error) throw profileResult.error;
     if (habitsResult.error) throw habitsResult.error;
     if (checkinsResult.error) throw checkinsResult.error;
+    if (periodsResult.error) throw periodsResult.error;
 
     const profile = profileResult.data ?? (await this.ensureProfile());
+    const archivePeriods = groupArchivePeriods(periodsResult.data);
 
     return habitTrackerStateSchema.parse({
       version: 1,
-      habits: habitsResult.data.map(mapHabit),
+      habits: habitsResult.data.map((row) =>
+        mapHabit(row, archivePeriods.get(row.id) ?? []),
+      ),
       checkins: checkinsResult.data.map(mapCheckin),
       settings: {
         displayName: profile.display_name ?? "Tú",

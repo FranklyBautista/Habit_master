@@ -72,6 +72,7 @@ function makeHabit(overrides: Partial<Habit> & Pick<Habit, "id">): Habit {
     startDate: "2026-01-01",
     position: 0,
     archivedAt: null,
+    archivePeriods: [],
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     ...overrides,

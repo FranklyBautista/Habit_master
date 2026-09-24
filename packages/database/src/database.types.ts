@@ -4,6 +4,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      habit_archive_periods: {
+        Row: {
+          archived_at: string;
+          created_at: string;
+          habit_id: string;
+          id: string;
+          restored_at: string;
+          user_id: string;
+        };
+        Insert: {
+          archived_at: string;
+          created_at?: string;
+          habit_id: string;
+          id?: string;
+          restored_at: string;
+          user_id: string;
+        };
+        Update: {
+          archived_at?: string;
+          created_at?: string;
+          habit_id?: string;
+          id?: string;
+          restored_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "habit_archive_periods_habit_owner_fkey";
+            columns: ["habit_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "habits";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
       habit_checkins: {
         Row: {
           checkin_date: string;

@@ -25,14 +25,28 @@ export function getLocalDateKey(date: Date, timezone: string): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+// Un hábito cuenta en un día si ya había empezado, no está archivado desde
+// ese día o antes, y el día no cae dentro de un archivado anterior ya
+// restaurado. Cada ventana es [día local de archivado, día local de
+// restauración): el día en que se archiva deja de contar y el día en que se
+// restaura vuelve a contar (se puede marcar ese mismo día).
 export function isHabitActiveOnDate(
   habit: Habit,
   dateKey: string,
   timezone: string,
 ): boolean {
   if (habit.startDate > dateKey) return false;
-  if (!habit.archivedAt) return true;
-  return getLocalDateKey(new Date(habit.archivedAt), timezone) > dateKey;
+  if (
+    habit.archivedAt &&
+    getLocalDateKey(new Date(habit.archivedAt), timezone) <= dateKey
+  ) {
+    return false;
+  }
+  return !habit.archivePeriods.some(
+    (period) =>
+      getLocalDateKey(new Date(period.archivedAt), timezone) <= dateKey &&
+      dateKey < getLocalDateKey(new Date(period.restoredAt), timezone),
+  );
 }
 
 export function addDaysToDateKey(dateKey: string, amount: number): string {

@@ -63,6 +63,7 @@ export class LocalHabitRepository implements HabitRepository {
       startDate: getLocalDateKey(this.now(), state.settings.timezone),
       position: state.habits.filter((item) => !item.archivedAt).length,
       archivedAt: null,
+      archivePeriods: [],
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -123,11 +124,19 @@ export class LocalHabitRepository implements HabitRepository {
         .map((habit) => habit.position),
     );
     const index = this.findHabitIndex(state, id);
+    const current = state.habits[index];
+    const restoredAt = this.now().toISOString();
+    // Igual que el trigger de Supabase: la ventana archivada queda en el
+    // historial para que esos días no cuenten como incumplidos.
+    const archivePeriods = current.archivedAt
+      ? [...current.archivePeriods, { archivedAt: current.archivedAt, restoredAt }]
+      : current.archivePeriods;
     const habit = {
-      ...state.habits[index],
+      ...current,
       archivedAt: null,
+      archivePeriods,
       position: maxPosition + 1,
-      updatedAt: this.now().toISOString(),
+      updatedAt: restoredAt,
     };
     state.habits[index] = habit;
     this.save(state);

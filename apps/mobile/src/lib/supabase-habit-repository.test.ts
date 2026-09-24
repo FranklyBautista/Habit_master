@@ -103,6 +103,15 @@ const checkinRow = {
   note: null,
 };
 
+const archivePeriodRow = {
+  id: "44444444-4444-4444-8444-444444444444",
+  habit_id: HABIT_ID,
+  user_id: USER_ID,
+  archived_at: "2026-09-03T12:00:00.000Z",
+  restored_at: "2026-09-05T12:00:00.000Z",
+  created_at: "2026-09-05T12:00:00.000Z",
+};
+
 function hasStep(interaction: Interaction, method: string) {
   return interaction.steps.some((step) => step.method === method);
 }
@@ -129,12 +138,19 @@ function isCheckinsSelect(interaction: Interaction) {
   );
 }
 
+function isArchivePeriodsSelect(interaction: Interaction) {
+  return interaction.table === "habit_archive_periods";
+}
+
 describe("SupabaseHabitRepository.getState", () => {
   it("maps snake_case rows to camelCase domain types through the schema", async () => {
     const { client } = createFakeClient((interaction) => {
       if (isProfileSelect(interaction)) return { data: profileRow, error: null };
       if (isHabitsSelect(interaction)) return { data: [habitRow], error: null };
       if (isCheckinsSelect(interaction)) return { data: [checkinRow], error: null };
+      if (isArchivePeriodsSelect(interaction)) {
+        return { data: [archivePeriodRow], error: null };
+      }
       throw new Error(`Unexpected interaction: ${JSON.stringify(interaction)}`);
     });
 
@@ -151,6 +167,12 @@ describe("SupabaseHabitRepository.getState", () => {
         startDate: "2026-09-01",
         position: 0,
         archivedAt: null,
+        archivePeriods: [
+          {
+            archivedAt: "2026-09-03T12:00:00.000Z",
+            restoredAt: "2026-09-05T12:00:00.000Z",
+          },
+        ],
         createdAt: "2026-09-01T12:00:00.000Z",
         updatedAt: "2026-09-01T12:00:00.000Z",
       },
@@ -178,6 +200,7 @@ describe("SupabaseHabitRepository.getState", () => {
         return { data: null, error: new Error("permission denied for table habits") };
       }
       if (isCheckinsSelect(interaction)) return { data: [], error: null };
+      if (isArchivePeriodsSelect(interaction)) return { data: [], error: null };
       throw new Error("unexpected");
     });
 
@@ -197,6 +220,7 @@ describe("SupabaseHabitRepository.getState", () => {
       }
       if (isHabitsSelect(interaction)) return { data: [], error: null };
       if (isCheckinsSelect(interaction)) return { data: [], error: null };
+      if (isArchivePeriodsSelect(interaction)) return { data: [], error: null };
       throw new Error("unexpected");
     });
 

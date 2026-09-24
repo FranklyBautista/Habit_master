@@ -28,6 +28,7 @@ const habits: Habit[] = [
     startDate: "2026-03-07",
     position: 0,
     archivedAt: "2026-03-10T07:00:00.000Z",
+    archivePeriods: [],
     createdAt: "2026-03-07T16:00:00.000Z",
     updatedAt: "2026-03-10T07:00:00.000Z",
   },
@@ -41,6 +42,7 @@ const habits: Habit[] = [
     startDate: "2026-03-09",
     position: 1,
     archivedAt: null,
+    archivePeriods: [],
     createdAt: "2026-03-09T16:00:00.000Z",
     updatedAt: "2026-03-09T16:00:00.000Z",
   },
@@ -103,6 +105,103 @@ describe("completion metrics", () => {
       expect.objectContaining({ name: "Temprano", expected: 3, percentage: 100 }),
       expect.objectContaining({ name: "Nuevo", expected: 2, percentage: 50 }),
     ]);
+  });
+});
+
+describe("archive and restore", () => {
+  // Hábito archivado el 4 de abril y restaurado el 7 (hora de Los Ángeles),
+  // marcado todos los días en que estuvo activo.
+  const restored: Habit = {
+    ...habits[1],
+    id: "10000000-0000-4000-8000-000000000003",
+    name: "Leer",
+    startDate: "2026-04-01",
+    archivedAt: null,
+    archivePeriods: [
+      {
+        archivedAt: "2026-04-04T17:00:00.000Z",
+        restoredAt: "2026-04-07T17:00:00.000Z",
+      },
+    ],
+  };
+  const restoredCheckins: HabitCheckin[] = [
+    "2026-04-01",
+    "2026-04-02",
+    "2026-04-03",
+    "2026-04-07",
+    "2026-04-08",
+  ].map((checkinDate, index) => ({
+    id: `00000000-0000-4000-8000-00000000010${index}`,
+    habitId: restored.id,
+    checkinDate,
+    completedAt: `${checkinDate}T18:00:00.000Z`,
+  }));
+  const restoredOptions = { habits: [restored], checkins: restoredCheckins, timezone };
+
+  it("does not count the archived days as missed", () => {
+    for (const date of ["2026-04-04", "2026-04-05", "2026-04-06"]) {
+      expect(calculateDailyCompletion(date, restoredOptions).expected).toBe(0);
+    }
+    expect(
+      calculatePeriodMetrics("2026-04-01", "2026-04-08", restoredOptions),
+    ).toMatchObject({ expected: 5, completed: 5, percentage: 100 });
+  });
+
+  it("keeps the streak across the archived window", () => {
+    expect(calculateStreaks("2026-04-08", restoredOptions)).toEqual({
+      current: 5,
+      best: 5,
+    });
+  });
+
+  it("counts the restore day and an archive-and-restore on the same day", () => {
+    expect(calculateDailyCompletion("2026-04-07", restoredOptions).expected).toBe(1);
+    const sameDay: Habit = {
+      ...restored,
+      archivePeriods: [
+        {
+          archivedAt: "2026-04-05T16:00:00.000Z",
+          restoredAt: "2026-04-05T20:00:00.000Z",
+        },
+      ],
+    };
+    expect(
+      calculateDailyCompletion("2026-04-05", { ...restoredOptions, habits: [sameDay] })
+        .expected,
+    ).toBe(1);
+  });
+
+  it("uses the local date of the archive instant, not the UTC one", () => {
+    // 06:00 UTC del 4 de abril = 23:00 del 3 de abril en Los Ángeles.
+    const lateNight: Habit = {
+      ...restored,
+      archivePeriods: [
+        {
+          archivedAt: "2026-04-04T06:00:00.000Z",
+          restoredAt: "2026-04-07T17:00:00.000Z",
+        },
+      ],
+    };
+    const lateNightOptions = { ...restoredOptions, habits: [lateNight] };
+    expect(calculateDailyCompletion("2026-04-03", lateNightOptions).expected).toBe(0);
+    expect(calculateDailyCompletion("2026-04-02", lateNightOptions).expected).toBe(1);
+  });
+
+  it("combines past windows with a current archive", () => {
+    const archivedAgain: Habit = {
+      ...restored,
+      archivedAt: "2026-04-08T17:00:00.000Z",
+    };
+    const archivedAgainOptions = { ...restoredOptions, habits: [archivedAgain] };
+    expect(calculateDailyCompletion("2026-04-05", archivedAgainOptions).expected).toBe(
+      0,
+    );
+    expect(calculateDailyCompletion("2026-04-07", archivedAgainOptions).expected).toBe(
+      1,
+    );
+    expect(calculateDailyCompletion("2026-04-08", archivedAgainOptions).expected).toBe(
+      0,
+    );
   });
 });
 

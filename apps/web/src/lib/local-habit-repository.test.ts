@@ -89,6 +89,25 @@ describe("LocalHabitRepository", () => {
     ).toBe(true);
   });
 
+  it("keeps the archived window in the history when restoring", () => {
+    const { repository } = createRepository();
+    const habitId = initialState.habits[0].id;
+    repository.archiveHabit(habitId);
+    repository.restoreHabit(habitId);
+    // Restaurar un hábito que no está archivado no inventa periodos.
+    repository.restoreHabit(habitId);
+
+    expect(
+      repository.getState().habits.find((habit) => habit.id === habitId)
+        ?.archivePeriods,
+    ).toEqual([
+      {
+        archivedAt: "2026-08-30T20:00:00.000Z",
+        restoredAt: "2026-08-30T20:00:00.000Z",
+      },
+    ]);
+  });
+
   it("toggles a single idempotent check-in per habit and date", () => {
     const { repository } = createRepository();
     const habitId = initialState.habits[2].id;
