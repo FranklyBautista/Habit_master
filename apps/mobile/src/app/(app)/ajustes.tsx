@@ -5,11 +5,15 @@ import {
   Cloud,
   ExternalLink,
   LogOut,
+  Pencil,
+  Plus,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +24,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/card";
+import { ReminderTimeModal } from "@/components/reminder-time-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -27,22 +32,23 @@ import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 import {
-  getReminderPreference,
+  compareTimes,
+  formatReminderTime,
+  isSameTime,
+  MAX_REMINDERS,
+  type ReminderTime,
+} from "@/lib/notifications/reminder-time";
+import {
+  getReminderSettings,
   hasReminderPermission,
+  newReminderId,
+  type Reminder,
+  type ReminderSettings,
   remindersSupported,
   requestReminderPermission,
-  setReminderPreference,
+  saveReminderSettings,
 } from "@/lib/notifications/reminders";
 import { supabase } from "@/lib/supabase/client";
-
-// Horas preestablecidas en vez de un selector libre: cubre los momentos
-// típicos para revisar hábitos sin necesitar un componente de reloj nuevo.
-const REMINDER_TIME_OPTIONS = [
-  { hour: 8, minute: 0, label: "8:00 a. m." },
-  { hour: 13, minute: 0, label: "1:00 p. m." },
-  { hour: 20, minute: 0, label: "8:00 p. m." },
-  { hour: 21, minute: 30, label: "9:30 p. m." },
-] as const;
 
 // La política vive en la web de producción (`/privacidad`, pública). Es la
 // misma URL que se declara en las fichas de Play Store/App Store.
@@ -69,32 +75,48 @@ export default function AjustesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState(false);
 
-  const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState<{ hour: number; minute: number }>(
-    REMINDER_TIME_OPTIONS[2],
-  );
+  const [reminders, setReminders] = useState<ReminderSettings>({
+    enabled: false,
+    reminders: [],
+  });
   const [reminderError, setReminderError] = useState<string | null>(null);
+  // undefined = modal cerrado; null = creando uno nuevo; Reminder = editando.
+  const [editing, setEditing] = useState<Reminder | null | undefined>(undefined);
 
   useEffect(() => {
     if (!remindersSupported) return;
     let cancelled = false;
-    void Promise.all([getReminderPreference(), hasReminderPermission()])
-      .then(([preference, granted]) => {
+    void Promise.all([getReminderSettings(), hasReminderPermission()])
+      .then(([stored, granted]) => {
         if (cancelled) return;
-        // Si el permiso se revocó desde el sistema, el recordatorio ya no llega:
-        // el toggle debe reflejarlo en vez de mostrarse activo.
-        setReminderEnabled(preference.enabled && granted);
-        setReminderTime({ hour: preference.hour, minute: preference.minute });
+        // Si el permiso se revocó desde el sistema, los recordatorios ya no
+        // llegan: el toggle debe reflejarlo en vez de mostrarse activo.
+        setReminders({ ...stored, enabled: stored.enabled && granted });
       })
       .catch(() => {
-        if (!cancelled) setReminderError("No se pudo leer el recordatorio.");
+        if (!cancelled) setReminderError("No se pudieron leer los recordatorios.");
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  async function toggleReminder(nextEnabled: boolean) {
+  // Guarda y reprograma; si falla, la pantalla vuelve al estado anterior.
+  async function persistReminders(next: ReminderSettings): Promise<boolean> {
+    const previous = reminders;
+    setReminders(next);
+    setReminderError(null);
+    try {
+      await saveReminderSettings(next);
+      return true;
+    } catch {
+      setReminders(previous);
+      setReminderError("No se pudieron guardar los recordatorios. Inténtalo de nuevo.");
+      return false;
+    }
+  }
+
+  async function toggleReminders(nextEnabled: boolean) {
     setReminderError(null);
     try {
       if (nextEnabled && !(await requestReminderPermission())) {
@@ -103,23 +125,35 @@ export default function AjustesScreen() {
         );
         return;
       }
-      await setReminderPreference({ enabled: nextEnabled, ...reminderTime });
-      setReminderEnabled(nextEnabled);
     } catch {
-      setReminderError("No se pudo actualizar el recordatorio. Inténtalo de nuevo.");
+      setReminderError("No se pudo pedir el permiso de notificaciones.");
+      return;
     }
+    await persistReminders({ ...reminders, enabled: nextEnabled });
   }
 
-  async function selectReminderTime(time: { hour: number; minute: number }) {
-    setReminderError(null);
-    const previous = reminderTime;
-    setReminderTime(time);
-    try {
-      await setReminderPreference({ enabled: reminderEnabled, ...time });
-    } catch {
-      setReminderTime(previous);
-      setReminderError("No se pudo cambiar la hora del recordatorio.");
+  async function saveReminderTime(time: ReminderTime): Promise<string | null> {
+    const others = reminders.reminders.filter((r) => r.id !== editing?.id);
+    if (others.some((r) => isSameTime(r, time))) {
+      return "Ya tienes un recordatorio a esa hora.";
     }
+    const updated = editing
+      ? { ...editing, ...time }
+      : { id: newReminderId(), ...time };
+    const saved = await persistReminders({
+      ...reminders,
+      reminders: [...others, updated].sort(compareTimes),
+    });
+    if (!saved) return "No se pudo guardar. Inténtalo de nuevo.";
+    setEditing(undefined);
+    return null;
+  }
+
+  function removeReminder(id: string) {
+    void persistReminders({
+      ...reminders,
+      reminders: reminders.reminders.filter((r) => r.id !== id),
+    });
   }
 
   const timezoneOptions = BASE_TIMEZONES.includes(snapshot.settings.timezone)
@@ -278,19 +312,19 @@ export default function AjustesScreen() {
                   <ThemedText type="small" themeColor="textSecondary">
                     MANTENTE AL DÍA
                   </ThemedText>
-                  <ThemedText type="smallBold">Recordatorio diario</ThemedText>
+                  <ThemedText type="smallBold">Recordatorios diarios</ThemedText>
                 </View>
                 <Bell size={20} color={theme.textSecondary} />
               </View>
 
               <View style={styles.reminderToggleRow}>
                 <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
-                  Recibir una notificación para marcar tus hábitos.
+                  Recibir notificaciones para marcar tus hábitos.
                 </ThemedText>
                 <Switch
-                  accessibilityLabel="Recordatorio diario"
-                  value={reminderEnabled}
-                  onValueChange={(value) => void toggleReminder(value)}
+                  accessibilityLabel="Recordatorios diarios"
+                  value={reminders.enabled}
+                  onValueChange={(value) => void toggleReminders(value)}
                   trackColor={{ true: theme.tint }}
                 />
               </View>
@@ -301,38 +335,83 @@ export default function AjustesScreen() {
                 </ThemedText>
               ) : null}
 
-              {reminderEnabled ? (
-                <View
-                  accessibilityRole="radiogroup"
-                  accessibilityLabel="Hora del recordatorio"
-                  style={styles.timezoneList}
-                >
-                  {REMINDER_TIME_OPTIONS.map((option) => {
-                    const selected =
-                      option.hour === reminderTime.hour &&
-                      option.minute === reminderTime.minute;
+              {reminders.enabled ? (
+                <View style={styles.reminderList}>
+                  {reminders.reminders.map((reminder) => {
+                    const label = formatReminderTime(reminder);
+                    const onlyOne = reminders.reminders.length === 1;
                     return (
-                      <Pressable
-                        key={option.label}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={option.label}
-                        onPress={() => void selectReminderTime(option)}
-                        style={[
-                          styles.timezoneOption,
-                          {
-                            borderColor: selected ? theme.tint : theme.border,
-                            backgroundColor: selected
-                              ? theme.tint + "1A"
-                              : theme.background,
-                          },
-                        ]}
+                      <View
+                        key={reminder.id}
+                        style={[styles.reminderRow, { borderColor: theme.border }]}
                       >
-                        <ThemedText type="small">{option.label}</ThemedText>
-                        {selected ? <Check size={16} color={theme.tint} /> : null}
-                      </Pressable>
+                        <ThemedText type="subtitle" style={styles.reminderTime}>
+                          {label}
+                        </ThemedText>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Editar recordatorio de las ${label}`}
+                          hitSlop={10}
+                          onPress={() => setEditing(reminder)}
+                          style={styles.iconButton}
+                        >
+                          <Pencil size={18} color={theme.text} />
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Eliminar recordatorio de las ${label}`}
+                          accessibilityState={{ disabled: onlyOne }}
+                          disabled={onlyOne}
+                          hitSlop={10}
+                          onPress={() => removeReminder(reminder.id)}
+                          style={[styles.iconButton, onlyOne && styles.buttonDisabled]}
+                        >
+                          <Trash2 size={18} color={theme.text} />
+                        </Pressable>
+                      </View>
                     );
                   })}
+
+                  {reminders.reminders.length < MAX_REMINDERS ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Añadir recordatorio"
+                      onPress={() => setEditing(null)}
+                      style={[
+                        styles.signOutButton,
+                        {
+                          borderColor: theme.border,
+                          backgroundColor: theme.background,
+                        },
+                      ]}
+                    >
+                      <Plus size={18} color={theme.text} />
+                      <ThemedText type="smallBold">Añadir recordatorio</ThemedText>
+                    </Pressable>
+                  ) : (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Puedes tener hasta {MAX_REMINDERS} recordatorios.
+                    </ThemedText>
+                  )}
+
+                  {Platform.OS === "android" ? (
+                    <View style={styles.exactAlarmNote}>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        ¿Los avisos llegan tarde? Permite «Alarmas y recordatorios» para
+                        Constancia en los ajustes de la app.
+                      </ThemedText>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Abrir ajustes de la app"
+                        hitSlop={8}
+                        onPress={() => void Linking.openSettings()}
+                      >
+                        <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                          Abrir ajustes
+                        </ThemedText>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
             </Card>
@@ -375,6 +454,16 @@ export default function AjustesScreen() {
             <ThemedText type="smallBold">Cerrar sesión</ThemedText>
           </Pressable>
         </ScrollView>
+
+        {editing !== undefined ? (
+          <ReminderTimeModal
+            key={editing?.id ?? "new"}
+            open
+            initialTime={editing}
+            onClose={() => setEditing(undefined)}
+            onSave={saveReminderTime}
+          />
+        ) : null}
 
         {toast ? (
           <Pressable
@@ -422,6 +511,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionCopy: { gap: 2 },
+  reminderList: { gap: Spacing.two },
+  reminderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+  },
+  reminderTime: { flex: 1 },
+  iconButton: { padding: Spacing.one },
+  exactAlarmNote: { gap: Spacing.one, marginTop: Spacing.one },
   reminderToggleRow: {
     flexDirection: "row",
     alignItems: "center",
