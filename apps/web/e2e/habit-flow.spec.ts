@@ -19,6 +19,19 @@ test("creates, checks, unchecks, archives and reviews statistics", async ({ page
   await dialog.getByRole("button", { name: "Crear hábito" }).click();
   await expect(page.getByText(habitName, { exact: true })).toBeVisible();
 
+  // Reordenar pasa por la RPC `reorder_habits`: el orden debe sobrevivir a
+  // una recarga (posiciones únicas entre hábitos activos).
+  const rowIndex = async () =>
+    (await page.locator(".habit-manage-row").allInnerTexts()).findIndex((text) =>
+      text.includes(habitName),
+    );
+  const createdIndex = await rowIndex();
+  expect(createdIndex).toBeGreaterThan(0);
+  await page.getByRole("button", { name: `Subir ${habitName}` }).click();
+  await expect.poll(rowIndex).toBe(createdIndex - 1);
+  await page.reload();
+  await expect.poll(rowIndex).toBe(createdIndex - 1);
+
   await page.goto("/hoy");
   const checkbox = page.getByRole("checkbox", { name: habitName });
   await checkbox.click();
@@ -29,6 +42,14 @@ test("creates, checks, unchecks, archives and reviews statistics", async ({ page
   await expect(page.getByRole("checkbox", { name: habitName })).not.toBeChecked();
 
   await page.goto("/habitos");
+  await page.getByRole("button", { name: `Archivar ${habitName}` }).click();
+  await expect(
+    page.getByRole("button", { name: `Restaurar ${habitName}` }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: `Restaurar ${habitName}` }).click();
+  await expect(
+    page.getByRole("button", { name: `Archivar ${habitName}` }),
+  ).toBeVisible();
   await page.getByRole("button", { name: `Archivar ${habitName}` }).click();
   await expect(
     page.getByRole("button", { name: `Restaurar ${habitName}` }),

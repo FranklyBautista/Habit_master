@@ -70,6 +70,29 @@ describe("LocalHabitRepository", () => {
     );
   });
 
+  it("creates a new habit after the highest active position, not the count", () => {
+    const { repository } = createRepository();
+    const active = repository.getState().habits.filter((habit) => !habit.archivedAt);
+    const middle = active.find(
+      (habit) => habit.position !== Math.max(...active.map((h) => h.position)),
+    );
+    repository.archiveHabit(middle!.id);
+    const created = repository.createHabit({
+      name: "Nuevo",
+      description: null,
+      color: "#047857",
+      icon: "sparkles",
+    });
+    const positions = repository
+      .getState()
+      .habits.filter((habit) => !habit.archivedAt)
+      .map((habit) => habit.position);
+    expect(new Set(positions).size).toBe(positions.length);
+    expect(created.position).toBe(
+      Math.max(...active.map((habit) => habit.position)) + 1,
+    );
+  });
+
   it("archives and restores without losing check-ins", () => {
     const { repository } = createRepository();
     const habitId = initialState.habits[0].id;

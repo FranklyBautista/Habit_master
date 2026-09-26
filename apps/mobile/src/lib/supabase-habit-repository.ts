@@ -19,6 +19,15 @@ type CheckinRow = Database["public"]["Tables"]["habit_checkins"]["Row"];
 type ArchivePeriodRow = Database["public"]["Tables"]["habit_archive_periods"]["Row"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
+// Violación de `habits_active_position_unique` (migración 20260926120000):
+// otro dispositivo ocupó la misma posición a la vez. El mensaje de Postgres
+// llegaría en inglés al aviso de sincronización.
+function positionConflictError(error: { code?: string }) {
+  return error.code === "23P01"
+    ? new Error("Tus hábitos cambiaron en otro dispositivo. Vuelve a intentarlo.")
+    : error;
+}
+
 function mapHabit(row: HabitRow, archivePeriods: ArchivePeriod[]): Habit {
   return {
     id: row.id,
@@ -127,7 +136,7 @@ export class SupabaseHabitRepository {
       start_date: startDate,
       position: lastActive ? lastActive.position + 1 : 0,
     });
-    if (error) throw error;
+    if (error) throw positionConflictError(error);
   }
 
   async updateHabit(id: string, input: UpdateHabitInput): Promise<void> {
@@ -144,13 +153,13 @@ export class SupabaseHabitRepository {
   }
 
   async reorderHabits(orderedIds: string[]): Promise<void> {
-    const results = await Promise.all(
-      orderedIds.map((id, position) =>
-        this.client.from("habits").update({ position }).eq("id", id),
-      ),
-    );
-    const failed = results.find((result) => result.error);
-    if (failed?.error) throw failed.error;
+    // Una sola sentencia en la base (migración 20260926120000): las posiciones
+    // de los hábitos activos son únicas y un UPDATE por hábito chocaría a
+    // mitad de un intercambio.
+    const { error } = await this.client.rpc("reorder_habits", {
+      ordered_ids: orderedIds,
+    });
+    if (error) throw error;
   }
 
   async setArchived(id: string, archived: boolean, position?: number): Promise<void> {
@@ -161,7 +170,7 @@ export class SupabaseHabitRepository {
         ...(position === undefined ? {} : { position }),
       })
       .eq("id", id);
-    if (error) throw error;
+    if (error) throw positionConflictError(error);
   }
 
   async setCheckin(habitId: string, checkinDate: string, completed: boolean) {

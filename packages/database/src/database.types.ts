@@ -158,6 +158,7 @@ export type Database = {
         Args: { checkins: Json; habits: Json };
         Returns: undefined;
       };
+      reorder_habits: { Args: { ordered_ids: string[] }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

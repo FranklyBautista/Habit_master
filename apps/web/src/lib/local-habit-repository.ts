@@ -61,7 +61,15 @@ export class LocalHabitRepository implements HabitRepository {
       id: this.createId(),
       frequency: "daily",
       startDate: getLocalDateKey(this.now(), state.settings.timezone),
-      position: state.habits.filter((item) => !item.archivedAt).length,
+      // Máxima posición activa + 1, no un conteo: tras archivar un hábito
+      // intermedio, el conteo repite una posición que sigue ocupada.
+      position:
+        Math.max(
+          -1,
+          ...state.habits
+            .filter((item) => !item.archivedAt)
+            .map((item) => item.position),
+        ) + 1,
       archivedAt: null,
       archivePeriods: [],
       createdAt: timestamp,

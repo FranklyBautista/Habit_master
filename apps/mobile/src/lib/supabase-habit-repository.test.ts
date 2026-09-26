@@ -61,6 +61,14 @@ function createFakeClient(resolve: (interaction: Interaction) => QueryResult) {
       interactions.push(interaction);
       return new FakeQuery(interaction, resolve);
     },
+    rpc(name: string, params: unknown) {
+      const interaction: Interaction = {
+        table: `rpc:${name}`,
+        steps: [{ method: "rpc", args: [params] }],
+      };
+      interactions.push(interaction);
+      return new FakeQuery(interaction, resolve);
+    },
   };
   return { client: client as unknown as SupabaseClient, interactions };
 }
@@ -280,6 +288,59 @@ describe("SupabaseHabitRepository mutations", () => {
       .flatMap((interaction) => interaction.steps)
       .find((step) => step.method === "insert");
     expect(insert?.args[0]).toMatchObject({ position: 0 });
+  });
+
+  it("turns a concurrent position conflict into a readable error", async () => {
+    const { client } = createFakeClient((interaction) => {
+      if (isHabitsPositionLookup(interaction)) {
+        return { data: { position: 4 }, error: null };
+      }
+      return {
+        data: null,
+        error: {
+          code: "23P01",
+          message: "conflicting key value violates exclusion constraint",
+        },
+      };
+    });
+
+    await expect(
+      new SupabaseHabitRepository(client, USER_ID).createHabit(
+        createInput,
+        "2026-09-09",
+      ),
+    ).rejects.toThrow(
+      "Tus hábitos cambiaron en otro dispositivo. Vuelve a intentarlo.",
+    );
+  });
+
+  it("reorders every active habit in a single reorder_habits call", async () => {
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: null,
+    }));
+    const ids = [HABIT_ID, CHECKIN_ID];
+
+    await new SupabaseHabitRepository(client, USER_ID).reorderHabits(ids);
+
+    expect(interactions).toEqual([
+      {
+        table: "rpc:reorder_habits",
+        steps: [{ method: "rpc", args: [{ ordered_ids: ids }] }],
+      },
+    ]);
+  });
+
+  it("surfaces the reorder_habits error when the list is stale", async () => {
+    const stale = {
+      code: "P0001",
+      message: "La lista de hábitos cambió en otro dispositivo.",
+    };
+    const { client } = createFakeClient(() => ({ data: null, error: stale }));
+
+    await expect(
+      new SupabaseHabitRepository(client, USER_ID).reorderHabits([HABIT_ID]),
+    ).rejects.toBe(stale);
   });
 
   it("marks a check-in with an idempotent upsert on (habit_id, checkin_date)", async () => {
