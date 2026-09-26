@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(14);
+select plan(23);
 
 insert into auth.users (id, email)
 values
@@ -36,6 +36,13 @@ values
     '2026-08-31',
     0
   );
+
+insert into public.habit_checkins (habit_id, user_id, checkin_date)
+values (
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  '22222222-2222-4222-8222-222222222222',
+  '2026-08-31'
+);
 
 set local role authenticated;
 set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
@@ -144,6 +151,60 @@ select is_empty(
     returning id$$,
   'a user cannot delete another habit'
 );
+select is_empty(
+  $$select id from public.habit_checkins
+    where habit_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'$$,
+  'a user cannot read another check-in'
+);
+select is_empty(
+  $$update public.habit_checkins
+    set completed_at = now()
+    where habit_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    returning id$$,
+  'a user cannot update another check-in'
+);
+select is_empty(
+  $$delete from public.habit_checkins
+    where habit_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    returning id$$,
+  'a user cannot delete another check-in'
+);
+select throws_ok(
+  $$update public.habit_checkins
+    set user_id = '22222222-2222-4222-8222-222222222222'
+    where habit_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,
+  '42501',
+  null,
+  'a user cannot transfer check-in ownership'
+);
+select results_eq(
+  $$update public.profiles
+    set display_name = 'Propietario'
+    where id = '11111111-1111-4111-8111-111111111111'
+    returning display_name$$,
+  array['Propietario'],
+  'a user can update their profile'
+);
+select is_empty(
+  $$update public.profiles
+    set display_name = 'Intrusión'
+    where id = '22222222-2222-4222-8222-222222222222'
+    returning id$$,
+  'a user cannot update another profile'
+);
+select is_empty(
+  $$delete from public.profiles
+    where id = '22222222-2222-4222-8222-222222222222'
+    returning id$$,
+  'a user cannot delete another profile'
+);
+select throws_ok(
+  $$insert into public.profiles (id)
+    values ('22222222-2222-4222-8222-222222222222')$$,
+  '42501',
+  null,
+  'a user cannot create a profile for another user'
+);
 select results_eq(
   $$delete from public.habit_checkins
     where habit_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -157,6 +218,17 @@ select results_eq(
     returning id$$,
   array['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid],
   'a user can delete their habit'
+);
+
+reset role;
+select results_eq(
+  $$select
+      (select count(*) from public.habit_checkins
+        where user_id = '22222222-2222-4222-8222-222222222222'),
+      (select display_name from public.profiles
+        where id = '22222222-2222-4222-8222-222222222222')$$,
+  $$values (1::bigint, null::text)$$,
+  'another user data is intact after the cross-user attempts'
 );
 
 set local role anon;
