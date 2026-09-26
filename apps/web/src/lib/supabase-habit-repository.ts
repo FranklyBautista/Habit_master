@@ -203,6 +203,33 @@ export class SupabaseHabitRepository {
 
   async importState(state: HabitTrackerState): Promise<void> {
     const validState = habitTrackerStateSchema.parse(state);
+
+    // Hábitos y check-ins van juntos en una función de la base (migración
+    // 20260925120000): la política de RLS solo admite check-ins de ayer a
+    // mañana, y la función es la única vía para subir historial — una vez, a
+    // una cuenta sin check-ins, y todo o nada.
+    const { error: importError } = await this.client.rpc("import_local_data", {
+      habits: validState.habits.map((habit) => ({
+        id: habit.id,
+        name: habit.name,
+        description: habit.description,
+        color: habit.color,
+        icon: habit.icon,
+        frequency: habit.frequency,
+        startDate: habit.startDate,
+        position: habit.position,
+        archivedAt: habit.archivedAt,
+        createdAt: habit.createdAt,
+        updatedAt: habit.updatedAt,
+      })),
+      checkins: validState.checkins.map((checkin) => ({
+        habitId: checkin.habitId,
+        checkinDate: checkin.checkinDate,
+        completedAt: checkin.completedAt,
+      })),
+    });
+    if (importError) throw importError;
+
     const { error: profileError } = await this.client
       .from("profiles")
       .update({
@@ -211,40 +238,5 @@ export class SupabaseHabitRepository {
       })
       .eq("id", this.userId);
     if (profileError) throw profileError;
-
-    if (validState.habits.length) {
-      const { error } = await this.client.from("habits").upsert(
-        validState.habits.map((habit) => ({
-          id: habit.id,
-          user_id: this.userId,
-          name: habit.name,
-          description: habit.description,
-          color: habit.color,
-          icon: habit.icon,
-          frequency: habit.frequency,
-          start_date: habit.startDate,
-          position: habit.position,
-          archived_at: habit.archivedAt,
-          created_at: habit.createdAt,
-          updated_at: habit.updatedAt,
-        })),
-        { onConflict: "id" },
-      );
-      if (error) throw error;
-    }
-
-    if (validState.checkins.length) {
-      const { error } = await this.client.from("habit_checkins").upsert(
-        validState.checkins.map((checkin) => ({
-          id: checkin.id,
-          habit_id: checkin.habitId,
-          user_id: this.userId,
-          checkin_date: checkin.checkinDate,
-          completed_at: checkin.completedAt,
-        })),
-        { onConflict: "habit_id,checkin_date", ignoreDuplicates: true },
-      );
-      if (error) throw error;
-    }
   }
 }

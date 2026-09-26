@@ -106,7 +106,7 @@ select lives_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '2026-08-31'
+      (now() at time zone 'utc')::date
     )$$,
   'a user can check in to their habit'
 );
@@ -118,7 +118,7 @@ select throws_ok(
     ) values (
       'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       '11111111-1111-4111-8111-111111111111',
-      '2026-08-31'
+      (now() at time zone 'utc')::date
     )$$,
   '23503',
   null,
@@ -132,7 +132,7 @@ select throws_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '2026-08-31'
+      (now() at time zone 'utc')::date
     )$$,
   '23505',
   null,
@@ -148,7 +148,7 @@ select results_eq(
   $$delete from public.habit_checkins
     where habit_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
     returning checkin_date$$,
-  array['2026-08-31'::date],
+  array[(now() at time zone 'utc')::date],
   'a user can remove their check-in'
 );
 select results_eq(

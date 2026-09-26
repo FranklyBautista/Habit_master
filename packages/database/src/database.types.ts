@@ -154,7 +154,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      import_local_data: {
+        Args: { checkins: Json; habits: Json };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
