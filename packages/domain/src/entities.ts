@@ -86,6 +86,20 @@ export const habitTrackerStateSchema = z
     settings: userSettingsSchema,
   })
   .superRefine((state, context) => {
+    // Un check-in de un hábito inexistente no aparece en ninguna métrica: en la
+    // importación de datos locales desaparecería en silencio. Supabase ya lo
+    // impide con la clave foránea; aquí se falla de forma visible.
+    const habitIds = new Set(state.habits.map((habit) => habit.id));
+    for (const [index, checkin] of state.checkins.entries()) {
+      if (!habitIds.has(checkin.habitId)) {
+        context.addIssue({
+          code: "custom",
+          message: "Hay check-ins de un hábito que no existe.",
+          path: ["checkins", index, "habitId"],
+        });
+      }
+    }
+
     const uniqueCheckins = new Set<string>();
     for (const checkin of state.checkins) {
       const key = `${checkin.habitId}:${checkin.checkinDate}`;

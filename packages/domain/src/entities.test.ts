@@ -30,25 +30,74 @@ describe("domain schemas", () => {
     ).toBe(false);
   });
 
+  const stateHabit = {
+    id: "10000000-0000-4000-8000-000000000001",
+    name: "Leer",
+    description: null,
+    color: "#047857",
+    icon: "brain",
+    frequency: "daily",
+    startDate: "2026-08-01",
+    position: 0,
+    archivedAt: null,
+    createdAt: "2026-08-01T16:00:00.000Z",
+    updatedAt: "2026-08-01T16:00:00.000Z",
+  };
+  const checkin = {
+    id: "20000000-0000-4000-8000-000000000001",
+    habitId: stateHabit.id,
+    checkinDate: "2026-08-30",
+    completedAt: "2026-08-30T16:00:00.000Z",
+  };
+  const settings = {
+    displayName: "Alex",
+    timezone: "America/Los_Angeles",
+    locale: "es",
+    weekStartsOn: 1,
+  };
+
+  it("accepts check-ins of existing habits, including archived ones", () => {
+    const result = habitTrackerStateSchema.safeParse({
+      version: 1,
+      habits: [{ ...stateHabit, archivedAt: "2026-09-01T16:00:00.000Z" }],
+      checkins: [checkin],
+      settings,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects duplicated check-ins for the same habit and date", () => {
-    const checkin = {
-      id: "20000000-0000-4000-8000-000000000001",
-      habitId: "10000000-0000-4000-8000-000000000001",
-      checkinDate: "2026-08-30",
-      completedAt: "2026-08-30T16:00:00.000Z",
+    const result = habitTrackerStateSchema.safeParse({
+      version: 1,
+      habits: [stateHabit],
+      checkins: [checkin, { ...checkin, id: "20000000-0000-4000-8000-000000000002" }],
+      settings,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      "Un hábito solo puede tener un check-in por fecha.",
+    ]);
+  });
+
+  it("rejects a check-in whose habit does not exist instead of dropping it", () => {
+    const orphan = {
+      ...checkin,
+      id: "20000000-0000-4000-8000-000000000003",
+      habitId: "10000000-0000-4000-8000-000000000099",
     };
     const result = habitTrackerStateSchema.safeParse({
       version: 1,
-      habits: [],
-      checkins: [checkin, { ...checkin, id: "20000000-0000-4000-8000-000000000002" }],
-      settings: {
-        displayName: "Alex",
-        timezone: "America/Los_Angeles",
-        locale: "es",
-        weekStartsOn: 1,
-      },
+      habits: [stateHabit],
+      checkins: [checkin, orphan],
+      settings,
     });
     expect(result.success).toBe(false);
+    expect(result.error?.issues).toMatchObject([
+      {
+        message: "Hay check-ins de un hábito que no existe.",
+        path: ["checkins", 1, "habitId"],
+      },
+    ]);
   });
 });
 

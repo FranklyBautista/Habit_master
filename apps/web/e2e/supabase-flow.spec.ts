@@ -127,3 +127,43 @@ test("imports valid local data only after explicit confirmation", async ({ page 
     page.evaluate(() => localStorage.getItem("habit-tracker:v1")),
   ).resolves.toBeNull();
 });
+
+test("rejects local data with orphan check-ins and keeps it", async ({ page }) => {
+  const timestamp = new Date().toISOString();
+  const localState = JSON.stringify({
+    version: 1,
+    habits: [],
+    checkins: [
+      {
+        id: crypto.randomUUID(),
+        habitId: crypto.randomUUID(),
+        checkinDate: timestamp.slice(0, 10),
+        completedAt: timestamp,
+      },
+    ],
+    settings: {
+      displayName: "Datos huérfanos",
+      timezone: "America/Los_Angeles",
+      locale: "es",
+      weekStartsOn: 1,
+    },
+  });
+
+  await login(page);
+  await page.evaluate(
+    (state) => localStorage.setItem("habit-tracker:v1", state),
+    localState,
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Importar" }).click();
+  await expect(
+    page.getByText(
+      "No se pudieron importar los datos locales. Hay check-ins de un hábito que no existe.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.evaluate(() => localStorage.getItem("habit-tracker:v1")),
+  ).resolves.toBe(localState);
+  await page.evaluate(() => localStorage.removeItem("habit-tracker:v1"));
+});

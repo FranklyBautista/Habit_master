@@ -127,7 +127,8 @@ select is_empty(
 set local role postgres;
 delete from public.habits where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 select is_empty(
-  $$select id from public.habit_archive_periods$$,
+  $$select id from public.habit_archive_periods
+    where habit_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,
   'deleting a habit cascades to its archive periods'
 );
 

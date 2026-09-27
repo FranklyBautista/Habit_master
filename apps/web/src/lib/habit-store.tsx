@@ -199,9 +199,27 @@ export function HabitStoreProvider({
       async importLocalData() {
         const stored = window.localStorage.getItem(habitStorageKey);
         if (!stored) return false;
+        let storedJson: unknown = null;
         try {
-          const state = habitTrackerStateSchema.parse(JSON.parse(stored));
-          const imported = await mutate(() => repository.importState(state));
+          storedJson = JSON.parse(stored);
+        } catch {
+          // Un JSON corrupto se informa igual que un estado inválido.
+        }
+        const parsed = habitTrackerStateSchema.safeParse(storedJson);
+        if (!parsed.success) {
+          // Los mensajes propios del dominio están en español; los de Zod por
+          // defecto no, así que solo se muestran los primeros.
+          const reason = parsed.error.issues.find((issue) => issue.code === "custom");
+          setSnapshot((current) => ({
+            ...current,
+            error: `No se pudieron importar los datos locales. ${
+              reason?.message ?? "No tienen un formato válido."
+            }`,
+          }));
+          return false;
+        }
+        try {
+          const imported = await mutate(() => repository.importState(parsed.data));
           if (imported) {
             window.localStorage.removeItem(habitStorageKey);
             setLocalDataAvailable(false);
