@@ -45,7 +45,6 @@ export type Database = {
           completed_at: string;
           habit_id: string;
           id: string;
-          note: string | null;
           user_id: string;
         };
         Insert: {
@@ -53,7 +52,6 @@ export type Database = {
           completed_at?: string;
           habit_id: string;
           id?: string;
-          note?: string | null;
           user_id: string;
         };
         Update: {
@@ -61,7 +59,6 @@ export type Database = {
           completed_at?: string;
           habit_id?: string;
           id?: string;
-          note?: string | null;
           user_id?: string;
         };
         Relationships: [

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import type { Habit, HabitCheckin } from "./entities";
 import {
   addDaysToDateKey,
   addMonthsToDateKey,
@@ -8,6 +7,7 @@ import {
   getMondayFirstWeekday,
   getMonthDateKeys,
 } from "./dates";
+import type { Habit, HabitCheckin } from "./entities";
 import {
   calculateDailyCompletion,
   calculatePeriodMetrics,

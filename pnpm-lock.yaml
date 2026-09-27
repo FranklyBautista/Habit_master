@@ -248,9 +248,21 @@ importers:
         specifier: 4.5.4
         version: 4.5.4
     devDependencies:
+      '@eslint/js':
+        specifier: 9.39.5
+        version: 9.39.5
+      eslint:
+        specifier: 9.39.5
+        version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
+      eslint-plugin-simple-import-sort:
+        specifier: 14.0.0
+        version: 14.0.0(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      typescript-eslint:
+        specifier: 8.68.0
+        version: 8.68.0(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
 
 packages:
 

@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "pnpm --filter @habit-tracker/web dev",
     "build": "pnpm --filter @habit-tracker/web build",
-    "lint": "pnpm --filter @habit-tracker/web lint",
-    "lint:fix": "pnpm --filter @habit-tracker/web lint:fix",
+    "lint": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:e2e": "pnpm build && pnpm --filter @habit-tracker/web test:e2e",

@@ -1,6 +1,6 @@
-import type { Habit } from "./entities";
-
 import { addDays, addMonths } from "date-fns";
+
+import type { Habit } from "./entities";
 
 function parseDateKey(dateKey: string): Date {
   const [year, month, day] = dateKey.split("-").map(Number);

@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import { SupabaseHabitRepository } from "./supabase-habit-repository";
 
-// SupabaseHabitRepository is plain TypeScript (only `import type` from
-// @supabase/supabase-js and @habit-tracker/database), so it can be exercised
-// against a hand-rolled fake client with no React Native / Expo runtime.
-// These tests lock in the behaviour Fase 8 prioritises: snake_case <-> camelCase
-// mapping through the domain schema, idempotent check-ins, and archived habits.
+// Mismo repositorio que apps/mobile/src/lib/supabase-habit-repository.ts (salvo
+// `importState`, que solo existe en web), probado con el mismo cliente falso:
+// mapeo snake_case <-> camelCase a través del schema del dominio, check-ins
+// idempotentes, hábitos archivados, reorden por RPC e importación de datos
+// locales.
 
 type QueryResult = { data: unknown; error: unknown };
 type Step = { method: string; args: unknown[] };
@@ -410,5 +410,118 @@ describe("SupabaseHabitRepository mutations", () => {
     const restorePayload = restore.steps.find((step) => step.method === "update")
       ?.args[0] as Record<string, unknown>;
     expect(restorePayload).toEqual({ archived_at: null, position: 3 });
+  });
+});
+
+describe("SupabaseHabitRepository.importState", () => {
+  const localState = {
+    version: 1 as const,
+    habits: [
+      {
+        id: HABIT_ID,
+        name: "Beber agua",
+        description: null,
+        color: "#0F766E" as const,
+        icon: "sparkles" as const,
+        frequency: "daily" as const,
+        startDate: "2026-09-01",
+        position: 0,
+        archivedAt: null,
+        archivePeriods: [],
+        createdAt: "2026-09-01T12:00:00.000Z",
+        updatedAt: "2026-09-01T12:00:00.000Z",
+      },
+    ],
+    checkins: [
+      {
+        id: CHECKIN_ID,
+        habitId: HABIT_ID,
+        checkinDate: "2026-09-02",
+        completedAt: "2026-09-02T09:00:00.000Z",
+      },
+    ],
+    settings: {
+      displayName: "Local",
+      timezone: "Europe/Madrid",
+      locale: "es" as const,
+      weekStartsOn: 1 as const,
+    },
+  };
+
+  it("imports habits and check-ins in one import_local_data call, then the profile", async () => {
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: null,
+    }));
+
+    await new SupabaseHabitRepository(client, USER_ID).importState(localState);
+
+    expect(interactions.map((interaction) => interaction.table)).toEqual([
+      "rpc:import_local_data",
+      "profiles",
+    ]);
+    expect(interactions[0].steps[0].args[0]).toEqual({
+      habits: [
+        {
+          id: HABIT_ID,
+          name: "Beber agua",
+          description: null,
+          color: "#0F766E",
+          icon: "sparkles",
+          frequency: "daily",
+          startDate: "2026-09-01",
+          position: 0,
+          archivedAt: null,
+          createdAt: "2026-09-01T12:00:00.000Z",
+          updatedAt: "2026-09-01T12:00:00.000Z",
+        },
+      ],
+      checkins: [
+        {
+          habitId: HABIT_ID,
+          checkinDate: "2026-09-02",
+          completedAt: "2026-09-02T09:00:00.000Z",
+        },
+      ],
+    });
+    expect(interactions[1].steps).toEqual([
+      {
+        method: "update",
+        args: [{ display_name: "Local", timezone: "Europe/Madrid" }],
+      },
+      { method: "eq", args: ["id", USER_ID] },
+    ]);
+  });
+
+  it("does not touch the profile when the import is rejected", async () => {
+    const rejected = {
+      code: "P0001",
+      message:
+        "Esta cuenta ya tiene registros: el historial local solo se puede importar en una cuenta nueva.",
+    };
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: rejected,
+    }));
+
+    await expect(
+      new SupabaseHabitRepository(client, USER_ID).importState(localState),
+    ).rejects.toBe(rejected);
+    expect(interactions).toHaveLength(1);
+  });
+
+  it("validates the state before sending anything", async () => {
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: null,
+    }));
+
+    await expect(
+      new SupabaseHabitRepository(client, USER_ID).importState({
+        ...localState,
+        habits: [],
+      }),
+    ).rejects.toThrow("Hay check-ins de un hábito que no existe.");
+    expect(interactions).toHaveLength(0);
   });
 });

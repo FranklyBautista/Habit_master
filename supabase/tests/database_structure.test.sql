@@ -1,11 +1,17 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(14);
+select plan(15);
 
 select has_table('public', 'profiles', 'profiles exists');
 select has_table('public', 'habits', 'habits exists');
 select has_table('public', 'habit_checkins', 'habit_checkins exists');
+select hasnt_column(
+  'public',
+  'habit_checkins',
+  'note',
+  'habit_checkins has no unused note column'
+);
 
 select policies_are(
   'public',

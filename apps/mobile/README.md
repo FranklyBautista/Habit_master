@@ -12,15 +12,15 @@ repositorio para las convenciones generales. Scaffolded con
    pnpm install
    ```
 
-2. Con Supabase local activo (`pnpm supabase:start` desde la raíz), exporta las
-   variables que este app lee (prefijo `EXPO_PUBLIC_*`, ver
-   `src/lib/supabase/env.ts`). Para probar desde un emulador/dispositivo físico
-   usa la IP LAN de tu máquina, no `localhost` — el dispositivo no puede
+2. Con Supabase local activo (`pnpm supabase:start` desde la raíz), crea
+   `apps/mobile/.env` a partir del ejemplo y rellena las variables que este app
+   lee (prefijo `EXPO_PUBLIC_*`, ver `src/lib/supabase/env.ts`) con los valores
+   de `pnpm exec supabase status`. Para probar desde un emulador/dispositivo
+   físico usa la IP LAN de tu máquina, no `localhost` — el dispositivo no puede
    resolver `localhost` como tu propia laptop:
 
    ```bash
-   export EXPO_PUBLIC_SUPABASE_URL="http://<tu-ip-lan>:54321"
-   export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="<publishable key de `supabase status`>"
+   cp apps/mobile/.env.example apps/mobile/.env
    ```
 
 3. Inicia la app
