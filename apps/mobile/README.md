@@ -1,10 +1,23 @@
 # Constancia — app móvil (Expo)
 
-Parte del workspace pnpm de `habit_tracker`; ver el `CLAUDE.md` de la raíz del
-repositorio para las convenciones generales. Scaffolded con
-[`create-expo-app`](https://www.npmjs.com/package/create-expo-app), Expo SDK 57.
+App Android/iOS del habit tracker. Parte del workspace pnpm de `habit_tracker`:
+ver el `README.md` y el `CLAUDE.md` de la raíz para las convenciones generales y
+`PLANIFICACION_HABIT_TRACKER.md` (Fase 8) para el estado.
 
-## Empezar
+Expo SDK 57 · Expo Router (rutas tipadas) · Supabase · `expo-notifications`.
+Reutiliza `@habit-tracker/domain` (fechas, rachas, métricas) y los tipos de
+`@habit-tracker/database`.
+
+## Estado
+
+- Pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes, en claro y oscuro.
+- Autenticación completa con deep links `habittracker://`.
+- Sincronización sin UI optimista (ADR 0001), igual que la web.
+- Recordatorios locales: hasta 5, con hora manual y alarmas exactas en Android.
+- Probada en un Android real; **iOS sin probar** (sin hardware Apple).
+- Beta interna en Android con el perfil `preview` de EAS.
+
+## Desarrollo
 
 1. Instala dependencias desde la raíz del repo (no dentro de `apps/mobile`):
 
@@ -13,41 +26,64 @@ repositorio para las convenciones generales. Scaffolded con
    ```
 
 2. Con Supabase local activo (`pnpm supabase:start` desde la raíz), crea
-   `apps/mobile/.env` a partir del ejemplo y rellena las variables que este app
-   lee (prefijo `EXPO_PUBLIC_*`, ver `src/lib/supabase/env.ts`) con los valores
-   de `pnpm exec supabase status`. Para probar desde un emulador/dispositivo
-   físico usa la IP LAN de tu máquina, no `localhost` — el dispositivo no puede
-   resolver `localhost` como tu propia laptop:
+   `apps/mobile/.env` a partir del ejemplo y rellena las variables `EXPO_PUBLIC_*`
+   (ver `src/lib/supabase/env.ts`) con los valores de
+   `pnpm exec supabase status`. Para un emulador o teléfono físico usa la IP LAN
+   de tu máquina, no `localhost`:
 
    ```bash
    cp apps/mobile/.env.example apps/mobile/.env
    ```
 
-3. Inicia la app
+3. Inicia Metro y abre la app en el development build instalado:
 
    ```bash
-   pnpm start
+   pnpm --filter @habit-tracker/mobile start
    ```
 
-In the output, you'll find options to open the app in a
+   En WSL con la red en modo NAT, el teléfono no alcanza Metro por la LAN:
+   usa `pnpm --filter @habit-tracker/mobile exec expo start --tunnel`.
+   `pnpm --filter @habit-tracker/mobile web` sirve como banco de pruebas rápido
+   en el navegador (Supabase en `http://localhost:54321`).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Las pantallas están en `src/app` (`(auth)` para el acceso, `(app)` para las
+pestañas).
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Comprobaciones
 
-## Learn more
+```bash
+pnpm --filter @habit-tracker/mobile lint
+pnpm --filter @habit-tracker/mobile typecheck
+pnpm --filter @habit-tracker/mobile test
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+También se ejecutan con `pnpm lint`, `pnpm typecheck` y `pnpm test` desde la
+raíz, y en CI.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Builds con EAS
 
-## Join the community
+Proyecto `@franklyb/habit-tracker-mobile`. Perfiles en `eas.json`:
 
-Join our community of developers creating universal apps.
+| Perfil        | Para qué                                                         | Supabase                               |
+| ------------- | ---------------------------------------------------------------- | -------------------------------------- |
+| `development` | Development build; necesita Metro corriendo en tu PC             | El de tu `.env` local                  |
+| `preview`     | APK independiente para uso diario y beta interna (enlace de EAS) | Producción, desde el entorno `preview` |
+| `production`  | Build firmado para las tiendas (aún sin usar)                    | Pendiente de configurar en EAS         |
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd apps/mobile
+npx eas-cli build --profile development --platform android
+npx eas-cli build --profile preview --platform android
+```
+
+- Los builds en la nube tardan unos 13 minutos y consumen cuota de EAS: agrupa
+  los cambios nativos (permisos, plugins, iconos, módulos) en un solo build. Los
+  cambios solo de JavaScript no necesitan build nuevo en desarrollo.
+- `apps/mobile/.env` no se sube a EAS (está en `.gitignore`). Las variables de
+  los builds independientes viven en EAS:
+  `npx eas-cli env:list --environment preview`.
+- Solo `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: nunca
+  añadas claves secretas, porque las variables `EXPO_PUBLIC_*` van dentro del
+  bundle de la app.
+- Para instalar el APK de `preview` fuera de Play Store hay que permitir
+  "instalar apps de origen desconocido" en Android.

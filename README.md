@@ -11,7 +11,8 @@ de cada fase.
 ## Estado
 
 **MVP web/PWA v1 (Fases 0–7) completado.** **Fase 8 (app móvil con Expo) en
-curso.**
+su tramo final:** la app Android funciona contra producción y empieza la beta
+interna; faltan la prueba en iOS y cerrar la beta.
 
 ### Web / PWA — completado
 
@@ -38,9 +39,9 @@ curso.**
   [`docs/decisions/0001-supabase-sync.md`](docs/decisions/0001-supabase-sync.md)):
   sin UI optimista, revalidación tras cada mutación y al recuperar foco/conexión,
   y migración explícita de los datos locales a la primera cuenta.
-- Base de datos con CLI fijada, configuración local, migración única, seed,
-  tipos TypeScript generados y pruebas pgTAP de estructura, RLS y permisos de
-  Data API; RLS por propiedad en todas las tablas.
+- Base de datos con CLI fijada, configuración local, migraciones versionadas,
+  seed, tipos TypeScript generados y pruebas pgTAP de estructura, RLS y permisos
+  de Data API; RLS por propiedad en todas las tablas.
 - PWA instalable: manifest, iconos, service worker (`public/sw.js`) con caché
   versionado que no almacena respuestas autenticadas, y página offline de solo
   lectura (`/offline`).
@@ -51,22 +52,44 @@ curso.**
   (Playwright, con auditoría de accesibilidad `@axe-core/playwright`): flujo de
   hábitos, PWA y flujo Supabase.
 
+### Seguridad y datos — revisión de calidad cerrada (plan §14)
+
+- Los check-ins solo se aceptan para "hoy" también en la base de datos (RLS con
+  ventana ayer–mañana en UTC); el historial local se importa una sola vez por la
+  RPC `import_local_data`.
+- Archivar y restaurar un hábito ya no altera sus rachas
+  (`habit_archive_periods`, rellenada por un trigger).
+- Posiciones únicas entre hábitos activos y reordenamiento atómico con la RPC
+  `reorder_habits`.
+- El registro no revela qué correos tienen cuenta; el schema rechaza check-ins
+  de hábitos inexistentes.
+- Tests unitarios del repositorio y del store en web, y de cambios de horario
+  reales (DST) en el dominio.
+
 **Limitación conocida:** sin hardware Apple, la instalación en iOS y el recorrido
 en Safari quedan sin verificar; es un riesgo aceptado y documentado en la Fase 7
 que debe resolverse antes de cerrar el criterio de salida de la Fase 8.
 
-### Móvil (Expo) — en curso (Fase 8)
+### Móvil (Expo) — Fase 8, beta interna en Android
 
-- `apps/mobile` creada con `create-expo-app`, Expo SDK 57, Expo Router
-  (rutas tipadas) y TypeScript.
-- Reutiliza `@habit-tracker/domain` y `@habit-tracker/database` desde el
-  workspace.
-- Autenticación funcionando: pantallas de login, registro, recuperación y
-  actualización de contraseña, confirmación por deep link (`habittracker://`),
-  `SessionProvider`, `AuthGate` y almacenamiento seguro de sesión con
-  `expo-secure-store` (cifrado para valores largos).
-- Pantalla **Hoy** provisional; las pantallas de hábitos, calendario y
-  estadísticas llegan en las siguientes iteraciones de la fase.
+- `apps/mobile` con Expo SDK 57, Expo Router (rutas tipadas) y TypeScript;
+  reutiliza `@habit-tracker/domain` y `@habit-tracker/database`.
+- Las cinco pantallas (Hoy, Hábitos, Calendario, Estadísticas y Ajustes), con
+  modo claro/oscuro y alternativa textual accesible en las gráficas.
+- Autenticación completa (login, registro, recuperación y cambio de contraseña)
+  con deep links `habittracker://` probados en Android real y sesión guardada
+  con `expo-secure-store`.
+- Mismo modelo de sincronización que la web (ADR 0001): Supabase bajo las mismas
+  RLS, check-ins idempotentes, revalidación al volver a la app o recuperar
+  conexión y banner de estado de conexión.
+- Recordatorios locales con `expo-notifications`: hasta 5 por dispositivo, con
+  hora manual y alarmas exactas en Android 12+.
+- Iconos, splash, permisos mínimos y política de privacidad propios.
+- Tests unitarios y de componentes con Vitest.
+- Builds con EAS: perfil `development` para desarrollar y `preview` (APK
+  independiente contra Supabase de producción) para la beta interna.
+- **Pendiente:** prueba en iOS, beta interna con testers Android y, antes de las
+  tiendas, eliminar cuenta desde la app y monitoreo de errores.
 
 ### Aún no iniciado
 
@@ -109,18 +132,18 @@ valores de `pnpm exec supabase status` (ver [`.env.example`](.env.example) y
 
 ```bash
 pnpm supabase:start
-# Usa la IP LAN de tu máquina, no localhost, para emulador/dispositivo físico
-export EXPO_PUBLIC_SUPABASE_URL="http://<tu-ip-lan>:54321"
-export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="<publishable key de supabase status>"
+cp apps/mobile/.env.example apps/mobile/.env   # rellena con `supabase status`
 pnpm --filter @habit-tracker/mobile start
 ```
 
-Detalles en [`apps/mobile/README.md`](apps/mobile/README.md).
+Para un teléfono físico usa la IP LAN de tu máquina en vez de `localhost`.
+Detalles, builds de EAS y distribución en
+[`apps/mobile/README.md`](apps/mobile/README.md).
 
 ## Comprobaciones
 
 ```bash
-pnpm lint        # ESLint de la web
+pnpm lint        # ESLint en todos los paquetes
 pnpm typecheck   # todos los paquetes (incluye apps/mobile)
 pnpm test        # Vitest en todos los paquetes
 pnpm test:e2e    # build + Playwright de la web
@@ -166,11 +189,11 @@ viajan en el bundle del cliente).
 habit_tracker/
 ├── apps/
 │   ├── web/                 # Next.js 16 con App Router (PWA desplegada)
-│   └── mobile/              # Expo SDK 57 + Expo Router (Fase 8, en curso)
+│   └── mobile/              # Expo SDK 57 + Expo Router (Fase 8, beta Android)
 ├── packages/
 │   ├── database/            # Tipo Database generado desde Supabase
 │   └── domain/              # Entidades Zod, fechas, rachas y métricas (sin UI)
-├── supabase/                # config, migración única, seed y pruebas pgTAP
+├── supabase/                # config, migraciones, seed y pruebas pgTAP
 ├── docs/
 │   ├── product/             # Alcance, wireframes, sistema visual y fixtures
 │   ├── quality/             # Revisión de calidad del prototipo
