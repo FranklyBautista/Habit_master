@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,13 +16,12 @@ const emailSchema = z.email("Escribe un correo válido.");
 export default function RecoverPasswordScreen() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string>();
-  const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
   const inputStyle = useAuthInputStyle();
 
   async function handleSubmit() {
     setError(undefined);
-    setMessage(undefined);
     const parsed = emailSchema.safeParse(email);
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message);
@@ -40,7 +39,12 @@ export default function RecoverPasswordScreen() {
       setError(authErrorMessage(resetError.message));
       return;
     }
-    setMessage("Si la cuenta existe, recibirás un enlace para continuar.");
+    // Se pasa a la pantalla del código exista o no la cuenta: Supabase no lo
+    // revela y aquí tampoco, para no permitir enumerar correos.
+    router.push({
+      pathname: "/(auth)/verificar",
+      params: { email: parsed.data, type: "recovery" },
+    });
   }
 
   return (
@@ -58,17 +62,16 @@ export default function RecoverPasswordScreen() {
           onChangeText={setEmail}
         />
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-        {message ? <ThemedText>{message}</ThemedText> : null}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Enviar enlace"
+          accessibilityLabel="Enviar código"
           accessibilityState={{ disabled: submitting }}
           disabled={submitting}
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
         >
           <ThemedText type="smallBold">
-            {submitting ? "Enviando…" : "Enviar enlace"}
+            {submitting ? "Enviando…" : "Enviar código"}
           </ThemedText>
         </Pressable>
         <Link href="/(auth)/login">

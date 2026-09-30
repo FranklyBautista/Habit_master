@@ -32,6 +32,11 @@
    hábito, cerrar sesión.
 4. Confirmar que las URLs de redirección de Auth en el dashboard de
    `habit_master` incluyen el dominio de producción.
+5. Confirmar que las plantillas de correo de Auth (*Confirm signup* y *Reset
+   password*) en el dashboard de `habit_master` coinciden con
+   `supabase/templates/confirmation.html` y `recovery.html`: deben incluir
+   `{{ .Token }}` (la app móvil pide el código) además de
+   `{{ .ConfirmationURL }}` (la web usa el enlace).
 
 ## Rollback
 

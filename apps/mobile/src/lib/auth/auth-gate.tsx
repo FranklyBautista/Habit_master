@@ -8,6 +8,10 @@ import { useSession } from "./session-provider";
 // web, it must stay reachable while authenticated (a password-recovery deep
 // link signs the user in with a temporary session before landing there).
 const AUTH_REDIRECT_PATHS = new Set(["login", "registro", "recuperar"]);
+// Reachable without a session, but — unlike the set above — never redirected
+// away once one exists: verifying a recovery code signs the user in, and
+// verificar.tsx must be the one to send them on to actualizar-contrasena.
+const PUBLIC_AUTH_PATHS = new Set([...AUTH_REDIRECT_PATHS, "verificar"]);
 
 export function AuthGate({ children }: PropsWithChildren) {
   const { session, loading } = useSession();
@@ -24,9 +28,12 @@ export function AuthGate({ children }: PropsWithChildren) {
     const isAuthRedirectPage = currentAuthPath
       ? AUTH_REDIRECT_PATHS.has(currentAuthPath)
       : false;
+    const isPublicAuthPage = currentAuthPath
+      ? PUBLIC_AUTH_PATHS.has(currentAuthPath)
+      : false;
     const isConfirmRoute = segments[0] === "auth" && segments[1] === "confirm";
 
-    if (!session && !isAuthRedirectPage && !isConfirmRoute) {
+    if (!session && !isPublicAuthPage && !isConfirmRoute) {
       router.replace("/(auth)/login");
       return;
     }

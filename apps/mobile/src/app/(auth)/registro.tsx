@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,13 +15,19 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
-  const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
   const inputStyle = useAuthInputStyle();
+
+  function goToVerify(address: string) {
+    router.push({
+      pathname: "/(auth)/verificar",
+      params: { email: address, type: "signup" },
+    });
+  }
 
   async function handleSubmit() {
     setError(undefined);
-    setMessage(undefined);
     const parsed = registerSchema.safeParse({ email, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message);
@@ -34,10 +40,10 @@ export default function RegisterScreen() {
     });
     setSubmitting(false);
     if (signUpError) {
-      // Mismo mensaje genérico que un registro nuevo — revelar "ya existe"
-      // permitiría enumerar correos, igual que en recuperar.tsx.
+      // Mismo camino que un registro nuevo — revelar "ya existe" permitiría
+      // enumerar correos, igual que en recuperar.tsx.
       if (signUpError.message.includes("User already registered")) {
-        setMessage("Revisa tu correo para confirmar la cuenta.");
+        goToVerify(parsed.data.email);
         return;
       }
       setError(authErrorMessage(signUpError.message));
@@ -45,8 +51,8 @@ export default function RegisterScreen() {
     }
     // Con confirmación de correo desactivada (como en local), signUp ya deja
     // sesión activa y AuthGate redirige solo. Si está activada, no hay sesión
-    // todavía y toca avisar.
-    if (!data.session) setMessage("Revisa tu correo para confirmar la cuenta.");
+    // todavía y se pide el código que llegó por correo.
+    if (!data.session) goToVerify(parsed.data.email);
   }
 
   return (
@@ -73,7 +79,6 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
         />
         {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-        {message ? <ThemedText>{message}</ThemedText> : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Crear cuenta"
