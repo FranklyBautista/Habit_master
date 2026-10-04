@@ -35,8 +35,11 @@
 5. Confirmar que las plantillas de correo de Auth (*Confirm signup* y *Reset
    password*) en el dashboard de `habit_master` coinciden con
    `supabase/templates/confirmation.html` y `recovery.html`: deben incluir
-   `{{ .Token }}` (la app móvil pide el código) además de
-   `{{ .ConfirmationURL }}` (la web usa el enlace).
+   `{{ .Token }}` (móvil y web piden el código en `/verificar`) además de
+   `{{ .ConfirmationURL }}` (el enlace sigue funcionando en el mismo navegador).
+   El dashboard solo deja editarlas con SMTP propio configurado (*Authentication
+   → Emails → SMTP Settings*); sin él se envían las plantillas por defecto, que
+   no llevan el código y además solo llegan a miembros del equipo del proyecto.
 
 ## Rollback
 

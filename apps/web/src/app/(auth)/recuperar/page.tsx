@@ -8,9 +8,9 @@ export default function RecoverPage() {
       <div className="auth-heading">
         <span className="section-kicker">Recuperación</span>
         <h1>Restablecer contraseña</h1>
-        <p>Enviaremos un enlace seguro si el correo corresponde a una cuenta.</p>
+        <p>Te enviaremos un código si el correo corresponde a una cuenta.</p>
       </div>
-      <AuthForm action={recoverPassword} fields="email" submitLabel="Enviar enlace">
+      <AuthForm action={recoverPassword} fields="email" submitLabel="Enviar código">
         <div className="auth-links">
           <AuthLink href="/login">Volver al inicio de sesión</AuthLink>
         </div>

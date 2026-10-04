@@ -15,7 +15,8 @@ type OtpCodeInputProps = {
 // Casillas de un dígito sobre un único TextInput transparente que cubre la
 // fila. Con un TextInput por casilla, pegar el código, el autocompletado del
 // sistema (`oneTimeCode`) y borrar hacia atrás exigen mover el foco a mano y
-// fallan en Android; así se comportan como en un campo normal.
+// fallan en Android; así se comportan como en un campo normal. Sin
+// `maxLength`: cortaría un "123 456" pegado antes de quitar lo que no es dígito.
 export function OtpCodeInput({
   length,
   value,
@@ -47,7 +48,6 @@ export function OtpCodeInput({
         autoComplete="one-time-code"
         caretHidden
         keyboardType="number-pad"
-        maxLength={length}
         style={styles.hiddenInput}
         textContentType="oneTimeCode"
         value={value}

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { OTP_CODE_LENGTH, parseVerifyType, verifyPath } from "@/lib/auth/otp";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -32,6 +33,18 @@ const registerSchema = z.object({
   password: newPasswordSchema,
 });
 
+const verifySchema = z.object({
+  email: z.email("No se pudo abrir la verificación."),
+  type: z.enum(["signup", "recovery"], "No se pudo abrir la verificación."),
+  code: z
+    .string()
+    .trim()
+    .regex(
+      new RegExp(`^\\d{${OTP_CODE_LENGTH}}$`),
+      `Escribe el código de ${OTP_CODE_LENGTH} dígitos que te enviamos.`,
+    ),
+});
+
 function values(formData: FormData) {
   return {
     email: formData.get("email"),
@@ -51,6 +64,18 @@ function authError(message: string) {
   }
   if (message.includes("Password should contain at least one character")) {
     return "La contraseña debe incluir al menos una letra y un número.";
+  }
+  if (message.includes("New password should be different from the old password")) {
+    return "La contraseña nueva debe ser distinta de la actual.";
+  }
+  if (message.includes("Token has expired or is invalid")) {
+    return "El código no es válido o ha caducado. Pide uno nuevo.";
+  }
+  if (
+    message.includes("For security purposes") ||
+    message.includes("rate limit exceeded")
+  ) {
+    return "Espera un momento antes de pedir otro código.";
   }
   return "No se pudo completar la solicitud. Inténtalo de nuevo.";
 }
@@ -94,12 +119,14 @@ export async function register(
     // here would let an attacker enumerate emails, contradicting the
     // deliberately ambiguous message recoverPassword() already uses below.
     if (error.message.includes("User already registered")) {
-      return { message: "Revisa tu correo para confirmar la cuenta." };
+      redirect(verifyPath("signup", parsed.data.email));
     }
     return { error: authError(error.message) };
   }
+  // With email confirmations off (as in local development and CI) signUp
+  // already returns a session; otherwise the account waits for the code.
   if (data.session) redirect("/hoy");
-  return { message: "Revisa tu correo para confirmar la cuenta." };
+  redirect(verifyPath("signup", parsed.data.email));
 }
 
 export async function recoverPassword(
@@ -114,7 +141,50 @@ export async function recoverPassword(
     redirectTo: `${await origin()}/auth/confirm?next=/actualizar-contrasena`,
   });
   if (error) return { error: authError(error.message) };
-  return { message: "Si la cuenta existe, recibirás un enlace para continuar." };
+  // Supabase answers the same whether or not the account exists, and so does
+  // the verify page ("si la cuenta existe…"), so this reveals nothing.
+  redirect(verifyPath("recovery", parsed.data));
+}
+
+export async function verifyCode(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = verifySchema.safeParse({
+    email: formData.get("email"),
+    type: formData.get("type"),
+    code: formData.get("code"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { email, type, code } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ email, token: code, type });
+  if (error) return { error: authError(error.message) };
+  redirect(type === "recovery" ? "/actualizar-contrasena" : "/hoy");
+}
+
+export async function resendCode(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const email = z.email().safeParse(formData.get("email"));
+  const type = parseVerifyType(formData.get("type"));
+  if (!email.success || !type) return { error: "No se pudo abrir la verificación." };
+
+  const supabase = await createClient();
+  const { error } =
+    type === "signup"
+      ? await supabase.auth.resend({
+          type: "signup",
+          email: email.data,
+          options: { emailRedirectTo: `${await origin()}/auth/confirm?next=/hoy` },
+        })
+      : await supabase.auth.resetPasswordForEmail(email.data, {
+          redirectTo: `${await origin()}/auth/confirm?next=/actualizar-contrasena`,
+        });
+  if (error) return { error: authError(error.message) };
+  return { message: "Te enviamos un código nuevo." };
 }
 
 export async function updatePassword(

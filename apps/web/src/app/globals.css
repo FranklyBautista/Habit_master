@@ -196,6 +196,65 @@ p {
   color: var(--primary-hover);
   padding: 10px 12px;
 }
+/* One-digit boxes under a single transparent input (otp-code-input.tsx): the
+   input keeps native paste, autofill and backspace; the boxes are visual. */
+.otp-input {
+  position: relative;
+  width: fit-content;
+  margin-inline: auto;
+}
+.otp-cells {
+  display: flex;
+  gap: 8px;
+}
+.otp-cell {
+  display: grid;
+  width: 44px;
+  height: 52px;
+  place-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+.otp-cell[data-active] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.form-field .otp-input input {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  padding: 0;
+  letter-spacing: 0;
+  cursor: text;
+}
+.form-field .otp-input input:focus-visible {
+  outline: none;
+}
+.otp-input:has(input:focus-visible) {
+  border-radius: 10px;
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+.form-field:has(.otp-input) label {
+  text-align: center;
+}
+@media (max-width: 380px) {
+  .otp-cells {
+    gap: 6px;
+  }
+  .otp-cell {
+    width: 38px;
+    height: 46px;
+  }
+}
 
 @media (max-width: 639px) {
   .migration-banner,

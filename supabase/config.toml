@@ -261,9 +261,10 @@ pass = "env(GMAIL_SMTP_APP_PASSWORD)"
 admin_email = "env(GMAIL_SMTP_USER)"
 sender_name = "Constancia (local)"
 
-# Plantillas con código y enlace a la vez: la app móvil pide el código
-# (verificar.tsx) y la web sigue usando el enlace. Producción no lee este
-# archivo — copia el mismo HTML en el dashboard (ver docs/setup/DEPLOY.md).
+# Plantillas con código y enlace a la vez: móvil y web piden el código en su
+# pantalla /verificar, y el enlace (PKCE) sigue sirviendo en el mismo navegador
+# que lo pidió. Producción no lee este archivo — copia el mismo HTML en el
+# dashboard, que exige SMTP propio para editarlas (ver docs/setup/DEPLOY.md).
 [auth.email.template.confirmation]
 subject = "Tu código para confirmar la cuenta"
 content_path = "./supabase/templates/confirmation.html"

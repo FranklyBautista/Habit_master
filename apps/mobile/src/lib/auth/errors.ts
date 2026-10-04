@@ -7,7 +7,9 @@ export function authErrorMessage(message: string): string {
   if (message.includes("Password should contain at least one character")) {
     return "La contraseña debe incluir al menos una letra y un número.";
   }
-  // Solo móvil: el flujo de código (verificar.tsx) no existe en la web.
+  if (message.includes("New password should be different from the old password")) {
+    return "La contraseña nueva debe ser distinta de la actual.";
+  }
   if (message.includes("Token has expired or is invalid")) {
     return "El código no es válido o ha caducado. Pide uno nuevo.";
   }

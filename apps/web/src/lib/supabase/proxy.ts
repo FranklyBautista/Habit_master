@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getSupabaseEnvironment } from "./env";
 
-const authPaths = ["/login", "/registro", "/recuperar"];
+const authPaths = ["/login", "/registro", "/recuperar", "/verificar"];
 // Reachable without a session: the offline fallback must render even when a
 // visitor has no cookies yet (first load with no connection, or before login),
 // and the privacy policy is linked from the app stores for anonymous visitors.

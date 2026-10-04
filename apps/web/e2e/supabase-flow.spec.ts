@@ -1,6 +1,8 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import { login, register } from "./helpers/auth";
+import { readEmailedCode } from "./helpers/mailpit";
 
 test("protects private routes and supports login, logout and recovery", async ({
   page,
@@ -15,10 +17,45 @@ test("protects private routes and supports login, logout and recovery", async ({
 
   await page.goto("/recuperar");
   await page.getByLabel("Correo").fill("demo@habit-tracker.local");
-  await page.getByRole("button", { name: "Enviar enlace" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "Si la cuenta existe, recibirás un enlace",
+  await page.getByRole("button", { name: "Enviar código" }).click();
+  await expect(page).toHaveURL(/\/verificar\?type=recovery&email=/);
+  await expect(
+    page.getByText(
+      "Si hay una cuenta con demo@habit-tracker.local, te enviamos un código.",
+    ),
+  ).toBeVisible();
+});
+
+test("recovers the password with the emailed code", async ({ page }) => {
+  const email = `e2e-recovery-${crypto.randomUUID()}@example.test`;
+  await register(page, email);
+  await page.context().clearCookies();
+
+  await page.goto("/recuperar");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByRole("button", { name: "Enviar código" }).click();
+  await expect(page).toHaveURL(/\/verificar\?type=recovery/);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await expect(
+    page.getByRole("button", { name: /Reenviar código en \d+ s/ }),
+  ).toBeDisabled();
+
+  await page.getByLabel("Código de verificación").fill("000000");
+  await page.getByRole("button", { name: "Verificar código" }).click();
+  await expect(page.locator(".form-error")).toHaveText(
+    "El código no es válido o ha caducado. Pide uno nuevo.",
   );
+
+  await page.getByLabel("Código de verificación").fill(await readEmailedCode(email));
+  await page.getByRole("button", { name: "Verificar código" }).click();
+  await expect(page).toHaveURL(/\/actualizar-contrasena$/);
+
+  await page.getByLabel("Contraseña").fill("NuevaClave2026");
+  await page.getByRole("button", { name: "Guardar contraseña" }).click();
+  await expect(page).toHaveURL(/\/hoy$/);
+
+  await page.context().clearCookies();
+  await login(page, { email, password: "NuevaClave2026" });
 });
 
 test("synchronizes mutations between two browser contexts", async ({ browser }) => {
