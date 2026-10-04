@@ -30,6 +30,9 @@ vi.mock("react-native", () => ({
       { onClick: onPress, disabled, "aria-label": accessibilityLabel },
       children,
     ),
+  StyleSheet: { create: <T,>(styles: T) => styles, absoluteFill: {} },
+  View: ({ children }: RNProps) =>
+    createElement("div", { "data-testid": "view" }, children),
   TextInput: ({ accessibilityLabel, value, onChangeText }: RNProps) =>
     createElement("input", {
       "aria-label": accessibilityLabel,
@@ -48,10 +51,11 @@ vi.mock("@/components/themed-text", () => ({
   ThemedText: ({ children, accessibilityRole }: RNProps) =>
     createElement("span", { role: accessibilityRole }, children),
 }));
-vi.mock("@/lib/auth/form-styles", () => ({
-  authFormStyles: {},
-  useAuthInputStyle: () => ({ style: {}, placeholderTextColor: "#000" }),
+vi.mock("@/lib/auth/form-styles", () => ({ authFormStyles: {} }));
+vi.mock("@/hooks/use-theme", () => ({
+  useTheme: () => ({ backgroundElement: "#fff", border: "#ccc", tint: "#0a0" }),
 }));
+vi.mock("@/constants/theme", () => ({ Spacing: { two: 8 } }));
 vi.mock("@/lib/auth/redirect", () => ({
   getMobileAuthRedirect: (next: string) => `habittracker://auth/confirm?next=${next}`,
 }));
@@ -108,6 +112,17 @@ describe("VerifyCodeScreen", () => {
     expect(auth.verifyOtp).toHaveBeenCalledWith(
       expect.objectContaining({ type: "recovery" }),
     );
+  });
+
+  it("shows one digit per box and ignores non-digits and extra characters", () => {
+    renderScreen("signup");
+    fireEvent.change(codeInput(), { target: { value: "1a2 3-4567890" } });
+
+    expect((codeInput() as HTMLInputElement).value).toBe("123456");
+    const boxes = screen
+      .getAllByTestId("view")
+      .filter((view) => view.children.length === 1 && view.textContent?.length === 1);
+    expect(boxes.map((box) => box.textContent)).toEqual(["1", "2", "3", "4", "5", "6"]);
   });
 
   it("rejects a malformed code without calling Supabase", () => {

@@ -1,13 +1,14 @@
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, TextInput } from "react-native";
+import { Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { OtpCodeInput } from "@/components/otp-code-input";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { otpCodeSchema } from "@/lib/auth/credentials-schema";
+import { OTP_CODE_LENGTH, otpCodeSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
+import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -38,7 +39,6 @@ export default function VerifyCodeScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
-  const inputStyle = useAuthInputStyle();
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -121,15 +121,9 @@ export default function VerifyCodeScreen() {
           Escribe el código que enviamos a {email}. Puede tardar un minuto; revisa
           también la carpeta de spam.
         </ThemedText>
-        <TextInput
+        <OtpCodeInput
           accessibilityLabel="Código de verificación"
-          autoComplete="one-time-code"
-          keyboardType="number-pad"
-          maxLength={10}
-          placeholder="Código"
-          placeholderTextColor={inputStyle.placeholderTextColor}
-          style={inputStyle.style}
-          textContentType="oneTimeCode"
+          length={OTP_CODE_LENGTH}
           value={code}
           onChangeText={setCode}
         />

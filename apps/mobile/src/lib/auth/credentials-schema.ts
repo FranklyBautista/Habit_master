@@ -23,10 +23,15 @@ export const registerSchema = z.object({
   password: newPasswordSchema,
 });
 
-// Supabase lets the email OTP length be configured between 6 and 10 digits
-// (`[auth.email] otp_length`); accept the whole range so the app keeps working
-// if production is set to something other than the local default of 6.
+// Must match `[auth.email] otp_length` in supabase/config.toml and "Email OTP
+// Length" in the production dashboard: the verify screen draws one box per
+// digit, so the length is fixed rather than Supabase's allowed 6–10 range.
+export const OTP_CODE_LENGTH = 6;
+
 export const otpCodeSchema = z
   .string()
   .trim()
-  .regex(/^\d{6,10}$/, "Escribe el código de 6 dígitos que te enviamos.");
+  .regex(
+    new RegExp(`^\\d{${OTP_CODE_LENGTH}}$`),
+    `Escribe el código de ${OTP_CODE_LENGTH} dígitos que te enviamos.`,
+  );
