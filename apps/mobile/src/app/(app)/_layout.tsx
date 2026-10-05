@@ -16,32 +16,29 @@ import { ThemedView } from "@/components/themed-view";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { HabitStoreProvider } from "@/lib/habit-store";
+import { initialLoadErrorDetail, loadWithRetry } from "@/lib/initial-load";
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseHabitRepository } from "@/lib/supabase-habit-repository";
 
 export default function AppLayout() {
   const { session, loading } = useSession();
   const [initialState, setInitialState] = useState<HabitTrackerState | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ detail?: string } | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const theme = useTheme();
 
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
-    new SupabaseHabitRepository(supabase, session.user.id)
-      .getState()
+    const repository = new SupabaseHabitRepository(supabase, session.user.id);
+    loadWithRetry(() => repository.getState())
       .then((state) => {
         if (!cancelled) setInitialState(state);
       })
       .catch((reason: unknown) => {
-        if (!cancelled) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "No se pudo cargar tu información.",
-          );
-        }
+        if (cancelled) return;
+        console.warn("Initial habit state load failed", reason);
+        setFailure({ detail: initialLoadErrorDetail(reason) });
       });
     return () => {
       cancelled = true;
@@ -55,19 +52,27 @@ export default function AppLayout() {
   // Sin esto, abrir la app sin conexión (o que la primera carga falle por
   // cualquier otro motivo) dejaba una pantalla de error sin salida: no había
   // forma de reintentar sin forzar el cierre de la app.
-  if (error) {
+  if (failure) {
     return (
       <ThemedView
         style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16 }}
       >
         <ThemedText style={{ textAlign: "center", paddingHorizontal: 24 }}>
-          {error}
+          No se pudo cargar tu información. Revisa tu conexión e inténtalo de nuevo.
         </ThemedText>
+        {failure.detail ? (
+          <ThemedText
+            type="small"
+            style={{ textAlign: "center", paddingHorizontal: 24, opacity: 0.7 }}
+          >
+            Detalle: {failure.detail}
+          </ThemedText>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Reintentar"
           onPress={() => {
-            setError(null);
+            setFailure(null);
             setLoadAttempt((attempt) => attempt + 1);
           }}
           style={{
