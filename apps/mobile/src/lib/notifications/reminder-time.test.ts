@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   compareTimes,
+  formatReminderDate,
   formatReminderTime,
   from12Hour,
   isSameTime,
@@ -102,5 +103,25 @@ describe("compareTimes", () => {
       { hour: 8, minute: 30 },
       { hour: 20, minute: 0 },
     ]);
+  });
+});
+
+describe("formatReminderDate", () => {
+  const now = new Date(2026, 9, 5, 15, 0);
+
+  it("says today for a time later the same day", () => {
+    expect(formatReminderDate(new Date(2026, 9, 5, 20, 0), now)).toBe("hoy 8:00 p. m.");
+  });
+
+  it("says tomorrow for the next day", () => {
+    expect(formatReminderDate(new Date(2026, 9, 6, 7, 5), now)).toBe(
+      "mañana 7:05 a. m.",
+    );
+  });
+
+  it("falls back to day/month further ahead", () => {
+    expect(formatReminderDate(new Date(2026, 9, 12, 9, 0), now)).toBe(
+      "el 12/10 9:00 a. m.",
+    );
   });
 });

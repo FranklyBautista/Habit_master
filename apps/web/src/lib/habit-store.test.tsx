@@ -17,9 +17,13 @@ import { habitStorageKey } from "./local-habit-repository";
 // SupabaseHabitRepository; se sustituyen por un repositorio falso para probar
 // `mutate()` / `refresh()` sin red (ADR 0001: sin UI optimista, el servidor es
 // la fuente de verdad y cada escritura va seguida de un getState completo).
-const { repository } = vi.hoisted(() => ({
+const { repository, browser } = vi.hoisted(() => ({
+  // Zona "del navegador"; por defecto la del perfil del fixture para que la
+  // sincronización automática no se dispare en los demás tests.
+  browser: { timeZone: "America/Santo_Domingo" as string | undefined },
   repository: {
     getState: vi.fn(),
+    updateSettings: vi.fn(),
     setCheckin: vi.fn(),
     reorderHabits: vi.fn(),
     setArchived: vi.fn(),
@@ -28,9 +32,13 @@ const { repository } = vi.hoisted(() => ({
 }));
 
 vi.mock("./supabase/client", () => ({ createClient: () => ({}) }));
+vi.mock("./browser-timezone", () => ({
+  getBrowserTimeZone: () => browser.timeZone,
+}));
 vi.mock("./supabase-habit-repository", () => ({
   SupabaseHabitRepository: class {
     getState = repository.getState;
+    updateSettings = repository.updateSettings;
     setCheckin = repository.setCheckin;
     reorderHabits = repository.reorderHabits;
     setArchived = repository.setArchived;
@@ -117,6 +125,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  browser.timeZone = TIMEZONE;
 });
 
 describe("getTodaySnapshot", () => {
@@ -442,5 +451,51 @@ describe("HabitStoreProvider local data import", () => {
       "Esta cuenta ya tiene registros: el historial local solo se puede importar en una cuenta nueva.",
     );
     expect(window.localStorage.getItem(habitStorageKey)).toBe(localState);
+  });
+});
+
+describe("HabitStoreProvider browser timezone", () => {
+  const utcState = () => makeState({ settings: { ...settings, timezone: "UTC" } });
+
+  it("saves the browser's timezone when the profile has another one", async () => {
+    browser.timeZone = "America/Mexico_City";
+    repository.updateSettings.mockResolvedValue(undefined);
+    repository.getState.mockResolvedValue(
+      makeState({ settings: { ...settings, timezone: "America/Mexico_City" } }),
+    );
+
+    const { result } = renderStore(utcState());
+
+    await waitFor(() =>
+      expect(result.current.snapshot.settings.timezone).toBe("America/Mexico_City"),
+    );
+    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+    expect(repository.updateSettings).toHaveBeenCalledWith({
+      ...settings,
+      timezone: "America/Mexico_City",
+    });
+  });
+
+  it("leaves the profile alone when it already matches the browser", async () => {
+    renderStore();
+    await act(async () => {});
+
+    expect(repository.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("does not retry in a loop when saving fails, but tries again on focus", async () => {
+    browser.timeZone = "America/Mexico_City";
+    repository.updateSettings.mockRejectedValue(new Error("sin red"));
+    repository.getState.mockResolvedValue(utcState());
+
+    const { result } = renderStore(utcState());
+    await waitFor(() => expect(result.current.snapshot.error).toBe("sin red"));
+    await act(async () => {});
+    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    await waitFor(() => expect(repository.updateSettings).toHaveBeenCalledTimes(2));
   });
 });

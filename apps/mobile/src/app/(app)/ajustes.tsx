@@ -1,7 +1,6 @@
 import { userSettingsSchema } from "@habit-tracker/domain";
 import {
   Bell,
-  Check,
   Cloud,
   ExternalLink,
   LogOut,
@@ -33,12 +32,14 @@ import { useSession } from "@/lib/auth/session-provider";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 import {
   compareTimes,
+  formatReminderDate,
   formatReminderTime,
   isSameTime,
   MAX_REMINDERS,
   type ReminderTime,
 } from "@/lib/notifications/reminder-time";
 import {
+  getNextReminderDate,
   getReminderSettings,
   hasReminderPermission,
   newReminderId,
@@ -47,22 +48,13 @@ import {
   remindersSupported,
   requestReminderPermission,
   saveReminderSettings,
+  scheduleTestReminder,
 } from "@/lib/notifications/reminders";
 import { supabase } from "@/lib/supabase/client";
 
 // La política vive en la web de producción (`/privacidad`, pública). Es la
 // misma URL que se declara en las fichas de Play Store/App Store.
 const PRIVACY_URL = "https://habit-master-web.vercel.app/privacidad";
-
-// Same fixed shortlist the web Ajustes screen offers; the profile's current
-// timezone is prepended when it isn't already one of these so it never
-// disappears from the list.
-const BASE_TIMEZONES = [
-  "America/Los_Angeles",
-  "America/Mexico_City",
-  "America/Bogota",
-  "Europe/Madrid",
-];
 
 export default function AjustesScreen() {
   const snapshot = useHabitStore();
@@ -71,7 +63,6 @@ export default function AjustesScreen() {
   const theme = useTheme();
 
   const [name, setName] = useState(snapshot.settings.displayName);
-  const [timezone, setTimezone] = useState(snapshot.settings.timezone);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState(false);
 
@@ -80,6 +71,9 @@ export default function AjustesScreen() {
     reminders: [],
   });
   const [reminderError, setReminderError] = useState<string | null>(null);
+  // Diagnóstico: `undefined` mientras se consulta al sistema.
+  const [nextReminder, setNextReminder] = useState<Date | null | undefined>();
+  const [testReminderAt, setTestReminderAt] = useState<Date | null>(null);
   // undefined = modal cerrado; null = creando uno nuevo; Reminder = editando.
   const [editing, setEditing] = useState<Reminder | null | undefined>(undefined);
 
@@ -92,6 +86,7 @@ export default function AjustesScreen() {
         // Si el permiso se revocó desde el sistema, los recordatorios ya no
         // llegan: el toggle debe reflejarlo en vez de mostrarse activo.
         setReminders({ ...stored, enabled: stored.enabled && granted });
+        refreshNextReminder();
       })
       .catch(() => {
         if (!cancelled) setReminderError("No se pudieron leer los recordatorios.");
@@ -101,6 +96,21 @@ export default function AjustesScreen() {
     };
   }, []);
 
+  function refreshNextReminder() {
+    getNextReminderDate()
+      .then(setNextReminder)
+      .catch(() => setNextReminder(null));
+  }
+
+  async function sendTestReminder() {
+    setReminderError(null);
+    try {
+      setTestReminderAt(await scheduleTestReminder());
+    } catch {
+      setReminderError("No se pudo programar el aviso de prueba.");
+    }
+  }
+
   // Guarda y reprograma; si falla, la pantalla vuelve al estado anterior.
   async function persistReminders(next: ReminderSettings): Promise<boolean> {
     const previous = reminders;
@@ -108,6 +118,7 @@ export default function AjustesScreen() {
     setReminderError(null);
     try {
       await saveReminderSettings(next);
+      refreshNextReminder();
       return true;
     } catch {
       setReminders(previous);
@@ -156,14 +167,12 @@ export default function AjustesScreen() {
     });
   }
 
-  const timezoneOptions = BASE_TIMEZONES.includes(snapshot.settings.timezone)
-    ? BASE_TIMEZONES
-    : [snapshot.settings.timezone, ...BASE_TIMEZONES];
-
   async function save() {
     const result = userSettingsSchema.safeParse({
       displayName: name,
-      timezone,
+      // Solo se edita el nombre: la zona la mantiene sincronizada el store con
+      // la del teléfono.
+      timezone: snapshot.settings.timezone,
       locale: "es",
       weekStartsOn: 1,
     });
@@ -239,39 +248,11 @@ export default function AjustesScreen() {
               <ThemedText type="small" themeColor="textSecondary">
                 Zona horaria
               </ThemedText>
+              <ThemedText>{snapshot.settings.timezone}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Se usa para asignar cada check-in al día correcto.
+                Se toma automáticamente del reloj del teléfono y sirve para asignar cada
+                check-in al día correcto.
               </ThemedText>
-              <View
-                accessibilityRole="radiogroup"
-                accessibilityLabel="Zona horaria"
-                style={styles.timezoneList}
-              >
-                {timezoneOptions.map((option) => {
-                  const selected = option === timezone;
-                  return (
-                    <Pressable
-                      key={option}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={option}
-                      onPress={() => setTimezone(option)}
-                      style={[
-                        styles.timezoneOption,
-                        {
-                          borderColor: selected ? theme.tint : theme.border,
-                          backgroundColor: selected
-                            ? theme.tint + "1A"
-                            : theme.background,
-                        },
-                      ]}
-                    >
-                      <ThemedText type="small">{option}</ThemedText>
-                      {selected ? <Check size={16} color={theme.tint} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
             </View>
 
             <View style={styles.field}>
@@ -393,6 +374,33 @@ export default function AjustesScreen() {
                       Puedes tener hasta {MAX_REMINDERS} recordatorios.
                     </ThemedText>
                   )}
+
+                  <View style={styles.exactAlarmNote}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {nextReminder === undefined
+                        ? "Comprobando los avisos programados…"
+                        : nextReminder
+                          ? `Próximo aviso: ${formatReminderDate(nextReminder)}.`
+                          : "El sistema no tiene ningún aviso programado. Desactiva y vuelve a activar los recordatorios."}
+                    </ThemedText>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Probar recordatorio"
+                      hitSlop={8}
+                      onPress={() => void sendTestReminder()}
+                    >
+                      <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                        Probar recordatorio
+                      </ThemedText>
+                    </Pressable>
+                    {testReminderAt ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Te llegará un aviso de prueba{" "}
+                        {formatReminderDate(testReminderAt)}. Sal de la app o bloquea el
+                        teléfono para comprobar que llega a su hora.
+                      </ThemedText>
+                    ) : null}
+                  </View>
 
                   {Platform.OS === "android" ? (
                     <View style={styles.exactAlarmNote}>
@@ -535,16 +543,6 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
     padding: Spacing.three,
     fontSize: 16,
-  },
-  timezoneList: { gap: Spacing.two, marginTop: Spacing.one },
-  timezoneOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
   },
   error: { color: "#DC2626" },
   primaryButton: {

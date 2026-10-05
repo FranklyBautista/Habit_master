@@ -25,7 +25,9 @@ export default function SettingsPage() {
     const form = new FormData(event.currentTarget);
     const result = userSettingsSchema.safeParse({
       displayName: form.get("name"),
-      timezone: form.get("timezone"),
+      // Solo se edita el nombre: la zona la mantiene sincronizada el store con
+      // la del navegador.
+      timezone: snapshot.settings.timezone,
       locale: "es",
       weekStartsOn: 1,
     });
@@ -87,19 +89,14 @@ export default function SettingsPage() {
             <FormField
               htmlFor="timezone"
               label="Zona horaria"
-              hint="Se usa para asignar cada check-in al día correcto."
+              hint="Se toma automáticamente del reloj de tu dispositivo y sirve para asignar cada check-in al día correcto."
             >
-              <select
+              <input
                 id="timezone"
-                name="timezone"
-                defaultValue={snapshot.settings.timezone}
+                value={snapshot.settings.timezone}
+                readOnly
                 aria-describedby="timezone-hint"
-              >
-                <option>America/Los_Angeles</option>
-                <option>America/Mexico_City</option>
-                <option>America/Bogota</option>
-                <option>Europe/Madrid</option>
-              </select>
+              />
             </FormField>
             <FormField htmlFor="week" label="La semana inicia">
               <select id="week" defaultValue="monday" disabled>

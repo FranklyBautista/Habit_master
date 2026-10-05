@@ -19,6 +19,7 @@ import {
 } from "react";
 import { AppState } from "react-native";
 
+import { getDeviceTimeZone } from "@/lib/device-timezone";
 import { supabase } from "@/lib/supabase/client";
 
 import { SupabaseHabitRepository } from "./supabase-habit-repository";
@@ -88,6 +89,9 @@ export function HabitStoreProvider({
   // the most recently *started* call allowed to write the snapshot (and
   // its syncing/error state); anything superseded is discarded quietly.
   const requestIdRef = useRef(0);
+  // Zona del teléfono que ya se intentó guardar desde la última vez que la app
+  // pasó a primer plano: evita reintentar en bucle si la escritura falla.
+  const attemptedTimeZoneRef = useRef<string | null>(null);
   const repository = useMemo(
     () => new SupabaseHabitRepository(supabase, userId),
     [userId],
@@ -220,7 +224,10 @@ export function HabitStoreProvider({
   useEffect(() => {
     const revalidate = () => void refresh();
     const appStateSubscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") revalidate();
+      if (state !== "active") return;
+      // Al volver a la app (p. ej. tras un viaje) se vuelve a comparar la zona.
+      attemptedTimeZoneRef.current = null;
+      revalidate();
     });
     const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
       // `isConnected` is `boolean | null` — treat "unknown" (null) as online so
@@ -239,6 +246,19 @@ export function HabitStoreProvider({
       netInfoUnsubscribe();
     };
   }, [refresh]);
+
+  // El perfil sigue la zona horaria del teléfono; no hay selector. Se guarda
+  // como cualquier otra escritura (servidor primero y re-consulta, ADR 0001).
+  const { settings, online } = snapshot;
+  useEffect(() => {
+    const deviceTimeZone = getDeviceTimeZone();
+    if (!deviceTimeZone || !online || settings.timezone === deviceTimeZone) return;
+    if (attemptedTimeZoneRef.current === deviceTimeZone) return;
+    attemptedTimeZoneRef.current = deviceTimeZone;
+    void mutate(() =>
+      repository.updateSettings({ ...settings, timezone: deviceTimeZone }),
+    );
+  }, [mutate, online, repository, settings]);
 
   const value = useMemo(() => ({ snapshot, actions }), [actions, snapshot]);
 

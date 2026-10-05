@@ -20,6 +20,7 @@ import {
   useState,
 } from "react";
 
+import { getBrowserTimeZone } from "./browser-timezone";
 import { habitStorageKey } from "./local-habit-repository";
 import { createClient } from "./supabase/client";
 import { SupabaseHabitRepository } from "./supabase-habit-repository";
@@ -83,6 +84,9 @@ export function HabitStoreProvider({
   // the most recently *started* call allowed to write the snapshot (and
   // its syncing/error state); anything superseded is discarded quietly.
   const requestIdRef = useRef(0);
+  // Zona del navegador que ya se intentó guardar desde el último `focus`:
+  // evita reintentar en bucle si la escritura falla.
+  const attemptedTimeZoneRef = useRef<string | null>(null);
   const repository = useMemo(
     () => new SupabaseHabitRepository(createClient(), userId),
     [userId],
@@ -241,13 +245,31 @@ export function HabitStoreProvider({
   useEffect(() => {
     setLocalDataAvailable(Boolean(window.localStorage.getItem(habitStorageKey)));
     const revalidate = () => void refresh();
-    window.addEventListener("focus", revalidate);
+    // Al volver a la pestaña (p. ej. tras un viaje) se vuelve a comparar la zona.
+    const onFocus = () => {
+      attemptedTimeZoneRef.current = null;
+      revalidate();
+    };
+    window.addEventListener("focus", onFocus);
     window.addEventListener("online", revalidate);
     return () => {
-      window.removeEventListener("focus", revalidate);
+      window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", revalidate);
     };
   }, [refresh]);
+
+  // El perfil sigue la zona horaria del navegador; no hay selector. Se guarda
+  // como cualquier otra escritura (servidor primero y re-consulta, ADR 0001).
+  const { settings } = snapshot;
+  useEffect(() => {
+    const browserTimeZone = getBrowserTimeZone();
+    if (!browserTimeZone || settings.timezone === browserTimeZone) return;
+    if (attemptedTimeZoneRef.current === browserTimeZone) return;
+    attemptedTimeZoneRef.current = browserTimeZone;
+    void mutate(() =>
+      repository.updateSettings({ ...settings, timezone: browserTimeZone }),
+    );
+  }, [mutate, repository, settings]);
 
   const value = useMemo(
     () => ({ snapshot, actions, localDataAvailable }),

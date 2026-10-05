@@ -69,3 +69,16 @@ export function parseManualTime(
 export function compareTimes(a: ReminderTime, b: ReminderTime): number {
   return a.hour * 60 + a.minute - (b.hour * 60 + b.minute);
 }
+
+// "hoy 8:00 p. m.", "mañana 7:30 a. m." o "el 12/10 9:00 a. m.", con el reloj
+// y la zona del teléfono, para el diagnóstico de Ajustes.
+export function formatReminderDate(date: Date, now: Date = new Date()): string {
+  const time = formatReminderTime({ hour: date.getHours(), minute: date.getMinutes() });
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.round(
+    (startOfDay(date).getTime() - startOfDay(now).getTime()) / 86_400_000,
+  );
+  if (days === 0) return `hoy ${time}`;
+  if (days === 1) return `mañana ${time}`;
+  return `el ${date.getDate()}/${date.getMonth() + 1} ${time}`;
+}

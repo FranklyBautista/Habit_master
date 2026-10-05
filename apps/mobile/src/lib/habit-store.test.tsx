@@ -16,17 +16,24 @@ import {
 // fake repository so the tests drive `mutate()` / `refresh()` directly.
 type NetInfoState = { isConnected: boolean | null };
 
-const { repository, netInfo } = vi.hoisted(() => ({
+const { repository, netInfo, device } = vi.hoisted(() => ({
   repository: {
     getState: vi.fn(),
     setCheckin: vi.fn(),
+    updateSettings: vi.fn(),
   },
+  // Zona "del teléfono"; por defecto la misma del perfil del fixture para que
+  // la sincronización automática no se dispare en los demás tests.
+  device: { timeZone: "America/Santo_Domingo" as string | undefined },
   netInfo: {
     listener: null as ((state: { isConnected: boolean | null }) => void) | null,
   },
 }));
 
 vi.mock("@/lib/supabase/client", () => ({ supabase: {} }));
+vi.mock("@/lib/device-timezone", () => ({
+  getDeviceTimeZone: () => device.timeZone,
+}));
 vi.mock("react-native", () => ({
   AppState: { addEventListener: () => ({ remove: () => {} }) },
 }));
@@ -49,6 +56,7 @@ vi.mock("./supabase-habit-repository", () => ({
   SupabaseHabitRepository: class {
     getState = repository.getState;
     setCheckin = repository.setCheckin;
+    updateSettings = repository.updateSettings;
   },
 }));
 
@@ -346,5 +354,81 @@ describe("HabitStoreProvider connectivity", () => {
 
     expect(result.current.online).toBe(true);
     expect(repository.getState).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("HabitStoreProvider device timezone", () => {
+  const initialState: HabitTrackerState = {
+    version: 1,
+    settings: { ...settings, timezone: "UTC" },
+    habits: [],
+    checkins: [],
+  };
+
+  function renderStore() {
+    return renderHook(() => useHabitStore(), {
+      wrapper: ({ children }: PropsWithChildren) => (
+        <HabitStoreProvider initialState={initialState} userId={USER_ID}>
+          {children}
+        </HabitStoreProvider>
+      ),
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  afterEach(() => {
+    device.timeZone = TIMEZONE;
+  });
+
+  it("saves the phone's timezone when the profile has another one", async () => {
+    device.timeZone = "America/Mexico_City";
+    repository.updateSettings.mockResolvedValue(undefined);
+    repository.getState.mockResolvedValue({
+      ...initialState,
+      settings: { ...initialState.settings, timezone: "America/Mexico_City" },
+    });
+
+    const { result } = renderStore();
+
+    await waitFor(() =>
+      expect(result.current.settings.timezone).toBe("America/Mexico_City"),
+    );
+    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+    expect(repository.updateSettings).toHaveBeenCalledWith({
+      ...initialState.settings,
+      timezone: "America/Mexico_City",
+    });
+  });
+
+  it("leaves the profile alone when it already matches the phone", async () => {
+    device.timeZone = "UTC";
+
+    renderStore();
+    await act(async () => {});
+
+    expect(repository.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("does not retry in a loop when saving the timezone fails", async () => {
+    device.timeZone = "America/Mexico_City";
+    repository.updateSettings.mockRejectedValue(new Error("sin red"));
+
+    const { result } = renderStore();
+
+    await waitFor(() => expect(result.current.error).toBe("sin red"));
+    await act(async () => {});
+    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+    expect(result.current.settings.timezone).toBe("UTC");
+  });
+
+  it("keeps the profile timezone if the phone does not report one", async () => {
+    device.timeZone = undefined;
+
+    renderStore();
+    await act(async () => {});
+
+    expect(repository.updateSettings).not.toHaveBeenCalled();
   });
 });

@@ -10,8 +10,9 @@ const notifications = vi.hoisted(() => ({
   getAllScheduledNotificationsAsync: vi.fn(),
   cancelScheduledNotificationAsync: vi.fn(),
   scheduleNotificationAsync: vi.fn(),
+  getNextTriggerDateAsync: vi.fn(),
   AndroidImportance: { DEFAULT: 3 },
-  SchedulableTriggerInputTypes: { DAILY: "daily" },
+  SchedulableTriggerInputTypes: { DAILY: "daily", TIME_INTERVAL: "timeInterval" },
 }));
 
 vi.mock("react-native", () => ({ Platform: { OS: "android" } }));
@@ -25,11 +26,14 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
 vi.stubGlobal("__DEV__", false);
 
 const {
+  getNextReminderDate,
   getReminderSettings,
   hasReminderPermission,
   parseStoredSettings,
+  reapplyReminderSettings,
   requestReminderPermission,
   saveReminderSettings,
+  scheduleTestReminder,
 } = await import("./reminders");
 
 type ScheduleRequest = {
@@ -206,5 +210,106 @@ describe("permissions", () => {
 
     await expect(hasReminderPermission()).resolves.toBe(false);
     expect(notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe("reapplyReminderSettings", () => {
+  const settings = {
+    enabled: true,
+    reminders: [{ id: "a", hour: 8, minute: 15 }],
+  };
+
+  it("reschedules the stored reminders when enabled and permitted", async () => {
+    await saveReminderSettings(settings);
+    notifications.getPermissionsAsync.mockResolvedValue({ granted: true });
+    notifications.scheduleNotificationAsync.mockClear();
+
+    await reapplyReminderSettings();
+
+    expect(scheduledRequests()).toEqual([
+      expect.objectContaining({
+        identifier: "habit-tracker-reminder-a",
+        trigger: expect.objectContaining({ hour: 8, minute: 15 }),
+      }),
+    ]);
+  });
+
+  it("does nothing when reminders are off or permission was revoked", async () => {
+    await saveReminderSettings(settings);
+    notifications.scheduleNotificationAsync.mockClear();
+    notifications.getPermissionsAsync.mockResolvedValue({ granted: false });
+
+    await reapplyReminderSettings();
+
+    expect(notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it("reapplies the latest saved settings, not an older read", async () => {
+    notifications.getPermissionsAsync.mockResolvedValue({ granted: true });
+    const saving = saveReminderSettings(settings);
+    const reapplying = reapplyReminderSettings();
+    const changing = saveReminderSettings({
+      enabled: true,
+      reminders: [{ id: "b", hour: 21, minute: 0 }],
+    });
+    await Promise.all([saving, reapplying, changing]);
+
+    expect([...scheduled]).toEqual(["habit-tracker-reminder-b"]);
+  });
+});
+
+describe("scheduleTestReminder", () => {
+  it("schedules a one-off notification a minute ahead on the reminders channel", async () => {
+    const before = Date.now();
+    const at = await scheduleTestReminder();
+
+    expect(notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: "constancia-test-reminder",
+        trigger: { type: "timeInterval", channelId: "reminders", seconds: 60 },
+      }),
+    );
+    expect(at.getTime()).toBeGreaterThanOrEqual(before + 60_000);
+  });
+
+  it("is not cancelled when the daily reminders are rescheduled", async () => {
+    await scheduleTestReminder();
+    await saveReminderSettings({
+      enabled: false,
+      reminders: [{ id: "a", hour: 8, minute: 0 }],
+    });
+
+    expect(scheduled.has("constancia-test-reminder")).toBe(true);
+  });
+});
+
+describe("getNextReminderDate", () => {
+  it("returns the earliest next trigger of the daily reminders in the system", async () => {
+    notifications.getAllScheduledNotificationsAsync.mockResolvedValue([
+      {
+        identifier: "habit-tracker-reminder-a",
+        trigger: { type: "daily", hour: 20, minute: 0 },
+      },
+      {
+        identifier: "habit-tracker-reminder-b",
+        trigger: { type: "daily", hour: 7, minute: 30 },
+      },
+      {
+        identifier: "constancia-test-reminder",
+        trigger: { type: "timeInterval", seconds: 60 },
+      },
+    ]);
+    notifications.getNextTriggerDateAsync.mockImplementation(
+      async ({ hour }: { hour: number }) => (hour === 20 ? 2_000 : 1_000),
+    );
+
+    await expect(getNextReminderDate()).resolves.toEqual(new Date(1_000));
+    expect(notifications.getNextTriggerDateAsync).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns null when the system has no daily reminder scheduled", async () => {
+    notifications.getAllScheduledNotificationsAsync.mockResolvedValue([]);
+
+    await expect(getNextReminderDate()).resolves.toBeNull();
   });
 });

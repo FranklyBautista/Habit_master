@@ -107,6 +107,81 @@ export async function requestReminderPermission(): Promise<boolean> {
   return requested.granted;
 }
 
+// Android decide si una alarma es exacta en el momento de programarla: las que
+// se programaron antes de conceder «Alarmas y recordatorios» siguen siendo
+// inexactas (pueden llegar con mucho retraso) aunque el permiso se conceda
+// después. Reprogramarlas al abrir la app o volver a ella las corrige.
+// Va en la misma cola que los cambios del usuario y lee la preferencia al
+// ejecutarse, para no reaplicar una versión anterior a un cambio recién hecho.
+export function reapplyReminderSettings(): Promise<void> {
+  if (!remindersSupported) return Promise.resolve();
+  const run = pending.then(async () => {
+    const settings = await getReminderSettings();
+    if (!settings.enabled || !(await hasReminderPermission())) return;
+    await applyReminderSettings(settings);
+  });
+  pending = run.catch(() => undefined);
+  return run;
+}
+
+// Fuera del prefijo de los recordatorios: reprogramarlos (p. ej. al volver a
+// la app) no debe cancelar un aviso de prueba pendiente.
+const TEST_NOTIFICATION_ID = "constancia-test-reminder";
+export const TEST_REMINDER_DELAY_SECONDS = 60;
+
+// Aviso de diagnóstico: si llega a su hora con la app cerrada, los
+// recordatorios diarios también lo harán; si no, el sistema los está frenando.
+export async function scheduleTestReminder(): Promise<Date> {
+  await ensureAndroidChannel();
+  await Notifications.cancelScheduledNotificationAsync(TEST_NOTIFICATION_ID);
+  await Notifications.scheduleNotificationAsync({
+    identifier: TEST_NOTIFICATION_ID,
+    content: {
+      title: "Constancia",
+      body: "Recordatorio de prueba: si lo ves a su hora, tus avisos funcionan.",
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      channelId: ANDROID_CHANNEL_ID,
+      seconds: TEST_REMINDER_DELAY_SECONDS,
+    },
+  });
+  return new Date(Date.now() + TEST_REMINDER_DELAY_SECONDS * 1000);
+}
+
+// El trigger que devuelve el sistema varía por plataforma; solo interesan los
+// diarios de Android (los que programa applyReminderSettings).
+function dailyTriggerTime(trigger: unknown): ReminderTime | null {
+  if (typeof trigger !== "object" || trigger === null) return null;
+  const { type, hour, minute } = trigger as Record<string, unknown>;
+  return type === "daily" && typeof hour === "number" && typeof minute === "number"
+    ? { hour, minute }
+    : null;
+}
+
+// Lo que el sistema tiene programado de verdad, no lo guardado en la app:
+// `null` si no hay ningún recordatorio diario en el sistema.
+export async function getNextReminderDate(): Promise<Date | null> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  const timestamps = await Promise.all(
+    scheduled
+      .filter(({ identifier }) => identifier.startsWith(NOTIFICATION_PREFIX))
+      .map(({ trigger }) => dailyTriggerTime(trigger))
+      .filter((time): time is ReminderTime => time !== null)
+      .map(({ hour, minute }) =>
+        Notifications.getNextTriggerDateAsync({
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour,
+          minute,
+        }),
+      ),
+  );
+  const next = timestamps
+    .filter((t): t is number => t !== null)
+    .sort((a, b) => a - b)[0];
+  return next === undefined ? null : new Date(next);
+}
+
 // Cada cambio cancela y reprograma; si dos cambios seguidos (p. ej. pulsar
 // "+" varias veces) se ejecutaran a la vez, el último en terminar podría no ser
 // el último pedido. La cola los aplica en orden.
