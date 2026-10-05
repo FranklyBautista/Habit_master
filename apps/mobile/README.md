@@ -11,7 +11,8 @@ Reutiliza `@habit-tracker/domain` (fechas, rachas, métricas) y los tipos de
 ## Estado
 
 - Pantallas Hoy, Hábitos, Calendario, Estadísticas y Ajustes, en claro y oscuro.
-- Autenticación completa con deep links `habittracker://`.
+- Autenticación completa; el registro y la recuperación se confirman con un
+  código de 6 dígitos del correo (pantalla `verificar`).
 - Sincronización sin UI optimista (ADR 0001), igual que la web.
 - Recordatorios locales: hasta 5, con hora manual y alarmas exactas en Android.
 - Probada en un Android real; **iOS sin probar** (sin hardware Apple).

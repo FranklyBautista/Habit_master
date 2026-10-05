@@ -32,7 +32,8 @@ interna; faltan la prueba en iOS y cerrar la beta.
   mejor racha, gráficas de línea/área y de barras (Recharts, carga diferida) y
   una alternativa textual accesible.
 - Autenticación con Supabase (registro, login, logout y recuperación de
-  contraseña); las rutas privadas validan la identidad en el servidor mediante
+  contraseña), confirmando el correo con un código de 6 dígitos en `/verificar`
+  (el enlace del correo sigue funcionando); las rutas privadas validan la identidad en el servidor mediante
   el middleware `proxy.ts` y clientes Supabase separados para navegador y
   servidor.
 - Sincronización con Postgres como fuente de verdad (ADR
@@ -77,8 +78,8 @@ que debe resolverse antes de cerrar el criterio de salida de la Fase 8.
 - Las cinco pantallas (Hoy, Hábitos, Calendario, Estadísticas y Ajustes), con
   modo claro/oscuro y alternativa textual accesible en las gráficas.
 - Autenticación completa (login, registro, recuperación y cambio de contraseña)
-  con deep links `habittracker://` probados en Android real y sesión guardada
-  con `expo-secure-store`.
+  con código de 6 dígitos enviado por correo, igual que la web, y sesión
+  guardada con `expo-secure-store`.
 - Mismo modelo de sincronización que la web (ADR 0001): Supabase bajo las mismas
   RLS, check-ins idempotentes, revalidación al volver a la app o recuperar
   conexión y banner de estado de conexión.

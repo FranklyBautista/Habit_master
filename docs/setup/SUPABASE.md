@@ -61,6 +61,13 @@ CI y el pgTAP/E2E de `apps/web/e2e/supabase-flow.spec.ts` dependen de que el
 correo se quede en Mailpit (no hay credenciales reales en CI), así que
 `enabled` debe permanecer en `false` en lo que se commitea.
 
+En local la confirmación de correo está desactivada (`[auth.email]
+enable_confirmations = false`): registrarse entra directo a la app, sin pasar
+por el código, y las E2E dependen de ello. Para probar a mano el registro con
+código en web o móvil, ponla en `true` solo en tu copia de trabajo, reinicia el
+stack y lee el código en Mailpit; vuelve a `false` antes de commitear o de
+correr las E2E. La recuperación de contraseña siempre usa el código.
+
 Para recibir el correo de verdad en tu propia bandeja durante desarrollo (sin
 tocar `habit_master`), `supabase/config.toml` ya trae listo un bloque
 `[auth.email.smtp]` para Gmail — actívalo solo en tu copia de trabajo local:
@@ -116,10 +123,21 @@ Configuración de `habit_master`:
    contra producción. No hace falta añadir `exp://**` ahí — ese esquema solo
    existe durante desarrollo con Expo Go, que siempre corre contra Supabase
    local.
-4. Vincula el proyecto con `pnpm exec supabase link` siguiendo las
+5. **Correo de Auth (desde 2026-10-04):** web y móvil confirman el registro y
+   la recuperación con un código, así que en `habit_master` hace falta:
+   - **SMTP propio** (*Authentication → Emails → SMTP Settings*), hoy la cuenta
+     de Gmail con contraseña de aplicación (`smtp.gmail.com:587`). Sin él no se
+     pueden editar las plantillas y el correo por defecto solo llega a los
+     miembros del equipo del proyecto.
+   - **Plantillas** *Confirm signup* y *Reset password* copiadas de
+     `supabase/templates/` (llevan `{{ .Token }}` y el enlace).
+   - **Email OTP Length = 6** (*Authentication → Providers → Email*), igual que
+     `otp_length` en `config.toml` y `OTP_CODE_LENGTH` en las apps: las casillas
+     de `/verificar` son exactamente 6.
+6. Vincula el proyecto con `pnpm exec supabase link` siguiendo las
    indicaciones interactivas de la CLI, únicamente cuando vayas a desplegar
    migraciones a producción.
-5. Aplica las migraciones a `habit_master` solo después de validar `db:reset`
+7. Aplica las migraciones a `habit_master` solo después de validar `db:reset`
    en local y de que CI pase en verde.
 
 Variables públicas de la web:
