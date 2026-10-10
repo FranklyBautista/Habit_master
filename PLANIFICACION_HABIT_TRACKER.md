@@ -562,4 +562,22 @@ Ritmo sugerido:
 - [x] **Falta `apps/mobile/.env.example`.** Las variables `EXPO_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` solo están documentadas en prosa en el README de mobile, no en un archivo versionado — inconsistente con el criterio de Fase 1. **Corregido (2026-09-27):** añadido `apps/mobile/.env.example` (hosts para web/emulador/teléfono y aviso de no incluir secretos) y el README de mobile lo referencia.
 - [x] **~450 KB de assets del scaffold sin usar en cada build nativo.** `assets/images/logo-glow.png`, `tutorial-web.png`, `react-logo*.png`, `expo-logo.png`, `expo-badge*.png` — sin referencias en `src/` ni `app.json`, sobras de `create-expo-app`; trivial de borrar antes del primer build real. **Corregido (2026-09-27):** borrados junto con `assets/expo.icon/` y `tabIcons/`; sin referencias en `src/` ni `app.json`, lint/typecheck/tests de móvil en verde. Cambio de assets: entra en el próximo EAS build (falta build).
 
-**Próximo paso recomendado:** comenzar la Fase 1 usando los entregables confirmados de la Fase 0 en `docs/product/`.
+**Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C2 (modelo de datos y RLS de grupos).
+
+---
+
+## 15. Fase colaborativa — Grupos de hábitos
+
+> Fuera del MVP original. Seguimiento detallado de C1–C6 en la página de Notion del
+> proyecto. Se trabaja en paralelo a las fases 8–10 solo mientras no dependa de ellas.
+
+### C1 — Decisiones de producto y seguridad (2026-10-04)
+
+- [x] Invitar con código de usuario revocable, sin búsqueda por correo ni enlaces (ADR 0002 §1).
+- [x] Definir qué ve un miembro y leerlo por RPC, sin ampliar la RLS de las tablas base (ADR 0002 §2).
+- [x] Fijar límites, roles, caducidad de invitaciones y qué pasa al salir o eliminar la cuenta (ADR 0002 §3).
+- [x] Wireframes de grupos, invitaciones, vista del grupo y chat en `docs/product/WIREFRAMES_GRUPOS.md`.
+
+### C2–C6
+
+- [ ] C2 Modelo de datos y RLS · C3 Dominio y repositorio · C4 Pantallas · C5 Chat · C6 Mascota.
