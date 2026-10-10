@@ -4,6 +4,142 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      group_habit_shares: {
+        Row: {
+          created_at: string;
+          group_id: string;
+          habit_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          group_id: string;
+          habit_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          group_id?: string;
+          habit_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_habit_shares_habit_owner_fkey";
+            columns: ["habit_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "habits";
+            referencedColumns: ["id", "user_id"];
+          },
+          {
+            foreignKeyName: "group_habit_shares_member_fkey";
+            columns: ["group_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "group_members";
+            referencedColumns: ["group_id", "user_id"];
+          },
+        ];
+      };
+      group_invitations: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          group_id: string;
+          id: string;
+          invitee_code: string;
+          invitee_id: string;
+          inviter_id: string;
+          muted: boolean;
+          responded_at: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at?: string;
+          group_id: string;
+          id?: string;
+          invitee_code: string;
+          invitee_id: string;
+          inviter_id: string;
+          muted?: boolean;
+          responded_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          group_id?: string;
+          id?: string;
+          invitee_code?: string;
+          invitee_id?: string;
+          inviter_id?: string;
+          muted?: boolean;
+          responded_at?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_invitations_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      group_members: {
+        Row: {
+          group_id: string;
+          id: string;
+          joined_at: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          group_id: string;
+          id?: string;
+          joined_at?: string;
+          role?: string;
+          user_id: string;
+        };
+        Update: {
+          group_id?: string;
+          id?: string;
+          joined_at?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      groups: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       habit_archive_periods: {
         Row: {
           archived_at: string;
@@ -124,6 +260,7 @@ export type Database = {
           locale: string;
           timezone: string;
           updated_at: string;
+          user_code: string;
           week_starts_on: number;
         };
         Insert: {
@@ -133,6 +270,7 @@ export type Database = {
           locale?: string;
           timezone?: string;
           updated_at?: string;
+          user_code?: string;
           week_starts_on?: number;
         };
         Update: {
@@ -142,6 +280,7 @@ export type Database = {
           locale?: string;
           timezone?: string;
           updated_at?: string;
+          user_code?: string;
           week_starts_on?: number;
         };
         Relationships: [];
@@ -151,11 +290,74 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      cancel_invitation: { Args: { invitation_id: string }; Returns: undefined };
+      create_group: {
+        Args: {
+          group_name: string;
+          habit_ids?: string[];
+          new_display_name?: string;
+        };
+        Returns: string;
+      };
+      delete_group: { Args: { group_id: string }; Returns: undefined };
+      get_group_progress: { Args: { group_id: string }; Returns: Json };
+      get_my_groups: {
+        Args: never;
+        Returns: {
+          id: string;
+          joined_at: string;
+          member_count: number;
+          name: string;
+          role: string;
+        }[];
+      };
+      get_my_invitations: {
+        Args: never;
+        Returns: {
+          expires_at: string;
+          group_id: string;
+          group_name: string;
+          id: string;
+          inviter_name: string;
+          member_count: number;
+        }[];
+      };
       import_local_data: {
         Args: { checkins: Json; habits: Json };
         Returns: undefined;
       };
+      invite_to_group: {
+        Args: { group_id: string; user_code: string };
+        Returns: string;
+      };
+      leave_group: { Args: { group_id: string }; Returns: undefined };
+      regenerate_user_code: { Args: never; Returns: string };
+      remove_member: {
+        Args: { group_id: string; member_id: string };
+        Returns: undefined;
+      };
+      rename_group: {
+        Args: { group_id: string; group_name: string };
+        Returns: undefined;
+      };
       reorder_habits: { Args: { ordered_ids: string[] }; Returns: undefined };
+      respond_invitation: {
+        Args: {
+          accept: boolean;
+          habit_ids?: string[];
+          invitation_id: string;
+          new_display_name?: string;
+        };
+        Returns: undefined;
+      };
+      set_shared_habits: {
+        Args: { group_id: string; habit_ids: string[] };
+        Returns: undefined;
+      };
+      transfer_ownership: {
+        Args: { group_id: string; member_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

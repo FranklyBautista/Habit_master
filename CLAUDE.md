@@ -97,7 +97,7 @@ Consume state via `useHabitStore()` (snapshot) / `useHabitActions()` (mutations)
 
 ### Database
 
-Migrations in `supabase/migrations/` (base schema `20260831192001_*` plus later ones) define `profiles`, `habits`, `habit_checkins` and `habit_archive_periods`. Production migrations have sometimes been applied by hand from the SQL Editor — check `supabase_migrations.schema_migrations` before a `supabase db push`. Key properties:
+Migrations in `supabase/migrations/` (base schema `20260831192001_*` plus later ones) define `profiles`, `habits`, `habit_checkins`, `habit_archive_periods` and the group tables (`groups`, `group_members`, `group_invitations`, `group_habit_shares`, ADR 0002). Production migrations have sometimes been applied by hand from the SQL Editor — check `supabase_migrations.schema_migrations` before a `supabase db push`. Key properties:
 
 - RLS on every table, owner-only (`(select auth.uid()) = user_id`), explicit `GRANT`s to `authenticated` only (`auto_expose_new_tables = false`).
 - `habit_checkins` references `habits (id, user_id)` (composite FK) and is unique on `(habit_id, checkin_date)`.
@@ -105,7 +105,9 @@ Migrations in `supabase/migrations/` (base schema `20260831192001_*` plus later 
 - `habit_checkins` INSERT/UPDATE policies only accept `checkin_date` between yesterday and tomorrow (UTC); importing local history goes through the `security definer` RPC `import_local_data`.
 - Active habits have unique positions (deferrable exclusion constraint); reordering goes through the RPC `reorder_habits`, never per-row updates.
 - `habit_archive_periods` is filled by a trigger when a habit is restored; clients can only read it.
-- pgTAP tests in `supabase/tests/` cover structure, RLS/ownership, check-in dates, positions and archive periods.
+- `profiles.user_code` (8-char Crockford base32, assigned by trigger) is server-only: clients have column-level `INSERT`/`UPDATE` grants on `profiles` that exclude it; it changes only via the RPC `regenerate_user_code`.
+- Group tables have RLS on, no policies and no client grants: every read and write goes through `security definer` RPCs (`create_group`, `invite_to_group`, `respond_invitation`, `set_shared_habits`, `get_group_progress`, …) that check membership/ownership and return only the columns ADR 0002 allows. Never widen RLS on `habits`/`habit_checkins` for groups.
+- pgTAP tests in `supabase/tests/` cover structure, RLS/ownership, check-in dates, positions, archive periods and group isolation.
 
 After any schema change: add a new migration file, run `pnpm db:reset`, then `pnpm db:types`, and update the pgTAP tests.
 
