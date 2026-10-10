@@ -4,16 +4,19 @@ import {
   BarChart3,
   CalendarDays,
   ListChecks,
+  type LucideIcon,
   Settings,
   Sparkles,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable } from "react-native";
+import { ActivityIndicator, type ColorValue, StyleSheet, View } from "react-native";
 
+import { Button } from "@/components/button";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { AppProviders } from "@/components/groups/app-providers";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { initialLoadErrorDetail, loadWithRetry } from "@/lib/initial-load";
@@ -68,24 +71,13 @@ export default function AppLayout() {
             Detalle: {failure.detail}
           </ThemedText>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Reintentar"
+        <Button
+          label="Reintentar"
           onPress={() => {
             setFailure(null);
             setLoadAttempt((attempt) => attempt + 1);
           }}
-          style={{
-            borderRadius: 8,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            backgroundColor: theme.tint,
-          }}
-        >
-          <ThemedText type="smallBold" style={{ color: "white" }}>
-            Reintentar
-          </ThemedText>
-        </Pressable>
+        />
       </ThemedView>
     );
   }
@@ -93,7 +85,7 @@ export default function AppLayout() {
   if (!initialState) {
     return (
       <ThemedView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
+        <ActivityIndicator color={theme.tint} />
       </ThemedView>
     );
   }
@@ -102,42 +94,51 @@ export default function AppLayout() {
     <AppProviders initialState={initialState} userId={session.user.id}>
       <ThemedView style={{ flex: 1 }}>
         <ConnectionBanner />
-        <Tabs screenOptions={{ headerShown: false }}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: theme.tint,
+            tabBarInactiveTintColor: theme.textSecondary,
+            tabBarStyle: {
+              backgroundColor: theme.background,
+              borderTopColor: theme.border,
+            },
+            tabBarLabelStyle: styles.tabLabel,
+          }}
+        >
           <Tabs.Screen
             name="index"
             options={{
               title: "Hoy",
-              tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
+              tabBarIcon: (props) => <TabIcon icon={Sparkles} {...props} />,
             }}
           />
           <Tabs.Screen
             name="habitos"
             options={{
               title: "Hábitos",
-              tabBarIcon: ({ color, size }) => <ListChecks color={color} size={size} />,
+              tabBarIcon: (props) => <TabIcon icon={ListChecks} {...props} />,
             }}
           />
           <Tabs.Screen
             name="calendario"
             options={{
               title: "Calendario",
-              tabBarIcon: ({ color, size }) => (
-                <CalendarDays color={color} size={size} />
-              ),
+              tabBarIcon: (props) => <TabIcon icon={CalendarDays} {...props} />,
             }}
           />
           <Tabs.Screen
             name="estadisticas"
             options={{
               title: "Estadísticas",
-              tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} />,
+              tabBarIcon: (props) => <TabIcon icon={BarChart3} {...props} />,
             }}
           />
           <Tabs.Screen
             name="ajustes"
             options={{
               title: "Ajustes",
-              tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+              tabBarIcon: (props) => <TabIcon icon={Settings} {...props} />,
             }}
           />
           {/* Sin pestaña propia: se entra desde Hoy y Ajustes. */}
@@ -147,3 +148,33 @@ export default function AppLayout() {
     </AppProviders>
   );
 }
+
+// La pestaña activa lleva el icono sobre una píldora de acento suave, para que
+// se distinga por algo más que el color.
+function TabIcon({
+  icon: Icon,
+  color,
+  focused,
+}: {
+  icon: LucideIcon;
+  color: ColorValue;
+  focused: boolean;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.tabIcon, focused && { backgroundColor: theme.accentSoft }]}>
+      <Icon color={color} size={22} strokeWidth={focused ? 2.4 : 2} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabLabel: { fontSize: 11, fontWeight: 600 },
+  tabIcon: {
+    width: 52,
+    height: 30,
+    borderRadius: Radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

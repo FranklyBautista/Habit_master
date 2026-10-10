@@ -1,13 +1,16 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AuthBrand } from "@/components/auth-brand";
+import { Button } from "@/components/button";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { registerSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
+import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -17,7 +20,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const inputStyle = useAuthInputStyle();
+  const theme = useTheme();
 
   function goToVerify(address: string) {
     router.push({
@@ -58,39 +61,32 @@ export default function RegisterScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <AuthBrand tagline="Empieza a construir tus hábitos con Constancia." />
         <ThemedText type="title">Crear cuenta</ThemedText>
-        <TextInput
+        <TextField
           accessibilityLabel="Correo electrónico"
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Correo electrónico"
-          placeholderTextColor={inputStyle.placeholderTextColor}
-          style={inputStyle.style}
           value={email}
           onChangeText={setEmail}
         />
-        <TextInput
+        <TextField
           accessibilityLabel="Contraseña"
           placeholder="Contraseña"
-          placeholderTextColor={inputStyle.placeholderTextColor}
           secureTextEntry
-          style={inputStyle.style}
           value={password}
           onChangeText={setPassword}
         />
-        {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-        <Pressable
-          accessibilityRole="button"
+        {error ? (
+          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
+        ) : null}
+        <Button
+          label={submitting ? "Creando…" : "Crear cuenta"}
           accessibilityLabel="Crear cuenta"
-          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
-          style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
-        >
-          <ThemedText type="smallBold">
-            {submitting ? "Creando…" : "Crear cuenta"}
-          </ThemedText>
-        </Pressable>
+        />
         <Link href="/(auth)/login">
           <ThemedText type="link">Ya tengo una cuenta</ThemedText>
         </Link>

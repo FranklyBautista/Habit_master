@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/button";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
+import { Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
   formatReminderTime,
@@ -80,7 +81,11 @@ export function ReminderTimeModal({
 
   const inputStyle = [
     styles.timeInput,
-    { color: theme.text, borderColor: theme.border, backgroundColor: theme.background },
+    {
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundSelected,
+    },
   ];
 
   return (
@@ -142,8 +147,8 @@ export function ReminderTimeModal({
                       {
                         borderColor: selected ? theme.tint : theme.border,
                         backgroundColor: selected
-                          ? theme.tint + "1A"
-                          : theme.background,
+                          ? theme.accentSoft
+                          : theme.backgroundElement,
                       },
                     ]}
                   >
@@ -185,7 +190,9 @@ export function ReminderTimeModal({
                     styles.presetChip,
                     {
                       borderColor: selected ? theme.tint : theme.border,
-                      backgroundColor: selected ? theme.tint + "1A" : theme.background,
+                      backgroundColor: selected
+                        ? theme.accentSoft
+                        : theme.backgroundElement,
                     },
                   ]}
                 >
@@ -196,36 +203,25 @@ export function ReminderTimeModal({
           </View>
 
           {error ? (
-            <ThemedText style={styles.error} accessibilityRole="alert">
+            <ThemedText style={{ color: theme.danger }} accessibilityRole="alert">
               {error}
             </ThemedText>
           ) : null}
 
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cancelar"
+            <Button
+              label="Cancelar"
+              variant="secondary"
+              style={styles.actionButton}
               onPress={onClose}
-              style={[styles.button, { backgroundColor: theme.backgroundElement }]}
-            >
-              <ThemedText type="smallBold">Cancelar</ThemedText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            />
+            <Button
+              label={saving ? "Guardando…" : "Guardar"}
               accessibilityLabel="Guardar recordatorio"
-              accessibilityState={{ disabled: saving }}
               disabled={saving}
+              style={styles.actionButton}
               onPress={() => void save()}
-              style={[
-                styles.button,
-                { backgroundColor: theme.tint },
-                saving && styles.buttonDisabled,
-              ]}
-            >
-              <ThemedText type="smallBold" style={{ color: "white" }}>
-                {saving ? "Guardando…" : "Guardar"}
-              </ThemedText>
-            </Pressable>
+            />
           </View>
         </SafeAreaView>
       </ThemedView>
@@ -245,7 +241,7 @@ function TimeStepper({
   const theme = useTheme();
   const buttonStyle = [
     styles.stepperButton,
-    { borderColor: theme.border, backgroundColor: theme.background },
+    { borderColor: theme.border, backgroundColor: theme.backgroundElement },
   ];
   return (
     <View style={styles.stepper}>
@@ -281,9 +277,10 @@ const styles = StyleSheet.create({
   timeInput: {
     width: 64,
     borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.md,
     paddingVertical: Spacing.two,
     fontSize: 28,
+    fontWeight: 700,
     textAlign: "center",
   },
   periodGroup: { flexDirection: "row", gap: Spacing.one, marginLeft: "auto" },
@@ -291,7 +288,7 @@ const styles = StyleSheet.create({
     minWidth: 48,
     minHeight: 44,
     borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.sm,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.two,
@@ -314,17 +311,10 @@ const styles = StyleSheet.create({
   presetRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
   presetChip: {
     borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
   },
-  error: { color: "#DC2626" },
   actions: { flexDirection: "row", gap: Spacing.two, marginTop: "auto" },
-  button: {
-    flex: 1,
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-    alignItems: "center",
-  },
-  buttonDisabled: { opacity: 0.6 },
+  actionButton: { flex: 1 },
 });

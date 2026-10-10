@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "@/components/card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useHabitStore } from "@/lib/habit-store";
 
@@ -71,13 +71,14 @@ export default function CalendarioScreen() {
     month: "long",
   });
 
-  // Tone backgrounds keyed by level; text flips to white on the strong tones.
+  // Tone backgrounds keyed by level; text flips to `onAccent` (dark) on the
+  // strong tones — white on lime would be unreadable.
   const toneBg = [
     "transparent",
     theme.backgroundSelected,
-    theme.tint + "3A",
-    theme.tint + "8C",
-    theme.tint,
+    theme.accent + "3A",
+    theme.accent + "99",
+    theme.accent,
   ];
 
   return (
@@ -108,14 +109,17 @@ export default function CalendarioScreen() {
                   style={[
                     styles.scopeChip,
                     {
-                      backgroundColor: active ? theme.tint : theme.backgroundElement,
-                      borderColor: active ? theme.tint : theme.border,
+                      backgroundColor: active ? theme.accent : theme.backgroundElement,
+                      borderColor: active ? theme.accent : theme.border,
                     },
                   ]}
                 >
                   <ThemedText
                     type="small"
-                    style={{ color: active ? "white" : theme.text }}
+                    style={{
+                      color: active ? theme.onAccent : theme.text,
+                      fontWeight: active ? "700" : "500",
+                    }}
                   >
                     {item.name}
                   </ThemedText>
@@ -184,7 +188,7 @@ export default function CalendarioScreen() {
                       style={[
                         styles.dayInner,
                         { backgroundColor: toneBg[level] },
-                        isToday && { borderColor: theme.tint, borderWidth: 1 },
+                        isToday && { borderColor: theme.tint, borderWidth: 1.5 },
                         isSelected && {
                           borderColor: theme.text,
                           borderWidth: 2,
@@ -194,7 +198,7 @@ export default function CalendarioScreen() {
                       <ThemedText
                         type="small"
                         style={{
-                          color: level >= 3 ? "white" : theme.text,
+                          color: level >= 3 ? theme.onAccent : theme.text,
                           fontWeight: isToday ? "700" : "500",
                         }}
                       >
@@ -246,7 +250,7 @@ export default function CalendarioScreen() {
                   ? "Día completo"
                   : "Progreso del día"}
             </ThemedText>
-            <ThemedText style={styles.dayValue}>
+            <ThemedText type="subtitle">
               {selectedMetrics.completed} de {selectedMetrics.expected}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
@@ -299,8 +303,8 @@ const styles = StyleSheet.create({
   scopeChip: {
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two - 2,
+    paddingHorizontal: Spacing.three + Spacing.one,
+    paddingVertical: Spacing.two,
   },
   monthControls: {
     flexDirection: "row",
@@ -320,7 +324,7 @@ const styles = StyleSheet.create({
   dayInner: {
     width: "100%",
     height: "100%",
-    borderRadius: Spacing.two,
+    borderRadius: Radius.sm,
     alignItems: "center",
     justifyContent: "center",
     borderColor: "transparent",
@@ -333,7 +337,6 @@ const styles = StyleSheet.create({
   },
   legendItem: { flexDirection: "row", alignItems: "center", gap: Spacing.one },
   legendSwatch: { width: 14, height: 14, borderRadius: 4, borderWidth: 1 },
-  dayValue: { fontSize: 22, lineHeight: 28, fontWeight: 700 },
   miniHabits: { gap: Spacing.two, marginTop: Spacing.one },
   miniHabit: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
 });

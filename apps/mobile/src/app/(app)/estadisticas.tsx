@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "@/components/card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useHabitStore } from "@/lib/habit-store";
 
@@ -64,7 +64,7 @@ export default function EstadisticasScreen() {
 
           <View
             accessibilityRole="tablist"
-            style={[styles.periodTabs, { backgroundColor: theme.backgroundSelected }]}
+            style={[styles.periodTabs, { backgroundColor: theme.backgroundElement }]}
           >
             {PERIODS.map((option) => {
               const active = option === period;
@@ -77,15 +77,12 @@ export default function EstadisticasScreen() {
                   onPress={() => setPeriod(option)}
                   style={[
                     styles.periodTab,
-                    active && {
-                      backgroundColor: theme.backgroundElement,
-                      borderColor: theme.border,
-                    },
+                    active && { backgroundColor: theme.accent },
                   ]}
                 >
                   <ThemedText
                     type="smallBold"
-                    style={{ color: active ? theme.text : theme.textSecondary }}
+                    style={{ color: active ? theme.onAccent : theme.textSecondary }}
                   >
                     {option} días
                   </ThemedText>
@@ -119,13 +116,13 @@ export default function EstadisticasScreen() {
             hint={`${selected.completed} de ${selected.expected} check-ins esperados`}
           />
           <MetricCard
-            icon={<Flame size={18} color="#2563EB" />}
+            icon={<Flame size={18} color={theme.tint} />}
             label="Racha actual"
             value={`${streaks.current} días`}
             hint="Puede continuar desde ayer si hoy aún está incompleto"
           />
           <MetricCard
-            icon={<Medal size={18} color="#D97706" />}
+            icon={<Medal size={18} color={theme.tint} />}
             label="Mejor racha"
             value={`${streaks.best} días`}
             hint="Días completos consecutivos"
@@ -247,10 +244,13 @@ function MetricCard({
   value: string;
   hint: string;
 }) {
+  const theme = useTheme();
   return (
     <Card>
       <View style={styles.metricHeader}>
-        {icon}
+        <View style={[styles.metricIcon, { backgroundColor: theme.accentSoft }]}>
+          {icon}
+        </View>
         <ThemedText type="small" themeColor="textSecondary">
           {label}
         </ThemedText>
@@ -276,23 +276,28 @@ const styles = StyleSheet.create({
   },
   periodTabs: {
     flexDirection: "row",
-    borderRadius: Spacing.two + 2,
-    padding: Spacing.half,
-    gap: Spacing.half,
+    borderRadius: Radius.pill,
+    padding: Spacing.one,
+    gap: Spacing.one,
     marginVertical: Spacing.two,
   },
   periodTab: {
     flex: 1,
     alignItems: "center",
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderRadius: Radius.pill,
   },
   summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
   summaryCard: { flexGrow: 1, flexBasis: "45%", gap: Spacing.one },
-  bigValue: { fontSize: 26, lineHeight: 32, fontWeight: 700 },
+  bigValue: { fontSize: 28, lineHeight: 34, fontWeight: 800, letterSpacing: -0.5 },
   metricHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
+  metricIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   trendRow: {
     alignItems: "flex-end",
     gap: 2,
@@ -300,7 +305,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
     paddingHorizontal: Spacing.half,
   },
-  trendBar: { width: 5, borderRadius: 2 },
+  trendBar: { width: 6, borderRadius: 3 },
   comparisonRow: { gap: Spacing.one, marginTop: Spacing.two },
   comparisonHeader: {
     flexDirection: "row",

@@ -1,13 +1,15 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
+import { Button } from "@/components/button";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
+import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -18,7 +20,7 @@ export default function RecoverPasswordScreen() {
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const inputStyle = useAuthInputStyle();
+  const theme = useTheme();
 
   async function handleSubmit() {
     setError(undefined);
@@ -51,29 +53,23 @@ export default function RecoverPasswordScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">Recuperar contraseña</ThemedText>
-        <TextInput
+        <TextField
           accessibilityLabel="Correo electrónico"
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Correo electrónico"
-          placeholderTextColor={inputStyle.placeholderTextColor}
-          style={inputStyle.style}
           value={email}
           onChangeText={setEmail}
         />
-        {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-        <Pressable
-          accessibilityRole="button"
+        {error ? (
+          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
+        ) : null}
+        <Button
+          label={submitting ? "Enviando…" : "Enviar código"}
           accessibilityLabel="Enviar código"
-          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
-          style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
-        >
-          <ThemedText type="smallBold">
-            {submitting ? "Enviando…" : "Enviar código"}
-          </ThemedText>
-        </Pressable>
+        />
         <Link href="/(auth)/login">
           <ThemedText type="link">Volver a iniciar sesión</ThemedText>
         </Link>

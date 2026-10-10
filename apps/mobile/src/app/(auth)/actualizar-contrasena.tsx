@@ -1,13 +1,15 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/button";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { newPasswordSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles, useAuthInputStyle } from "@/lib/auth/form-styles";
+import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { supabase } from "@/lib/supabase/client";
 
 export default function UpdatePasswordScreen() {
@@ -15,7 +17,7 @@ export default function UpdatePasswordScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
-  const inputStyle = useAuthInputStyle();
+  const theme = useTheme();
 
   async function handleSubmit() {
     setError(undefined);
@@ -42,28 +44,22 @@ export default function UpdatePasswordScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">Actualizar contraseña</ThemedText>
-        <TextInput
+        <TextField
           accessibilityLabel="Nueva contraseña"
           placeholder="Nueva contraseña"
-          placeholderTextColor={inputStyle.placeholderTextColor}
           secureTextEntry
-          style={inputStyle.style}
           value={password}
           onChangeText={setPassword}
         />
-        {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-        <Pressable
-          accessibilityRole="button"
+        {error ? (
+          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
+        ) : null}
+        <Button
+          label={submitting ? "Guardando…" : "Guardar contraseña"}
           accessibilityLabel="Guardar contraseña"
-          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
-          style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
-        >
-          <ThemedText type="smallBold">
-            {submitting ? "Guardando…" : "Guardar contraseña"}
-          </ThemedText>
-        </Pressable>
+        />
       </SafeAreaView>
     </ThemedView>
   );

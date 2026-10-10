@@ -23,11 +23,12 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const theme = useTheme();
+  const isLink = type === "link" || type === "linkPrimary";
 
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? "text"] },
+        { color: theme[themeColor ?? (isLink ? "tint" : "text")] },
         type === "default" && styles.default,
         type === "title" && styles.title,
         type === "small" && styles.small,
@@ -60,23 +61,26 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 700,
-    lineHeight: 38,
+    fontSize: 30,
+    fontWeight: 800,
+    lineHeight: 36,
+    letterSpacing: -0.6,
   },
   subtitle: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: 600,
+    fontWeight: 700,
+    letterSpacing: -0.3,
   },
   link: {
     lineHeight: 30,
     fontSize: 14,
+    fontWeight: 600,
   },
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: "#3c87f7",
+    fontWeight: 700,
   },
   code: {
     fontFamily: Fonts.mono,

@@ -53,9 +53,19 @@ vi.mock("@/components/themed-text", () => ({
 }));
 vi.mock("@/lib/auth/form-styles", () => ({ authFormStyles: {} }));
 vi.mock("@/hooks/use-theme", () => ({
-  useTheme: () => ({ backgroundElement: "#fff", border: "#ccc", tint: "#0a0" }),
+  useTheme: () => ({
+    backgroundElement: "#fff",
+    border: "#ccc",
+    tint: "#0a0",
+    accent: "#cf3",
+    onAccent: "#000",
+    danger: "#d00",
+  }),
 }));
-vi.mock("@/constants/theme", () => ({ Spacing: { two: 8 } }));
+vi.mock("@/constants/theme", () => ({
+  Spacing: { one: 4, two: 8, three: 16, four: 24 },
+  Radius: { sm: 12, md: 16, lg: 24, pill: 999 },
+}));
 vi.mock("@/lib/auth/redirect", () => ({
   getMobileAuthRedirect: (next: string) => `habittracker://auth/confirm?next=${next}`,
 }));

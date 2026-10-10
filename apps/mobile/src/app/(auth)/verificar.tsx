@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/button";
 import { OtpCodeInput } from "@/components/otp-code-input";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { OTP_CODE_LENGTH, otpCodeSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { authFormStyles as styles } from "@/lib/auth/form-styles";
@@ -33,6 +35,7 @@ export default function VerifyCodeScreen() {
   const email = Array.isArray(params.email) ? params.email[0] : params.email;
   const type = parseType(params.type);
   const router = useRouter();
+  const theme = useTheme();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
@@ -117,7 +120,7 @@ export default function VerifyCodeScreen() {
         <ThemedText type="title">
           {type === "signup" ? "Confirma tu correo" : "Recupera tu cuenta"}
         </ThemedText>
-        <ThemedText>
+        <ThemedText themeColor="textSecondary">
           Escribe el código que enviamos a {email}. Puede tardar un minuto; revisa
           también la carpeta de spam.
         </ThemedText>
@@ -128,23 +131,17 @@ export default function VerifyCodeScreen() {
           onChangeText={setCode}
         />
         {error ? (
-          <ThemedText accessibilityRole="alert" style={styles.error}>
+          <ThemedText accessibilityRole="alert" style={{ color: theme.danger }}>
             {error}
           </ThemedText>
         ) : null}
         {message ? <ThemedText>{message}</ThemedText> : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={submitting ? "Verificando…" : "Verificar código"}
           accessibilityLabel="Verificar código"
-          accessibilityState={{ disabled: submitting }}
           disabled={submitting}
-          style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleVerify}
-        >
-          <ThemedText type="smallBold">
-            {submitting ? "Verificando…" : "Verificar código"}
-          </ThemedText>
-        </Pressable>
+        />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Reenviar código"

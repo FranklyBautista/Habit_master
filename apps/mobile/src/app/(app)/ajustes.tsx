@@ -17,17 +17,19 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { UserCodeSection } from "@/components/groups/user-code-section";
 import { ReminderTimeModal } from "@/components/reminder-time-modal";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { Toast } from "@/components/toast";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
@@ -200,8 +202,8 @@ export default function AjustesScreen() {
         >
           <Card style={styles.card}>
             <View style={styles.accountRow}>
-              <View style={[styles.avatar, { backgroundColor: theme.tint }]}>
-                <ThemedText type="smallBold" style={{ color: "white" }}>
+              <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
+                <ThemedText type="subtitle" style={{ color: theme.onAccent }}>
                   {name.slice(0, 1).toUpperCase() || "?"}
                 </ThemedText>
               </View>
@@ -229,12 +231,11 @@ export default function AjustesScreen() {
               <ThemedText type="small" themeColor="textSecondary">
                 Nombre
               </ThemedText>
-              <TextInput
+              <TextField
                 accessibilityLabel="Nombre"
                 value={name}
                 onChangeText={setName}
                 maxLength={60}
-                style={[styles.input, { color: theme.text, borderColor: theme.border }]}
               />
             </View>
 
@@ -264,27 +265,21 @@ export default function AjustesScreen() {
             </View>
 
             {error ? (
-              <ThemedText type="small" style={styles.error} accessibilityRole="alert">
+              <ThemedText
+                type="small"
+                style={{ color: theme.danger }}
+                accessibilityRole="alert"
+              >
                 {error}
               </ThemedText>
             ) : null}
 
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              label={snapshot.syncing ? "Guardando…" : "Guardar cambios"}
               accessibilityLabel="Guardar cambios"
-              accessibilityState={{ disabled: snapshot.syncing }}
               disabled={snapshot.syncing}
               onPress={() => void save()}
-              style={[
-                styles.primaryButton,
-                { backgroundColor: theme.tint },
-                snapshot.syncing && styles.buttonDisabled,
-              ]}
-            >
-              <ThemedText type="smallBold" style={{ color: "white" }}>
-                {snapshot.syncing ? "Guardando…" : "Guardar cambios"}
-              </ThemedText>
-            </Pressable>
+            />
           </Card>
 
           <UserCodeSection />
@@ -309,12 +304,24 @@ export default function AjustesScreen() {
                   accessibilityLabel="Recordatorios diarios"
                   value={reminders.enabled}
                   onValueChange={(value) => void toggleReminders(value)}
-                  trackColor={{ true: theme.tint }}
+                  trackColor={{ true: theme.accent, false: theme.backgroundSelected }}
+                  thumbColor={
+                    Platform.OS === "android"
+                      ? reminders.enabled
+                        ? theme.onAccent
+                        : theme.textSecondary
+                      : undefined
+                  }
+                  ios_backgroundColor={theme.backgroundSelected}
                 />
               </View>
 
               {reminderError ? (
-                <ThemedText type="small" style={styles.error} accessibilityRole="alert">
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.danger }}
+                  accessibilityRole="alert"
+                >
                   {reminderError}
                 </ThemedText>
               ) : null}
@@ -357,21 +364,12 @@ export default function AjustesScreen() {
                   })}
 
                   {reminders.reminders.length < MAX_REMINDERS ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Añadir recordatorio"
+                    <Button
+                      label="Añadir recordatorio"
+                      variant="outline"
+                      icon={(color) => <Plus size={18} color={color} />}
                       onPress={() => setEditing(null)}
-                      style={[
-                        styles.signOutButton,
-                        {
-                          borderColor: theme.border,
-                          backgroundColor: theme.background,
-                        },
-                      ]}
-                    >
-                      <Plus size={18} color={theme.text} />
-                      <ThemedText type="smallBold">Añadir recordatorio</ThemedText>
-                    </Pressable>
+                    />
                   ) : (
                     <ThemedText type="small" themeColor="textSecondary">
                       Puedes tener hasta {MAX_REMINDERS} recordatorios.
@@ -439,31 +437,20 @@ export default function AjustesScreen() {
             </View>
           </Card>
 
-          <Pressable
+          <Button
+            label="Política de privacidad"
             accessibilityRole="link"
-            accessibilityLabel="Política de privacidad"
+            variant="secondary"
+            icon={(color) => <ExternalLink size={18} color={color} />}
             onPress={() => void Linking.openURL(PRIVACY_URL)}
-            style={[
-              styles.signOutButton,
-              { borderColor: theme.border, backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <ExternalLink size={18} color={theme.text} />
-            <ThemedText type="smallBold">Política de privacidad</ThemedText>
-          </Pressable>
+          />
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar sesión"
+          <Button
+            label="Cerrar sesión"
+            variant="outline"
+            icon={() => <LogOut size={18} color={theme.danger} />}
             onPress={() => void supabase.auth.signOut()}
-            style={[
-              styles.signOutButton,
-              { borderColor: theme.border, backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <LogOut size={18} color={theme.text} />
-            <ThemedText type="smallBold">Cerrar sesión</ThemedText>
-          </Pressable>
+          />
         </ScrollView>
 
         {editing !== undefined ? (
@@ -477,15 +464,10 @@ export default function AjustesScreen() {
         ) : null}
 
         {toast ? (
-          <Pressable
-            accessibilityRole="alert"
-            onPress={() => setToast(false)}
-            style={styles.toast}
-          >
-            <ThemedText style={{ color: "white" }}>
-              Tus preferencias se guardaron.
-            </ThemedText>
-          </Pressable>
+          <Toast
+            message="Tus preferencias se guardaron."
+            onDismiss={() => setToast(false)}
+          />
         ) : null}
       </SafeAreaView>
     </ThemedView>
@@ -509,9 +491,9 @@ const styles = StyleSheet.create({
   },
   accountRow: { flexDirection: "row", alignItems: "center", gap: Spacing.three },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -528,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.md,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
   },
@@ -541,37 +523,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   field: { gap: Spacing.one },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-    fontSize: 16,
-  },
-  error: { color: "#DC2626" },
-  primaryButton: {
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-    alignItems: "center",
-  },
   buttonDisabled: { opacity: 0.6 },
   noteCard: { flexDirection: "row", alignItems: "flex-start", gap: Spacing.three },
   noteCopy: { flex: 1, gap: 2 },
-  signOutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.two,
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-  },
-  toast: {
-    position: "absolute",
-    bottom: Spacing.four,
-    left: Spacing.four,
-    right: Spacing.four,
-    backgroundColor: "#111827",
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-  },
 });

@@ -15,7 +15,8 @@ import { HabitFormModal } from "@/components/habit-form-modal";
 import { habitIconComponents } from "@/components/habit-icons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { Toast } from "@/components/toast";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
@@ -66,10 +67,10 @@ export default function HabitsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Crear hábito"
-            style={[styles.createButton, { backgroundColor: theme.tint }]}
+            style={[styles.createButton, { backgroundColor: theme.accent }]}
             onPress={openCreate}
           >
-            <Plus size={18} color="white" />
+            <Plus size={22} strokeWidth={2.5} color={theme.onAccent} />
           </Pressable>
         </View>
         <ThemedText themeColor="textSecondary">
@@ -104,7 +105,11 @@ export default function HabitsScreen() {
                       onPress={() => void actions.moveHabit(habit.id, -1)}
                       style={styles.iconButton}
                     >
-                      <ArrowUp size={16} opacity={index === 0 ? 0.3 : 1} />
+                      <ArrowUp
+                        size={16}
+                        color={theme.textSecondary}
+                        opacity={index === 0 ? 0.3 : 1}
+                      />
                     </Pressable>
                     <Pressable
                       accessibilityRole="button"
@@ -119,17 +124,18 @@ export default function HabitsScreen() {
                     >
                       <ArrowDown
                         size={16}
+                        color={theme.textSecondary}
                         opacity={index === activeHabits.length - 1 ? 0.3 : 1}
                       />
                     </Pressable>
                   </View>
-                  <View
-                    style={[styles.habitIcon, { backgroundColor: `${habit.color}30` }]}
-                  >
-                    <Icon size={20} color={habit.color} />
+                  <View style={[styles.habitIcon, { backgroundColor: habit.color }]}>
+                    <Icon size={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.habitCopy}>
-                    <ThemedText>{habit.name}</ThemedText>
+                    <ThemedText type="smallBold" style={styles.habitName}>
+                      {habit.name}
+                    </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
                       {habit.description ?? "Hábito diario"}
                     </ThemedText>
@@ -141,7 +147,7 @@ export default function HabitsScreen() {
                     style={styles.iconButton}
                     onPress={() => openEdit(habit)}
                   >
-                    <Pencil size={18} />
+                    <Pencil size={18} color={theme.text} />
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
@@ -150,7 +156,7 @@ export default function HabitsScreen() {
                     style={styles.iconButton}
                     onPress={() => void archive(habit)}
                   >
-                    <Archive size={18} />
+                    <Archive size={18} color={theme.text} />
                   </Pressable>
                 </View>
               );
@@ -182,8 +188,13 @@ export default function HabitsScreen() {
                     },
                   ]}
                 >
-                  <View style={styles.habitIcon}>
-                    <Icon size={19} color={habit.color} opacity={0.6} />
+                  <View
+                    style={[
+                      styles.habitIcon,
+                      { backgroundColor: theme.backgroundSelected },
+                    ]}
+                  >
+                    <Icon size={19} color={theme.textSecondary} />
                   </View>
                   <View style={styles.habitCopy}>
                     <ThemedText themeColor="textSecondary">{habit.name}</ThemedText>
@@ -195,7 +206,7 @@ export default function HabitsScreen() {
                     style={styles.iconButton}
                     onPress={() => void restore(habit)}
                   >
-                    <RotateCcw size={18} />
+                    <RotateCcw size={18} color={theme.tint} />
                   </Pressable>
                 </View>
               );
@@ -205,11 +216,7 @@ export default function HabitsScreen() {
           )}
         </ScrollView>
 
-        {toast ? (
-          <View accessibilityRole="alert" style={styles.toast}>
-            <ThemedText style={{ color: "white" }}>{toast}</ThemedText>
-          </View>
-        ) : null}
+        {toast ? <Toast message={toast} onDismiss={() => setToast(null)} /> : null}
       </SafeAreaView>
 
       <HabitFormModal
@@ -239,9 +246,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   createButton: {
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: 22,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -252,26 +259,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.two,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.lg,
     borderWidth: 1,
   },
   orderActions: { gap: 2 },
   iconButton: { padding: Spacing.one },
   habitIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   habitCopy: { flex: 1, gap: 2 },
-  toast: {
-    position: "absolute",
-    bottom: Spacing.four,
-    left: Spacing.four,
-    right: Spacing.four,
-    backgroundColor: "#111827",
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-  },
+  habitName: { fontSize: 16, lineHeight: 22 },
 });

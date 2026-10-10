@@ -7,26 +7,47 @@ import "@/global.css";
 
 import { Platform } from "react-native";
 
+// Dirección visual (rama feat/rediseno-visual): superficies casi negras con un
+// acento lima, inspirada en apps de progreso modernas. Reglas para no volver a
+// tener texto negro sobre negro:
+// - `tint` es el acento para TEXTO e ICONOS sobre superficies. En oscuro es el
+//   lima; en claro un oliva, porque el lima sobre blanco no se lee.
+// - `accent` es el RELLENO (botones, chips, celdas llenas) y siempre lleva
+//   `onAccent` encima, nunca "white".
+// - Ningún icono ni TextInput se queda sin color: el valor por defecto del
+//   sistema es negro y desaparece en modo oscuro.
 export const Colors = {
   light: {
-    text: "#17181A",
+    text: "#121214",
     // Page sits on a light grey so white surfaces (cards, inputs) read as
     // raised. Before, page and cards were both near-white and blended.
-    background: "#F4F4F6",
+    background: "#F2F3EF",
     backgroundElement: "#FFFFFF",
-    backgroundSelected: "#E8E9EC",
-    textSecondary: "#5B5F66",
-    border: "#E1E1E6",
-    tint: "#047857",
+    backgroundSelected: "#E7E9E2",
+    textSecondary: "#5D6068",
+    border: "#E1E3DC",
+    tint: "#4D7C0F",
+    accent: "#C6F432",
+    onAccent: "#121214",
+    accentSoft: "rgba(132, 204, 22, 0.16)",
+    danger: "#DC2626",
+    inverse: "#121214",
+    onInverse: "#F5F5F7",
   },
   dark: {
-    text: "#F4F4F5",
-    background: "#0C0C0D",
-    backgroundElement: "#1B1C1F",
-    backgroundSelected: "#2A2C30",
-    textSecondary: "#A6AAB2",
-    border: "#2D2E33",
-    tint: "#2FB37E",
+    text: "#F5F5F7",
+    background: "#0B0B0C",
+    backgroundElement: "#161618",
+    backgroundSelected: "#222225",
+    textSecondary: "#9C9CA4",
+    border: "#26262A",
+    tint: "#C6F432",
+    accent: "#C6F432",
+    onAccent: "#0B0B0C",
+    accentSoft: "rgba(198, 244, 50, 0.14)",
+    danger: "#F87171",
+    inverse: "#F5F5F7",
+    onInverse: "#0B0B0C",
   },
 } as const;
 
@@ -65,6 +86,13 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+export const Radius = {
+  sm: 12,
+  md: 16,
+  lg: 24,
+  pill: 999,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

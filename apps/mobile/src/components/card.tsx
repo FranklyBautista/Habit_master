@@ -1,6 +1,6 @@
 import { StyleSheet, View, type ViewProps } from "react-native";
 
-import { Spacing } from "@/constants/theme";
+import { Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 // Shared raised surface: a white (light) / dark-grey (dark) panel with a
@@ -24,8 +24,8 @@ export function Card({ style, ...rest }: ViewProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    borderRadius: Radius.lg,
+    padding: Spacing.three + Spacing.one,
     gap: Spacing.two,
   },
 });

@@ -5,12 +5,15 @@ import {
   habitIcons,
 } from "@habit-tracker/domain";
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/button";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
+import { Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { useHabitActions } from "@/lib/habit-store";
 
 import { habitIconComponents } from "./habit-icons";
@@ -26,6 +29,7 @@ type HabitFormModalProps = {
 // (createHabitInputSchema for both create and update), same fields.
 export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModalProps) {
   const actions = useHabitActions();
+  const theme = useTheme();
   const [name, setName] = useState(habit?.name ?? "");
   const [description, setDescription] = useState(habit?.description ?? "");
   const [color, setColor] = useState(habit?.color ?? habitColors[0]);
@@ -74,23 +78,22 @@ export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModal
           </ThemedText>
 
           <ThemedText type="smallBold">Nombre</ThemedText>
-          <TextInput
+          <TextField
             accessibilityLabel="Nombre"
             maxLength={60}
             placeholder="Por ejemplo, beber agua"
-            style={styles.input}
             value={name}
             onChangeText={setName}
           />
 
           <ThemedText type="smallBold">Descripción (opcional)</ThemedText>
-          <TextInput
+          <TextField
             accessibilityLabel="Descripción"
             maxLength={160}
             multiline
             numberOfLines={3}
             placeholder="Cuándo o cómo quieres hacerlo"
-            style={[styles.input, styles.multiline]}
+            style={styles.multiline}
             value={description ?? ""}
             onChangeText={setDescription}
           />
@@ -105,11 +108,12 @@ export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModal
                 accessibilityLabel={`Color ${value}`}
                 onPress={() => setColor(value)}
                 style={[
-                  styles.swatch,
-                  { backgroundColor: value },
-                  color === value && styles.swatchSelected,
+                  styles.swatchRing,
+                  { borderColor: color === value ? theme.text : "transparent" },
                 ]}
-              />
+              >
+                <View style={[styles.swatch, { backgroundColor: value }]} />
+              </Pressable>
             ))}
           </View>
 
@@ -125,41 +129,40 @@ export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModal
                   accessibilityState={{ selected }}
                   accessibilityLabel={`Icono ${value}`}
                   onPress={() => setIcon(value)}
-                  style={[styles.iconOption, selected && styles.iconOptionSelected]}
+                  style={[
+                    styles.iconOption,
+                    selected
+                      ? { backgroundColor: theme.accentSoft, borderColor: theme.tint }
+                      : {
+                          backgroundColor: theme.backgroundElement,
+                          borderColor: theme.border,
+                        },
+                  ]}
                 >
-                  <Icon size={20} />
+                  <Icon size={20} color={selected ? theme.tint : theme.text} />
                 </Pressable>
               );
             })}
           </View>
 
-          {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
+          {error ? (
+            <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
+          ) : null}
 
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cancelar"
-              style={[styles.button, styles.buttonSecondary]}
+            <Button
+              label="Cancelar"
+              variant="secondary"
+              style={styles.actionButton}
               onPress={resetAndClose}
-            >
-              <ThemedText type="smallBold">Cancelar</ThemedText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            />
+            <Button
+              label={submitting ? "Guardando…" : habit ? "Guardar" : "Crear hábito"}
               accessibilityLabel={habit ? "Guardar" : "Crear hábito"}
-              accessibilityState={{ disabled: submitting }}
               disabled={submitting}
-              style={[
-                styles.button,
-                styles.buttonPrimary,
-                submitting && styles.buttonDisabled,
-              ]}
+              style={styles.actionButton}
               onPress={submit}
-            >
-              <ThemedText type="smallBold" style={{ color: "white" }}>
-                {submitting ? "Guardando…" : habit ? "Guardar" : "Crear hábito"}
-              </ThemedText>
-            </Pressable>
+            />
           </View>
         </SafeAreaView>
       </ThemedView>
@@ -170,40 +173,25 @@ export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModal
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, gap: Spacing.two, padding: Spacing.four },
-  input: {
-    borderWidth: 1,
-    borderColor: "#8888",
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-  },
-  multiline: { minHeight: 72, textAlignVertical: "top" },
+  multiline: { minHeight: 88, textAlignVertical: "top" },
   swatchRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
-  swatch: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  swatchSelected: { borderColor: "#111827" },
-  iconOption: {
+  swatchRing: {
     width: 44,
     height: 44,
-    borderRadius: Spacing.two,
+    borderRadius: 22,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F0F0F3",
   },
-  iconOptionSelected: { backgroundColor: "#E0E1E6" },
-  error: { color: "#DC2626" },
-  actions: { flexDirection: "row", gap: Spacing.two, marginTop: "auto" },
-  button: {
-    flex: 1,
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
+  swatch: { width: 32, height: 32, borderRadius: 16 },
+  iconOption: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    borderWidth: 1,
     alignItems: "center",
+    justifyContent: "center",
   },
-  buttonSecondary: { backgroundColor: "#F0F0F3" },
-  buttonPrimary: { backgroundColor: "#047857" },
-  buttonDisabled: { opacity: 0.6 },
+  actions: { flexDirection: "row", gap: Spacing.two, marginTop: "auto" },
+  actionButton: { flex: 1 },
 });
