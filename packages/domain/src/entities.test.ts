@@ -5,6 +5,7 @@ import {
   getLocalDateKey,
   habitSchema,
   habitTrackerStateSchema,
+  isPlaceholderDisplayName,
   userSettingsSchema,
 } from "./index";
 
@@ -139,5 +140,15 @@ describe("local dates", () => {
     const instant = new Date("2026-08-30T01:30:00.000Z");
     expect(getLocalDateKey(instant, "America/Los_Angeles")).toBe("2026-08-29");
     expect(getLocalDateKey(instant, "Europe/Madrid")).toBe("2026-08-30");
+  });
+});
+
+describe("placeholder display name", () => {
+  it("treats the app default and empty names as no name", () => {
+    expect(isPlaceholderDisplayName(null)).toBe(true);
+    expect(isPlaceholderDisplayName("   ")).toBe(true);
+    expect(isPlaceholderDisplayName("Tú")).toBe(true);
+    expect(isPlaceholderDisplayName(" tú ")).toBe(true);
+    expect(isPlaceholderDisplayName("Tula")).toBe(false);
   });
 });

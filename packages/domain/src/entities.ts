@@ -61,6 +61,16 @@ export const habitCheckinSchema = z.object({
   completedAt: instantSchema,
 });
 
+// Lo que la app muestra cuando el perfil no tiene nombre visible. No es un
+// nombre: nunca se guarda en `profiles.display_name` ni lo ve otro miembro de
+// un grupo (ADR 0002 §2).
+export const placeholderDisplayName = "Tú";
+
+export function isPlaceholderDisplayName(name: string | null | undefined): boolean {
+  const trimmed = name?.trim() ?? "";
+  return !trimmed || trimmed.toLowerCase() === placeholderDisplayName.toLowerCase();
+}
+
 export const userSettingsSchema = z.object({
   displayName: z.string().trim().min(1).max(60),
   timezone: z

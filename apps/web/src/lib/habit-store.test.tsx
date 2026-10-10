@@ -24,6 +24,7 @@ const { repository, browser } = vi.hoisted(() => ({
   repository: {
     getState: vi.fn(),
     updateSettings: vi.fn(),
+    updateTimezone: vi.fn(),
     setCheckin: vi.fn(),
     reorderHabits: vi.fn(),
     setArchived: vi.fn(),
@@ -39,6 +40,7 @@ vi.mock("./supabase-habit-repository", () => ({
   SupabaseHabitRepository: class {
     getState = repository.getState;
     updateSettings = repository.updateSettings;
+    updateTimezone = repository.updateTimezone;
     setCheckin = repository.setCheckin;
     reorderHabits = repository.reorderHabits;
     setArchived = repository.setArchived;
@@ -459,7 +461,7 @@ describe("HabitStoreProvider browser timezone", () => {
 
   it("saves the browser's timezone when the profile has another one", async () => {
     browser.timeZone = "America/Mexico_City";
-    repository.updateSettings.mockResolvedValue(undefined);
+    repository.updateTimezone.mockResolvedValue(undefined);
     repository.getState.mockResolvedValue(
       makeState({ settings: { ...settings, timezone: "America/Mexico_City" } }),
     );
@@ -469,33 +471,31 @@ describe("HabitStoreProvider browser timezone", () => {
     await waitFor(() =>
       expect(result.current.snapshot.settings.timezone).toBe("America/Mexico_City"),
     );
-    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
-    expect(repository.updateSettings).toHaveBeenCalledWith({
-      ...settings,
-      timezone: "America/Mexico_City",
-    });
+    expect(repository.updateTimezone).toHaveBeenCalledTimes(1);
+    expect(repository.updateTimezone).toHaveBeenCalledWith("America/Mexico_City");
+    expect(repository.updateSettings).not.toHaveBeenCalled();
   });
 
   it("leaves the profile alone when it already matches the browser", async () => {
     renderStore();
     await act(async () => {});
 
-    expect(repository.updateSettings).not.toHaveBeenCalled();
+    expect(repository.updateTimezone).not.toHaveBeenCalled();
   });
 
   it("does not retry in a loop when saving fails, but tries again on focus", async () => {
     browser.timeZone = "America/Mexico_City";
-    repository.updateSettings.mockRejectedValue(new Error("sin red"));
+    repository.updateTimezone.mockRejectedValue(new Error("sin red"));
     repository.getState.mockResolvedValue(utcState());
 
     const { result } = renderStore(utcState());
     await waitFor(() => expect(result.current.snapshot.error).toBe("sin red"));
     await act(async () => {});
-    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+    expect(repository.updateTimezone).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       window.dispatchEvent(new Event("focus"));
     });
-    await waitFor(() => expect(repository.updateSettings).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(repository.updateTimezone).toHaveBeenCalledTimes(2));
   });
 });

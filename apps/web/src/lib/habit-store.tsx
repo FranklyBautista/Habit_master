@@ -266,9 +266,7 @@ export function HabitStoreProvider({
     if (!browserTimeZone || settings.timezone === browserTimeZone) return;
     if (attemptedTimeZoneRef.current === browserTimeZone) return;
     attemptedTimeZoneRef.current = browserTimeZone;
-    void mutate(() =>
-      repository.updateSettings({ ...settings, timezone: browserTimeZone }),
-    );
+    void mutate(() => repository.updateTimezone(browserTimeZone));
   }, [mutate, repository, settings]);
 
   const value = useMemo(

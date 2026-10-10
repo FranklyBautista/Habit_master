@@ -21,6 +21,7 @@ const { repository, netInfo, device } = vi.hoisted(() => ({
     getState: vi.fn(),
     setCheckin: vi.fn(),
     updateSettings: vi.fn(),
+    updateTimezone: vi.fn(),
   },
   // Zona "del teléfono"; por defecto la misma del perfil del fixture para que
   // la sincronización automática no se dispare en los demás tests.
@@ -57,6 +58,7 @@ vi.mock("./supabase-habit-repository", () => ({
     getState = repository.getState;
     setCheckin = repository.setCheckin;
     updateSettings = repository.updateSettings;
+    updateTimezone = repository.updateTimezone;
   },
 }));
 
@@ -384,7 +386,7 @@ describe("HabitStoreProvider device timezone", () => {
 
   it("saves the phone's timezone when the profile has another one", async () => {
     device.timeZone = "America/Mexico_City";
-    repository.updateSettings.mockResolvedValue(undefined);
+    repository.updateTimezone.mockResolvedValue(undefined);
     repository.getState.mockResolvedValue({
       ...initialState,
       settings: { ...initialState.settings, timezone: "America/Mexico_City" },
@@ -395,11 +397,9 @@ describe("HabitStoreProvider device timezone", () => {
     await waitFor(() =>
       expect(result.current.settings.timezone).toBe("America/Mexico_City"),
     );
-    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
-    expect(repository.updateSettings).toHaveBeenCalledWith({
-      ...initialState.settings,
-      timezone: "America/Mexico_City",
-    });
+    expect(repository.updateTimezone).toHaveBeenCalledTimes(1);
+    expect(repository.updateTimezone).toHaveBeenCalledWith("America/Mexico_City");
+    expect(repository.updateSettings).not.toHaveBeenCalled();
   });
 
   it("leaves the profile alone when it already matches the phone", async () => {
@@ -408,18 +408,18 @@ describe("HabitStoreProvider device timezone", () => {
     renderStore();
     await act(async () => {});
 
-    expect(repository.updateSettings).not.toHaveBeenCalled();
+    expect(repository.updateTimezone).not.toHaveBeenCalled();
   });
 
   it("does not retry in a loop when saving the timezone fails", async () => {
     device.timeZone = "America/Mexico_City";
-    repository.updateSettings.mockRejectedValue(new Error("sin red"));
+    repository.updateTimezone.mockRejectedValue(new Error("sin red"));
 
     const { result } = renderStore();
 
     await waitFor(() => expect(result.current.error).toBe("sin red"));
     await act(async () => {});
-    expect(repository.updateSettings).toHaveBeenCalledTimes(1);
+    expect(repository.updateTimezone).toHaveBeenCalledTimes(1);
     expect(result.current.settings.timezone).toBe("UTC");
   });
 
@@ -429,6 +429,6 @@ describe("HabitStoreProvider device timezone", () => {
     renderStore();
     await act(async () => {});
 
-    expect(repository.updateSettings).not.toHaveBeenCalled();
+    expect(repository.updateTimezone).not.toHaveBeenCalled();
   });
 });

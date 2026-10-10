@@ -255,9 +255,7 @@ export function HabitStoreProvider({
     if (!deviceTimeZone || !online || settings.timezone === deviceTimeZone) return;
     if (attemptedTimeZoneRef.current === deviceTimeZone) return;
     attemptedTimeZoneRef.current = deviceTimeZone;
-    void mutate(() =>
-      repository.updateSettings({ ...settings, timezone: deviceTimeZone }),
-    );
+    void mutate(() => repository.updateTimezone(deviceTimeZone));
   }, [mutate, online, repository, settings]);
 
   const value = useMemo(() => ({ snapshot, actions }), [actions, snapshot]);

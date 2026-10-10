@@ -411,6 +411,48 @@ describe("SupabaseHabitRepository mutations", () => {
       ?.args[0] as Record<string, unknown>;
     expect(restorePayload).toEqual({ archived_at: null, position: 3 });
   });
+
+  it("syncs the timezone without rewriting the rest of the profile", async () => {
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: null,
+    }));
+
+    await new SupabaseHabitRepository(client, USER_ID).updateTimezone(
+      "America/Mexico_City",
+    );
+
+    const payload = interactions[0].steps.find((step) => step.method === "update")
+      ?.args[0];
+    expect(payload).toEqual({ timezone: "America/Mexico_City" });
+  });
+
+  it("never stores the app placeholder as a display name", async () => {
+    const { client, interactions } = createFakeClient(() => ({
+      data: null,
+      error: null,
+    }));
+    const repository = new SupabaseHabitRepository(client, USER_ID);
+    const settings = {
+      displayName: "Tú",
+      timezone: "UTC",
+      locale: "es" as const,
+      weekStartsOn: 1 as const,
+    };
+
+    await repository.updateSettings(settings);
+    await repository.updateSettings({ ...settings, displayName: "Ana" });
+
+    const [placeholder, named] = interactions.map(
+      (interaction) =>
+        interaction.steps.find((step) => step.method === "update")?.args[0] as Record<
+          string,
+          unknown
+        >,
+    );
+    expect(placeholder.display_name).toBeNull();
+    expect(named.display_name).toBe("Ana");
+  });
 });
 
 describe("SupabaseHabitRepository.importState", () => {

@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(67);
+select plan(70);
 
 -- Estructura y permisos ---------------------------------------------------------
 
@@ -609,6 +609,34 @@ select is_empty(
   format($$select id from public.groups where id = %L$$, current_setting('test.solo_id')),
   'the last member leaving deletes the group'
 );
+
+-- "Tú" es el nombre por defecto de la app, no un nombre visible ---------------
+
+insert into auth.users (id, email)
+values ('44444444-4444-4444-8444-444444444444', 'dani@example.test');
+update public.profiles set display_name = 'Tú'
+where id = '44444444-4444-4444-8444-444444444444';
+set local role authenticated;
+set local request.jwt.claim.sub = '44444444-4444-4444-8444-444444444444';
+select throws_ok(
+  $$select public.create_group('Con Tú')$$,
+  'P0001',
+  'Elige un nombre visible de 1 a 60 caracteres para unirte a un grupo.',
+  'the app placeholder "Tú" does not count as a display name'
+);
+select throws_ok(
+  $$select public.create_group('Con Tú', '{}', ' tú ')$$,
+  'P0001',
+  'Elige un nombre visible de 1 a 60 caracteres para unirte a un grupo.',
+  '"Tú" is not accepted as a new display name either'
+);
+select public.create_group('Con nombre', '{}', 'Dani');
+select is(
+  (select display_name from public.profiles),
+  'Dani',
+  'a real display name replaces the placeholder'
+);
+set local role postgres;
 
 select * from finish();
 rollback;

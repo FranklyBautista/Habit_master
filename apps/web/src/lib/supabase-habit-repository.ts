@@ -6,6 +6,8 @@ import {
   type HabitCheckin,
   type HabitTrackerState,
   habitTrackerStateSchema,
+  isPlaceholderDisplayName,
+  placeholderDisplayName,
   type UpdateHabitInput,
   type UserSettings,
 } from "@habit-tracker/domain";
@@ -14,6 +16,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
 type CheckinRow = Database["public"]["Tables"]["habit_checkins"]["Row"];
 type ArchivePeriodRow = Database["public"]["Tables"]["habit_archive_periods"]["Row"];
+function storedDisplayName(displayName: string): string | null {
+  return isPlaceholderDisplayName(displayName) ? null : displayName;
+}
+
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 // Violación de `habits_active_position_unique` (migración 20260926120000):
@@ -98,7 +104,7 @@ export class SupabaseHabitRepository {
       ),
       checkins: checkinsResult.data.map(mapCheckin),
       settings: {
-        displayName: profile.display_name ?? "Tú",
+        displayName: profile.display_name ?? placeholderDisplayName,
         timezone: profile.timezone,
         locale: "es",
         weekStartsOn: 1,
@@ -197,11 +203,21 @@ export class SupabaseHabitRepository {
     if (error) throw error;
   }
 
+  // Solo la zona: la sincronización automática no debe reescribir el resto del
+  // perfil (antes guardaba el "Tú" de relleno como nombre visible).
+  async updateTimezone(timezone: string): Promise<void> {
+    const { error } = await this.client
+      .from("profiles")
+      .update({ timezone })
+      .eq("id", this.userId);
+    if (error) throw error;
+  }
+
   async updateSettings(settings: UserSettings): Promise<void> {
     const { error } = await this.client
       .from("profiles")
       .update({
-        display_name: settings.displayName,
+        display_name: storedDisplayName(settings.displayName),
         timezone: settings.timezone,
         locale: settings.locale,
         week_starts_on: settings.weekStartsOn,
@@ -242,7 +258,7 @@ export class SupabaseHabitRepository {
     const { error: profileError } = await this.client
       .from("profiles")
       .update({
-        display_name: validState.settings.displayName,
+        display_name: storedDisplayName(validState.settings.displayName),
         timezone: validState.settings.timezone,
       })
       .eq("id", this.userId);
