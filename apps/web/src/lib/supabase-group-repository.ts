@@ -128,13 +128,15 @@ export class SupabaseGroupRepository {
     groups: GroupSummary[];
     invitations: GroupInvitation[];
     userCode: string;
+    /** Valor crudo de `profiles.display_name` (null si nunca se eligió). */
+    displayName: string | null;
   }> {
     const [groupsResult, invitationsResult, profileResult] = await Promise.all([
       this.client.rpc("get_my_groups"),
       this.client.rpc("get_my_invitations"),
       this.client
         .from("profiles")
-        .select("user_code")
+        .select("user_code, display_name")
         .eq("id", this.userId)
         .maybeSingle(),
     ]);
@@ -154,6 +156,7 @@ export class SupabaseGroupRepository {
         .array(groupInvitationSchema)
         .parse((invitationsResult.data ?? []).map(mapInvitation)),
       userCode: userCodeSchema.parse(profileResult.data.user_code),
+      displayName: profileResult.data.display_name,
     };
   }
 

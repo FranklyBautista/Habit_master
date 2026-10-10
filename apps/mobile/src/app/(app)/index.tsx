@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/card";
+import { GroupsCard } from "@/components/groups/groups-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -31,6 +32,7 @@ export default function HoyScreen() {
           <ThemedText themeColor="textSecondary">
             Buenos días, {snapshot.settings.displayName}
           </ThemedText>
+          <GroupsCard />
 
           {activeHabits.length ? (
             <>

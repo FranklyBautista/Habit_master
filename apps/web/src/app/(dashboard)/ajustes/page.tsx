@@ -5,6 +5,7 @@ import { Cloud, LogOut, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 
+import { UserCodeCard } from "@/components/groups/user-code-card";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -127,6 +128,7 @@ export default function SettingsPage() {
             </div>
           </Card>
         </form>
+        <UserCodeCard />
         <Card>
           <Link className="privacy-link" href="/privacidad">
             Política de privacidad

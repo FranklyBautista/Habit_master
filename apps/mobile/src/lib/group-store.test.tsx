@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   GroupStoreProvider,
+  isDisplayNameRequiredError,
   useGroupActions,
   useGroupProgress,
   useGroups,
@@ -73,7 +74,12 @@ const { GroupAccessError } = await import("./supabase-group-repository");
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const GROUP_ID = "99999999-9999-4999-8999-999999999999";
 
-const emptyOverview = { groups: [], invitations: [], userCode: "H2M4R8TN" };
+const emptyOverview = {
+  groups: [],
+  invitations: [],
+  userCode: "H2M4R8TN",
+  displayName: "Ana",
+};
 const familia = {
   id: GROUP_ID,
   name: "Familia",
@@ -116,12 +122,24 @@ beforeEach(() => {
   repository.getProgress.mockResolvedValue(progress);
 });
 
+describe("isDisplayNameRequiredError", () => {
+  it("recognises the server message that asks for a display name", () => {
+    expect(
+      isDisplayNameRequiredError(
+        "Elige un nombre visible de 1 a 60 caracteres para unirte a un grupo.",
+      ),
+    ).toBe(true);
+    expect(isDisplayNameRequiredError("Código no válido.")).toBe(false);
+  });
+});
+
 describe("GroupStoreProvider", () => {
   it("loads the overview on mount", async () => {
     const { result } = renderStore();
     expect(result.current.snapshot.hydrated).toBe(false);
     await waitFor(() => expect(result.current.snapshot.hydrated).toBe(true));
     expect(result.current.snapshot.userCode).toBe("H2M4R8TN");
+    expect(result.current.snapshot.displayName).toBe("Ana");
     expect(result.current.snapshot.revision).toBe(0);
   });
 

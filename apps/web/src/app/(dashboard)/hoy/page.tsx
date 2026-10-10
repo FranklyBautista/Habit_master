@@ -4,6 +4,7 @@ import { Inbox, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { type CSSProperties } from "react";
 
+import { GroupsTodayCard } from "@/components/groups/groups-today-card";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -84,6 +85,7 @@ export default function TodayPage() {
               </p>
             </div>
           </Card>
+          <GroupsTodayCard />
         </div>
       ) : (
         <Card className="empty-page-state">
@@ -96,6 +98,11 @@ export default function TodayPage() {
             <Plus size={18} /> Crear un hábito
           </Link>
         </Card>
+      )}
+      {activeHabits.length ? null : (
+        <div className="today-groups-standalone">
+          <GroupsTodayCard />
+        </div>
       )}
     </>
   );

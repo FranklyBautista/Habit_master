@@ -150,7 +150,7 @@ describe("SupabaseGroupRepository", () => {
           error: null,
         };
       }
-      return { data: { user_code: "H2M4R8TN" }, error: null };
+      return { data: { user_code: "H2M4R8TN", display_name: null }, error: null };
     });
 
     await expect(repository.getOverview()).resolves.toEqual({
@@ -174,11 +174,12 @@ describe("SupabaseGroupRepository", () => {
         },
       ],
       userCode: "H2M4R8TN",
+      displayName: null,
     });
     const profileQuery = interactions.find((item) => item.table === "profiles");
     expect(profileQuery?.steps).toContainEqual({
       method: "select",
-      args: ["user_code"],
+      args: ["user_code, display_name"],
     });
     expect(profileQuery?.steps).toContainEqual({ method: "eq", args: ["id", USER_ID] });
   });

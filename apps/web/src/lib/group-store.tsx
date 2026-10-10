@@ -19,6 +19,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { z } from "zod";
 
 import { createClient } from "./supabase/client";
 import { GroupAccessError, SupabaseGroupRepository } from "./supabase-group-repository";
@@ -30,6 +31,10 @@ import { GroupAccessError, SupabaseGroupRepository } from "./supabase-group-repo
 export type ActionResult<T = void> =
   { ok: true; data: T } | { ok: false; error: string };
 
+/** Mensaje del servidor cuando falta el nombre visible. */
+export const missingDisplayNameError =
+  "Elige un nombre visible de 1 a 60 caracteres para unirte a un grupo.";
+
 export type GroupsSnapshot = {
   hydrated: boolean;
   syncing: boolean;
@@ -37,6 +42,11 @@ export type GroupsSnapshot = {
   groups: GroupSummary[];
   invitations: GroupInvitation[];
   userCode: string | null;
+  /**
+   * `profiles.display_name` tal cual. Si `isPlaceholderDisplayName` (dominio)
+   * es true, hay que pedir "Tu nombre en el grupo" antes de crear o unirse.
+   */
+  displayName: string | null;
   /** Sube con cada acción confirmada; `useGroupProgress` vuelve a consultar. */
   revision: number;
 };
@@ -73,6 +83,8 @@ type GroupStoreValue = {
 
 const GroupStoreContext = createContext<GroupStoreValue | null>(null);
 
+const groupIdSchema = z.uuid();
+
 const genericError = "No se pudo sincronizar. Revisa tu conexión e inténtalo de nuevo.";
 const duplicateError = "Ya se está procesando. Espera un momento.";
 
@@ -107,6 +119,7 @@ export function GroupStoreProvider({
     groups: [],
     invitations: [],
     userCode: null,
+    displayName: null,
     revision: 0,
   });
   // Igual que habit-store: solo la última consulta iniciada puede escribir el
@@ -305,6 +318,12 @@ export function useGroupProgress(groupId: string) {
 
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current;
+    // Un id mal formado (URL editada a mano) se trata igual que un grupo ajeno,
+    // sin enviar a Postgres algo que respondería con un error en inglés.
+    if (!groupIdSchema.safeParse(groupId).success) {
+      setState({ progress: null, loading: false, error: null, notMember: true });
+      return;
+    }
     setState((current) => ({ ...current, loading: true, error: null }));
     try {
       const progress = await repository.getProgress(groupId);

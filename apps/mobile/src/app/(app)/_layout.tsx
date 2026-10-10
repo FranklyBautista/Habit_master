@@ -11,11 +11,11 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable } from "react-native";
 
 import { ConnectionBanner } from "@/components/connection-banner";
+import { AppProviders } from "@/components/groups/app-providers";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
-import { HabitStoreProvider } from "@/lib/habit-store";
 import { initialLoadErrorDetail, loadWithRetry } from "@/lib/initial-load";
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseHabitRepository } from "@/lib/supabase-habit-repository";
@@ -99,7 +99,7 @@ export default function AppLayout() {
   }
 
   return (
-    <HabitStoreProvider initialState={initialState} userId={session.user.id}>
+    <AppProviders initialState={initialState} userId={session.user.id}>
       <ThemedView style={{ flex: 1 }}>
         <ConnectionBanner />
         <Tabs screenOptions={{ headerShown: false }}>
@@ -140,8 +140,10 @@ export default function AppLayout() {
               tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
             }}
           />
+          {/* Sin pestaña propia: se entra desde Hoy y Ajustes. */}
+          <Tabs.Screen name="grupos" options={{ href: null, title: "Grupos" }} />
         </Tabs>
       </ThemedView>
-    </HabitStoreProvider>
+    </AppProviders>
   );
 }

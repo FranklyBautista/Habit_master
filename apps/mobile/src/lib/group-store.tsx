@@ -39,6 +39,8 @@ export type GroupsSnapshot = {
   groups: GroupSummary[];
   invitations: GroupInvitation[];
   userCode: string | null;
+  /** Valor crudo de `profiles.display_name`; ver `isPlaceholderDisplayName`. */
+  displayName: string | null;
   /** Sube tras cada mutación con éxito; `useGroupProgress` reconsulta al cambiar. */
   revision: number;
 };
@@ -77,6 +79,13 @@ const GroupStoreContext = createContext<GroupStoreValue | null>(null);
 
 const genericError = "No se pudo sincronizar. Revisa tu conexión e inténtalo de nuevo.";
 
+// Para crear o unirse a un grupo hace falta nombre visible (ADR 0002 §2). Si el
+// perfil no lo tiene (o tiene el "Tú" de relleno, ver `isPlaceholderDisplayName`
+// del dominio) el servidor responde con este mensaje y la pantalla pide el nombre.
+export function isDisplayNameRequiredError(message: string): boolean {
+  return message.startsWith("Elige un nombre visible");
+}
+
 function errorMessage(reason: unknown) {
   if (reason instanceof Error && reason.message) return reason.message;
   return genericError;
@@ -100,6 +109,7 @@ export function GroupStoreProvider({
     groups: [],
     invitations: [],
     userCode: null,
+    displayName: null,
     revision: 0,
   });
   const repository = useMemo(

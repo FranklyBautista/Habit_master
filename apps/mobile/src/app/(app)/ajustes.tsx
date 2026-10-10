@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/card";
+import { UserCodeSection } from "@/components/groups/user-code-section";
 import { ReminderTimeModal } from "@/components/reminder-time-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -285,6 +286,8 @@ export default function AjustesScreen() {
               </ThemedText>
             </Pressable>
           </Card>
+
+          <UserCodeSection />
 
           {remindersSupported ? (
             <Card style={styles.card}>

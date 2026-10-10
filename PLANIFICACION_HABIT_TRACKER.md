@@ -562,7 +562,7 @@ Ritmo sugerido:
 - [x] **Falta `apps/mobile/.env.example`.** Las variables `EXPO_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` solo están documentadas en prosa en el README de mobile, no en un archivo versionado — inconsistente con el criterio de Fase 1. **Corregido (2026-09-27):** añadido `apps/mobile/.env.example` (hosts para web/emulador/teléfono y aviso de no incluir secretos) y el README de mobile lo referencia.
 - [x] **~450 KB de assets del scaffold sin usar en cada build nativo.** `assets/images/logo-glow.png`, `tutorial-web.png`, `react-logo*.png`, `expo-logo.png`, `expo-badge*.png` — sin referencias en `src/` ni `app.json`, sobras de `create-expo-app`; trivial de borrar antes del primer build real. **Corregido (2026-09-27):** borrados junto con `assets/expo.icon/` y `tabIcons/`; sin referencias en `src/` ni `app.json`, lint/typecheck/tests de móvil en verde. Cambio de assets: entra en el próximo EAS build (falta build).
 
-**Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C4 (pantallas de grupos).
+**Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C5 (chat del grupo); antes de publicar grupos hay que aplicar en producción las migraciones `20261010120000` y `20261010130000`.
 
 ---
 
@@ -590,6 +590,14 @@ Ritmo sugerido:
 - [x] `packages/domain`: esquemas Zod de grupos (`groups.ts`, salida de las RPC en camelCase), utilidades del código de usuario y métricas puras (`group-metrics.ts`: hoy, racha con la misma semántica que `calculateStreaks`, últimos 7 días y resumen "al día" del grupo).
 - [x] `SupabaseGroupRepository` y `GroupStoreProvider`/`useGroups`/`useGroupActions`/`useGroupProgress` en web y móvil con el mismo contrato: validación Zod en el límite, sin UI optimista (ADR 0001), revalidación por foco/conexión y dedupe de dobles envíos.
 
-### C4–C6
+### C4 — Pantallas de grupos, web y móvil (2026-10-10)
 
-- [ ] C4 Pantallas · C5 Chat · C6 Mascota.
+- [x] Crear grupo en 3 pasos (nombre → hábitos a compartir, con "Crear un hábito nuevo" → invitar por código), con nombre visible obligatorio si el perfil no tiene uno ("Tú" no cuenta).
+- [x] Bandeja de invitaciones en `/grupos` y aviso en Hoy; aceptar en `/grupos/invitaciones/[id]` eligiendo qué hábitos compartir; código de usuario en Ajustes (copiar/compartir y regenerar).
+- [x] Vista del grupo `/grupos/[id]` (hoy ✓/✗ con texto, racha, últimos 7 días con alternativa textual, check-in propio, gestionar lo compartido) y ajustes del grupo (renombrar, invitar, cancelar, expulsar, transferir, salir, borrar).
+- [x] Web: "Grupos" en la barra lateral con contador; móvil: rutas ocultas en Tabs (`href: null`) y tarjeta en Hoy, sin cambios nativos.
+- [x] E2E `e2e/groups.spec.ts` con dos usuarios (invitar → aceptar → marcar → el otro lo ve) + axe sin violaciones en `/grupos` y `/grupos/[id]`.
+
+### C5–C6
+
+- [ ] C5 Chat · C6 Mascota.

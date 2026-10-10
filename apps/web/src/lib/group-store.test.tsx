@@ -76,7 +76,7 @@ const progress: GroupProgress = {
 };
 
 function overview(groups: GroupSummary[] = []) {
-  return { groups, invitations: [], userCode: "H2M4R8TN" };
+  return { groups, invitations: [], userCode: "H2M4R8TN", displayName: "Ana" };
 }
 
 function deferred<T>() {
@@ -110,6 +110,7 @@ describe("GroupStoreProvider", () => {
     expect(result.current.snapshot.hydrated).toBe(false);
     await waitFor(() => expect(result.current.snapshot.hydrated).toBe(true));
     expect(result.current.snapshot.userCode).toBe("H2M4R8TN");
+    expect(result.current.snapshot.displayName).toBe("Ana");
     expect(result.current.snapshot.groups).toEqual([]);
   });
 

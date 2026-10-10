@@ -10,6 +10,7 @@ import {
   Menu,
   MoreHorizontal,
   Settings,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { GroupStoreProvider, useGroups } from "@/lib/group-store";
 import {
   HabitStoreProvider,
   useHabitActions,
@@ -24,18 +26,32 @@ import {
   useLocalDataMigration,
 } from "@/lib/habit-store";
 
-const navigation: Array<{
+type NavigationItem = {
   href: string;
   label: string;
   shortLabel?: string;
   Icon: LucideIcon;
-}> = [
+};
+
+// La barra inferior móvil se queda con 5 elementos (wireframe de grupos): a
+// Grupos se entra desde la barra lateral, Hoy o Ajustes.
+const navigation: NavigationItem[] = [
   { href: "/hoy", label: "Hoy", Icon: CheckCircle2 },
   { href: "/habitos", label: "Hábitos", Icon: ListChecks },
   { href: "/calendario", label: "Calendario", shortLabel: "Cal.", Icon: CalendarDays },
   { href: "/estadisticas", label: "Estadísticas", shortLabel: "Est.", Icon: BarChart3 },
   { href: "/ajustes", label: "Ajustes", Icon: Settings },
 ];
+const groupsItem: NavigationItem = { href: "/grupos", label: "Grupos", Icon: Users };
+const sidebarNavigation: NavigationItem[] = [
+  ...navigation.slice(0, -1),
+  groupsItem,
+  ...navigation.slice(-1),
+];
+
+function isActive(pathname: string, href: string) {
+  return href === "/grupos" ? pathname.startsWith("/grupos") : pathname === href;
+}
 
 type AppShellProps = {
   children: ReactNode;
@@ -47,7 +63,9 @@ type AppShellProps = {
 export function AppShell({ children, initialState, userEmail, userId }: AppShellProps) {
   return (
     <HabitStoreProvider initialState={initialState} userId={userId}>
-      <AppShellContent userEmail={userEmail}>{children}</AppShellContent>
+      <GroupStoreProvider userId={userId}>
+        <AppShellContent userEmail={userEmail}>{children}</AppShellContent>
+      </GroupStoreProvider>
     </HabitStoreProvider>
   );
 }
@@ -62,7 +80,9 @@ function AppShellContent({
   const pathname = usePathname();
   const snapshot = useHabitStore();
   const actions = useHabitActions();
+  const groups = useGroups();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pendingInvitations = groups.invitations.length;
 
   return (
     <div className="app-shell">
@@ -89,18 +109,31 @@ function AppShellContent({
           </Button>
         </div>
         <nav>
-          {navigation.map(({ href, label, Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={pathname === href ? "active" : ""}
-              aria-current={pathname === href ? "page" : undefined}
-              onClick={() => setMenuOpen(false)}
-            >
-              <Icon size={20} />
-              <span>{label}</span>
-            </Link>
-          ))}
+          {sidebarNavigation.map(({ href, label, Icon }) => {
+            const badge = href === "/grupos" && pendingInvitations > 0;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={isActive(pathname, href) ? "active" : ""}
+                aria-current={isActive(pathname, href) ? "page" : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                <Icon size={20} />
+                <span>{label}</span>
+                {badge ? (
+                  <span className="nav-badge">
+                    <span aria-hidden="true">{pendingInvitations}</span>
+                    <span className="sr-only">
+                      {pendingInvitations === 1
+                        ? ", 1 invitación pendiente"
+                        : `, ${pendingInvitations} invitaciones pendientes`}
+                    </span>
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
         </nav>
         <div className="profile-chip">
           <span className="avatar avatar--small">
@@ -155,8 +188,8 @@ function AppShellContent({
           <Link
             key={href}
             href={href}
-            className={pathname === href ? "active" : ""}
-            aria-current={pathname === href ? "page" : undefined}
+            className={isActive(pathname, href) ? "active" : ""}
+            aria-current={isActive(pathname, href) ? "page" : undefined}
           >
             <Icon size={21} />
             <span>{shortLabel ?? label}</span>
