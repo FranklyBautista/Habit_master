@@ -562,7 +562,7 @@ Ritmo sugerido:
 - [x] **Falta `apps/mobile/.env.example`.** Las variables `EXPO_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` solo están documentadas en prosa en el README de mobile, no en un archivo versionado — inconsistente con el criterio de Fase 1. **Corregido (2026-09-27):** añadido `apps/mobile/.env.example` (hosts para web/emulador/teléfono y aviso de no incluir secretos) y el README de mobile lo referencia.
 - [x] **~450 KB de assets del scaffold sin usar en cada build nativo.** `assets/images/logo-glow.png`, `tutorial-web.png`, `react-logo*.png`, `expo-logo.png`, `expo-badge*.png` — sin referencias en `src/` ni `app.json`, sobras de `create-expo-app`; trivial de borrar antes del primer build real. **Corregido (2026-09-27):** borrados junto con `assets/expo.icon/` y `tabIcons/`; sin referencias en `src/` ni `app.json`, lint/typecheck/tests de móvil en verde. Cambio de assets: entra en el próximo EAS build (falta build).
 
-**Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C3 (dominio y repositorio de grupos).
+**Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C4 (pantallas de grupos).
 
 ---
 
@@ -585,6 +585,11 @@ Ritmo sugerido:
 - [x] Progreso compartido por `get_group_progress(group_id)` con solo las columnas de ADR 0002 §2; la RLS de `habits`/`habit_checkins` no cambia.
 - [x] pgTAP `supabase/tests/groups.test.sql` (67 casos: no-miembro, exmiembro, hábito no compartido o archivado, invitación caducada o silenciada, límites, propiedad y borrado de cuenta) y tipos regenerados.
 
-### C3–C6
+### C3 — Dominio y repositorio de grupos (2026-10-10)
 
-- [ ] C3 Dominio y repositorio · C4 Pantallas · C5 Chat · C6 Mascota.
+- [x] `packages/domain`: esquemas Zod de grupos (`groups.ts`, salida de las RPC en camelCase), utilidades del código de usuario y métricas puras (`group-metrics.ts`: hoy, racha con la misma semántica que `calculateStreaks`, últimos 7 días y resumen "al día" del grupo).
+- [x] `SupabaseGroupRepository` y `GroupStoreProvider`/`useGroups`/`useGroupActions`/`useGroupProgress` en web y móvil con el mismo contrato: validación Zod en el límite, sin UI optimista (ADR 0001), revalidación por foco/conexión y dedupe de dobles envíos.
+
+### C4–C6
+
+- [ ] C4 Pantallas · C5 Chat · C6 Mascota.
