@@ -2,12 +2,12 @@
 
 import { Inbox, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties } from "react";
 
 import { GroupsTodayCard } from "@/components/groups/groups-today-card";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { getTodaySnapshot, useHabitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function TodayPage() {
@@ -40,15 +40,10 @@ export default function TodayPage() {
                   : `Te ${activeHabits.length - completed === 1 ? "falta uno" : `faltan ${activeHabits.length - completed}`}. Sin prisa.`}
               </p>
             </div>
-            <div
-              className="progress-ring"
-              style={{ "--progress": `${(percentage ?? 0) * 3.6}deg` } as CSSProperties}
-            >
-              <div>
-                <strong>{percentage}%</strong>
-                <span>completado</span>
-              </div>
-            </div>
+            <ProgressRing percentage={percentage} size={116} strokeWidth={12}>
+              <strong>{percentage}%</strong>
+              <span>completado</span>
+            </ProgressRing>
           </Card>
           <Card className="habits-card">
             <div className="section-heading">

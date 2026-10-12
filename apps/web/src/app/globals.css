@@ -110,6 +110,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-weight: 450;
   line-height: 1.5;
 }
 button,
@@ -137,8 +138,17 @@ button {
 }
 h1,
 h2,
+h3,
 p {
   margin-block: 0;
+}
+/* Jerarquía de ThemedText en móvil: title 30/800, subtitle 22/700. */
+h1 {
+  font-weight: 800;
+}
+h2,
+h3 {
+  font-weight: 700;
 }
 .sr-only {
   position: absolute;
@@ -174,14 +184,14 @@ p {
   width: 100%;
   max-width: 1180px;
   margin-inline: auto;
-  padding: 24px 18px 104px;
+  padding: 20px 20px 112px;
 }
 .sync-error,
 .migration-banner,
 .migration-message {
-  margin-bottom: 18px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-md);
   background: var(--surface);
   padding: 14px 16px;
 }
@@ -347,7 +357,6 @@ p {
   min-height: 60px;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--background) 92%, transparent);
   padding: 8px 14px;
   backdrop-filter: blur(12px);
@@ -356,20 +365,29 @@ p {
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  color: var(--primary);
-  font-weight: 700;
+  gap: 10px;
+  color: var(--foreground);
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 .brand-mark {
   display: grid;
   width: 38px;
   height: 38px;
+  flex: 0 0 auto;
   place-items: center;
-  border-radius: 11px;
+  border-radius: var(--rounded-sm);
   background: var(--accent);
   color: var(--on-accent);
 }
+.brand-mark--small {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+/* Barra inferior como las pestañas de móvil: fondo de página, etiqueta
+   pequeña y la pestaña activa con el icono sobre una píldora de acento
+   suave, para que se distinga por algo más que el color. */
 .bottom-nav {
   position: fixed;
   z-index: 30;
@@ -380,27 +398,37 @@ p {
   grid-template-columns: repeat(5, 1fr);
   border-top: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--background) 94%, transparent);
-  padding: 7px max(8px, env(safe-area-inset-right))
-    calc(7px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  padding: 6px max(8px, env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   backdrop-filter: blur(14px);
 }
 .bottom-nav a {
   display: flex;
   min-width: 0;
-  min-height: 48px;
+  min-height: 52px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border-radius: 9px;
-  color: var(--subtle);
+  gap: 3px;
+  color: var(--muted);
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
 }
+.nav-icon {
+  display: grid;
+  width: 52px;
+  height: 30px;
+  place-items: center;
+  border-radius: var(--rounded-pill);
+  transition: background-color 180ms ease;
+}
 .bottom-nav a.active {
-  background: var(--primary-soft);
-  color: var(--primary);
+  color: var(--tint);
+  font-weight: 700;
+}
+.bottom-nav a.active .nav-icon {
+  background: var(--accent-soft);
 }
 .sidebar-backdrop {
   position: fixed;
@@ -431,26 +459,30 @@ p {
 .sidebar nav {
   display: grid;
   gap: 4px;
-  margin-top: 34px;
+  margin-top: 30px;
 }
 .sidebar nav a {
   display: flex;
   min-height: 48px;
   align-items: center;
   gap: 12px;
-  border-radius: 9px;
+  border-radius: var(--rounded-pill);
   color: var(--muted);
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-weight: 600;
   text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 .sidebar nav a:hover {
   background: var(--surface-selected);
   color: var(--foreground);
 }
 .sidebar nav a.active {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--accent-soft);
+  color: var(--tint);
+  font-weight: 700;
 }
 .profile-chip {
   display: flex;
@@ -458,8 +490,10 @@ p {
   align-items: center;
   gap: 10px;
   margin-top: auto;
-  border-top: 1px solid var(--border-soft);
-  padding: 18px 8px 0;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-md);
+  background: var(--surface);
+  padding: 10px 12px;
 }
 .profile-chip > span:nth-child(2) {
   display: grid;
@@ -471,24 +505,55 @@ p {
 }
 .profile-chip small {
   overflow: hidden;
-  color: var(--subtle);
+  color: var(--muted);
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .avatar {
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-weight: 700;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 22px;
+  font-weight: 800;
 }
 .avatar--small {
   width: 34px;
   height: 34px;
-  font-size: 13px;
+  font-size: 14px;
+}
+/* Avatar de la cabecera de Hoy en móvil: anillo discontinuo de acento. */
+.avatar-ring {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px dashed var(--tint);
+  border-radius: 50%;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.avatar-ring--small {
+  width: 44px;
+  height: 44px;
+}
+.avatar-ring > span {
+  display: grid;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-selected);
+  font-size: 20px;
+  font-weight: 700;
+}
+.avatar-ring--small > span {
+  font-size: 15px;
 }
 
 .page-header {
@@ -496,77 +561,84 @@ p {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .page-header h1 {
-  margin-top: 3px;
-  font-size: clamp(26px, 5vw, 34px);
+  margin-top: 2px;
+  font-size: clamp(28px, 6vw, 34px);
   line-height: 1.15;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.025em;
 }
 .page-header p {
   max-width: 600px;
-  margin-top: 7px;
+  margin-top: 6px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
 }
+/* Rótulos pequeños en mayúsculas, en texto secundario como en móvil
+   ("PROGRESO DE HOY", "TU CONTEXTO"). */
 .eyebrow,
 .section-kicker {
   display: block;
-  color: var(--primary);
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .page-header__action {
   flex: 0 0 auto;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 9px 16px;
+  border-radius: var(--rounded-pill);
+  padding: 10px 22px;
   cursor: pointer;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
     color 180ms ease,
+    opacity 180ms ease,
     transform 180ms ease;
 }
-.button:active {
-  transform: translateY(1px);
+.button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.38;
+  opacity: 0.45;
 }
 .button--primary {
   background: var(--accent);
   color: var(--on-accent);
 }
-.button--primary:hover {
+.button--primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 88%, var(--foreground));
 }
 .button--secondary {
-  border-color: var(--border);
-  background: var(--surface);
+  border-color: var(--surface-selected);
+  background: var(--surface-selected);
   color: var(--foreground);
 }
-.button--secondary:hover,
-.button--ghost:hover {
-  background: var(--surface-selected);
+.button--secondary:hover:not(:disabled) {
+  border-color: var(--border);
 }
 .button--ghost {
   background: transparent;
-  color: var(--muted);
+  color: var(--foreground);
+}
+.button--ghost:hover:not(:disabled) {
+  background: var(--surface-selected);
 }
 .button--danger {
   background: var(--error);
@@ -575,12 +647,19 @@ p {
 .button--icon {
   width: 44px;
   min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+/* Botón redondo de acento ("+" de Hábitos en móvil). */
+.button--round {
+  width: 48px;
+  min-width: 48px;
   padding: 0;
 }
 
 .card {
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
+  border-radius: var(--rounded-lg);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
@@ -598,9 +677,9 @@ p {
 .day-summary h2,
 .state-card h2,
 .account-row h2 {
-  margin-top: 3px;
-  font-size: 20px;
-  letter-spacing: -0.025em;
+  margin-top: 2px;
+  font-size: 19px;
+  letter-spacing: -0.02em;
 }
 .quiet-badge,
 .count,
@@ -608,10 +687,10 @@ p {
   display: inline-flex;
   min-height: 28px;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--rounded-pill);
   background: var(--surface-selected);
   color: var(--muted);
-  padding: 3px 10px;
+  padding: 3px 11px;
   font-size: 13px;
   font-weight: 700;
 }
@@ -623,8 +702,8 @@ p {
   vertical-align: 2px;
 }
 .positive-pill {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .progress-card {
@@ -653,30 +732,13 @@ p {
   margin-top: 9px;
   color: var(--muted);
 }
-.progress-ring {
-  --progress: 270deg;
-  display: grid;
-  width: 116px;
-  height: 116px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: conic-gradient(var(--accent) var(--progress), var(--surface-selected) 0);
+.progress-card .progress-ring__center strong {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
-.progress-ring > div {
-  display: grid;
-  width: 88px;
-  height: 88px;
-  place-content: center;
-  border-radius: 50%;
-  background: var(--surface);
-  text-align: center;
-}
-.progress-ring strong {
-  font-size: 23px;
-}
-.progress-ring span {
-  color: var(--subtle);
+.progress-card .progress-ring__center span {
+  color: var(--muted);
   font-size: 11px;
 }
 .habits-card,
@@ -695,15 +757,39 @@ p {
 }
 .check-row {
   display: flex;
-  min-height: 70px;
+  min-height: 72px;
   align-items: center;
   gap: 14px;
-  border-top: 1px solid var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-lg);
+  background: var(--surface);
   cursor: pointer;
-  padding: 10px 2px;
+  padding: 12px 12px 12px 16px;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
 }
-.check-row:first-child {
-  border-top: 0;
+.check-row:has(.checkbox-input:checked) {
+  border-color: var(--tint);
+}
+.check-row:has(.checkbox-input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.check-row:active {
+  transform: scale(0.99);
+}
+.check-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--rounded-sm);
+  background: var(--habit-color);
+  /* Los seis colores de hábito son tonos 600–700: el blanco se lee en ambos
+     modos. */
+  color: #fff;
 }
 .checkbox-wrap {
   position: relative;
@@ -712,6 +798,7 @@ p {
   height: 44px;
   flex: 0 0 auto;
   place-items: center;
+  margin-left: auto;
 }
 .checkbox-input {
   position: absolute;
@@ -721,20 +808,18 @@ p {
 }
 .checkbox-control {
   display: grid;
-  width: 27px;
-  height: 27px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
   color: transparent;
   transition: 160ms ease;
 }
 .checkbox-input:checked + .checkbox-control {
-  border-color: var(--habit-color);
-  background: var(--habit-color);
-  /* Los seis colores de hábito son tonos 600–700: el blanco pasa AA en ambos
-     modos. */
-  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .checkbox-input:focus-visible + .checkbox-control {
   outline: 2px solid var(--focus);
@@ -742,19 +827,17 @@ p {
 }
 .check-copy {
   display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 .check-label {
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 .check-description {
-  margin-top: 2px;
-  color: var(--subtle);
-  font-size: 13px;
-}
-.checkbox-input:checked ~ .check-copy .check-label {
   color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-color: var(--border);
+  font-size: 14px;
 }
 .encouragement-card,
 .insight-card,
@@ -1301,12 +1384,29 @@ p {
 .form-field select,
 .form-field textarea {
   width: 100%;
-  min-height: 44px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  min-height: 48px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-md);
   background: var(--surface-selected);
   color: var(--foreground);
-  padding: 9px 11px;
+  padding: 11px 16px;
+  font-size: 16px;
+  caret-color: var(--tint);
+  transition: border-color 160ms ease;
+}
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--tint);
+}
+.form-field input:read-only:not([type="checkbox"], [type="radio"]),
+.form-field select:disabled {
+  color: var(--muted);
 }
 .form-field textarea {
   resize: vertical;
@@ -1327,9 +1427,9 @@ p {
 
 .dialog {
   width: min(540px, calc(100vw - 28px));
-  max-height: calc(100vh - 28px);
-  border: 0;
-  border-radius: 14px;
+  max-height: calc(100dvh - 28px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-lg);
   background: var(--surface);
   color: var(--foreground);
   padding: 0;
@@ -1344,17 +1444,32 @@ p {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid var(--border-soft);
-  padding: 20px 20px 16px;
+  padding: 22px 20px 6px 24px;
 }
 .dialog__header h2 {
-  font-size: 22px;
-  letter-spacing: -0.03em;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 .dialog__header p {
   margin-top: 4px;
   color: var(--muted);
   font-size: 14px;
+}
+.dialog__header .button--ghost {
+  background: var(--surface-selected);
+}
+@media (max-width: 639px) {
+  /* En el teléfono el diálogo sube desde abajo, como el modal de móvil. */
+  .dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: var(--rounded-lg) var(--rounded-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 .habit-form {
   display: grid;
@@ -1392,17 +1507,18 @@ p {
 }
 .icon-field label span {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: var(--muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rounded-sm);
+  background: var(--surface);
+  color: var(--foreground);
 }
 .icon-field input:checked + span {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  color: var(--primary);
+  border-color: var(--tint);
+  background: var(--accent-soft);
+  color: var(--tint);
 }
 .icon-field input:focus-visible + span {
   outline: 2px solid var(--focus);
@@ -1440,7 +1556,9 @@ p {
   background: var(--swatch);
 }
 .color-field input:checked + span {
-  outline: 2px solid var(--swatch);
+  /* Anillo del color del texto, como móvil: el del propio color se perdía
+     sobre la superficie oscura. */
+  outline: 2px solid var(--foreground);
   outline-offset: 3px;
 }
 .color-field input:focus-visible + span {
@@ -1453,26 +1571,37 @@ p {
   gap: 8px;
   margin-top: 4px;
 }
+@media (max-width: 639px) {
+  .dialog-actions > .button {
+    flex: 1;
+  }
+}
 .toast {
   position: fixed;
   z-index: 60;
   right: 16px;
-  bottom: calc(82px + env(safe-area-inset-bottom));
+  bottom: calc(84px + env(safe-area-inset-bottom));
   left: 16px;
   display: flex;
-  min-height: 58px;
+  min-height: 56px;
   align-items: center;
-  gap: 10px;
-  border: 0;
-  border-radius: 11px;
+  gap: 12px;
+  border-radius: var(--rounded-md);
   background: var(--inverse);
   color: var(--on-inverse);
-  padding: 7px 7px 7px 12px;
+  padding: 8px 8px 8px 14px;
   box-shadow: var(--shadow-raised);
   font-size: 14px;
+  font-weight: 500;
 }
 .toast > span:nth-child(2) {
   margin-right: auto;
+}
+.toast .button--ghost {
+  color: var(--on-inverse);
+}
+.toast .button--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--on-inverse) 12%, transparent);
 }
 .toast__status {
   display: grid;
@@ -1485,9 +1614,84 @@ p {
   color: var(--on-accent);
 }
 
+/* Anillo de progreso (progress-ring.tsx). */
+.progress-ring {
+  position: relative;
+  flex: 0 0 auto;
+}
+.progress-ring svg {
+  display: block;
+}
+.progress-ring__track {
+  stroke: var(--surface-selected);
+}
+.progress-ring__value {
+  stroke: var(--accent);
+  transition: stroke-dashoffset 250ms ease;
+}
+.progress-ring__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+/* Tira semanal (week-strip.tsx). */
+.week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.week-day {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  border: 1.5px solid var(--surface);
+  border-radius: var(--rounded-md);
+  background: var(--surface);
+  padding: 12px 0;
+}
+.week-day.is-today {
+  border-color: var(--tint);
+}
+.week-day__name {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+.week-day.is-today .week-day__name {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.week-day__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+.week-day__dot.is-complete {
+  background: var(--accent);
+}
+.week-day__dot.is-partial {
+  background: var(--foreground);
+}
+.week-day__dot.is-zero {
+  background: var(--muted);
+}
+.week-day__number {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
 .skeleton {
   display: block;
-  border-radius: 8px;
+  border-radius: var(--rounded-lg);
   background: linear-gradient(
     90deg,
     var(--surface-selected) 25%,
@@ -1836,7 +2040,7 @@ p {
     height: 100vh;
     flex-direction: column;
     border-right: 1px solid var(--border-soft);
-    background: var(--surface);
+    background: var(--background);
     padding: 24px 16px;
   }
   .sidebar-close,

@@ -4,12 +4,12 @@ import type { HabitTrackerState } from "@habit-tracker/domain";
 import {
   BarChart3,
   CalendarDays,
-  CheckCircle2,
   ListChecks,
   type LucideIcon,
   Menu,
   MoreHorizontal,
   Settings,
+  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -36,7 +36,7 @@ type NavigationItem = {
 // La barra inferior móvil se queda con 5 elementos (wireframe de grupos): a
 // Grupos se entra desde la barra lateral, Hoy o Ajustes.
 const navigation: NavigationItem[] = [
-  { href: "/hoy", label: "Hoy", Icon: CheckCircle2 },
+  { href: "/hoy", label: "Hoy", Icon: Sparkles },
   { href: "/habitos", label: "Hábitos", Icon: ListChecks },
   { href: "/calendario", label: "Calendario", shortLabel: "Cal.", Icon: CalendarDays },
   { href: "/estadisticas", label: "Estadísticas", shortLabel: "Est.", Icon: BarChart3 },
@@ -94,8 +94,8 @@ function AppShellContent({
         aria-label="Navegación principal"
       >
         <div className="brand">
-          <span className="brand-mark">
-            <CheckCircle2 size={23} />
+          <span className="brand-mark" aria-hidden="true">
+            <Sparkles size={21} strokeWidth={2.4} />
           </span>
           <span>Constancia</span>
           <Button
@@ -111,15 +111,16 @@ function AppShellContent({
         <nav>
           {sidebarNavigation.map(({ href, label, Icon }) => {
             const badge = href === "/grupos" && pendingInvitations > 0;
+            const active = isActive(pathname, href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={isActive(pathname, href) ? "active" : ""}
-                aria-current={isActive(pathname, href) ? "page" : undefined}
+                className={active ? "active" : ""}
+                aria-current={active ? "page" : undefined}
                 onClick={() => setMenuOpen(false)}
               >
-                <Icon size={20} />
+                <Icon size={20} strokeWidth={active ? 2.4 : 2} aria-hidden="true" />
                 <span>{label}</span>
                 {badge ? (
                   <span className="nav-badge">
@@ -164,7 +165,10 @@ function AppShellContent({
             <Menu size={22} />
           </Button>
           <span className="mobile-brand">
-            <CheckCircle2 size={20} /> Constancia
+            <span className="brand-mark brand-mark--small" aria-hidden="true">
+              <Sparkles size={17} strokeWidth={2.4} />
+            </span>
+            Constancia
           </span>
           <span className="avatar avatar--small">
             {snapshot.settings.displayName.slice(0, 1).toUpperCase()}
@@ -184,17 +188,22 @@ function AppShellContent({
         </main>
       </div>
       <nav className="bottom-nav" aria-label="Navegación móvil">
-        {navigation.map(({ href, label, shortLabel, Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={isActive(pathname, href) ? "active" : ""}
-            aria-current={isActive(pathname, href) ? "page" : undefined}
-          >
-            <Icon size={21} />
-            <span>{shortLabel ?? label}</span>
-          </Link>
-        ))}
+        {navigation.map(({ href, label, shortLabel, Icon }) => {
+          const active = isActive(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={active ? "active" : ""}
+              aria-current={active ? "page" : undefined}
+            >
+              <span className="nav-icon" aria-hidden="true">
+                <Icon size={21} strokeWidth={active ? 2.4 : 2} />
+              </span>
+              <span>{shortLabel ?? label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
