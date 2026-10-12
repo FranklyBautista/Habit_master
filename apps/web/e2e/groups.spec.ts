@@ -97,6 +97,12 @@ test("two people share habits in a group and see each other's check-ins", async 
     await expect(memberCard.getByText(guestHabit)).toBeVisible();
     await expect(memberCard.getByText("✓ hecho hoy")).toBeVisible();
     await expect(owner.getByText("Hoy: 1 de 2 al día")).toBeVisible();
+    // Mascota (C6): con 1 de 2 al día ya comió.
+    const pet = owner.getByRole("article", { name: "Pulpito" });
+    await expect(
+      pet.getByRole("img", { name: /^Pulpito del grupo, etapa Cría, contenta$/ }),
+    ).toBeVisible();
+    await expect(pet.getByText("Ya comió: 1 de 2 al día.")).toBeVisible();
     await expectNoAxeViolations(owner);
   } finally {
     await ownerContext.close();
