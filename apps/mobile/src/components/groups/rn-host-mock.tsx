@@ -12,6 +12,7 @@ type HostProps = {
   accessibilityLabel?: string;
   accessibilityState?: { checked?: boolean; disabled?: boolean; busy?: boolean };
   onPress?: () => void;
+  onLongPress?: () => void;
   disabled?: boolean;
   value?: string;
   onChangeText?: (text: string) => void;
@@ -45,9 +46,11 @@ export const reactNativeHostMock = {
   Text: host("span"),
   ScrollView: host("div"),
   ActivityIndicator: () => createElement("progress"),
+  // Mantener pulsado se simula con el menú contextual (`fireEvent.contextMenu`).
   Pressable: ({
     children,
     onPress,
+    onLongPress,
     disabled,
     accessibilityRole,
     accessibilityLabel,
@@ -57,6 +60,7 @@ export const reactNativeHostMock = {
       "button",
       {
         onClick: onPress,
+        onContextMenu: onLongPress,
         disabled,
         role: accessibilityRole === "checkbox" ? "checkbox" : undefined,
         "aria-checked":

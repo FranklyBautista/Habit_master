@@ -52,6 +52,10 @@
   font-weight: 650;
 }
 
+.delete {
+  margin-left: auto;
+}
+
 .body {
   margin: 0;
   overflow-wrap: anywhere;

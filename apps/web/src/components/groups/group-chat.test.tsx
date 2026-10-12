@@ -188,4 +188,37 @@ describe("GroupChat", () => {
       screen.getByRole("heading", { name: "Ya no formas parte de este grupo" }),
     ).toBeInTheDocument();
   });
+
+  it("lets me delete only my own messages, after confirming", async () => {
+    const user = userEvent.setup();
+    chat.deleteMessage.mockResolvedValue({ ok: true, data: undefined });
+    chat.state.messages = [message(1), message(2, { isMine: true, authorName: "Ana" })];
+    renderChat();
+
+    const deleteButtons = screen.getAllByRole("button", { name: "Borrar mensaje" });
+    expect(deleteButtons).toHaveLength(1);
+    await user.click(deleteButtons[0]);
+    expect(chat.deleteMessage).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toHaveTextContent("todo el grupo");
+
+    await user.click(screen.getByRole("button", { name: "Borrar" }));
+    expect(chat.deleteMessage).toHaveBeenCalledWith(message(2).id);
+  });
+
+  it("keeps the dialog open with the error when deleting fails", async () => {
+    const user = userEvent.setup();
+    chat.deleteMessage.mockResolvedValue({
+      ok: false,
+      error: "Este mensaje ya no está disponible.",
+    });
+    chat.state.messages = [message(2, { isMine: true })];
+    renderChat();
+
+    await user.click(screen.getByRole("button", { name: "Borrar mensaje" }));
+    await user.click(screen.getByRole("button", { name: "Borrar" }));
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Este mensaje ya no está disponible.",
+    );
+  });
 });

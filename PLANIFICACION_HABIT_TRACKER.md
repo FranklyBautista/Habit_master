@@ -598,13 +598,13 @@ Ritmo sugerido:
 - [x] Web: "Grupos" en la barra lateral con contador; móvil: rutas ocultas en Tabs (`href: null`) y tarjeta en Hoy, sin cambios nativos.
 - [x] E2E `e2e/groups.spec.ts` con dos usuarios (invitar → aceptar → marcar → el otro lo ve) + axe sin violaciones en `/grupos` y `/grupos/[id]`.
 
-### C5 — Chat del grupo
+### C5 — Chat del grupo (2026-10-12)
 
 - [x] Migración `20261012120000_create_group_messages.sql`: `group_messages` y RPC `security definer` para enviar (máx. 1000 caracteres, 10 por minuto, id generado por la app para reintentos idempotentes), listar por páginas de 50 con cursor y borrar solo lo propio; autor "Antiguo miembro" al salir, cascada al borrar cuenta o grupo. Única política `select` (miembros actuales, `grant` solo de `id` y `group_id`) para Realtime, documentada en el addendum de ADR 0002; pgTAP `group_messages.test.sql` (47 casos) y tipos regenerados.
 - [x] Dominio (`group-messages.ts`: esquemas Zod, longitud en caracteres como Postgres, ventana de mensajes con cursor, hora del mensaje e id v4 para reintentos), métodos de chat en `SupabaseGroupRepository` y hook `useGroupChat` en web y móvil, con el mismo contrato: sin UI optimista (ADR 0001), dedupe de dobles envíos y revalidación por foco/conexión o AppState/NetInfo.
 - [x] Pantallas `/grupos/[id]/chat` en web y móvil (acceso desde la vista del grupo; en móvil, dentro del Stack oculto de Grupos): carga, vacío, error, sin conexión (campo deshabilitado), "Cargar anteriores", contador 0/1000 en caracteres, Intro envía (web), anuncio de mensajes nuevos (`aria-live` en web, `announceForAccessibility` en móvil); sin cambios nativos.
 - [x] Tiempo real como señal: `subscribeToMessages` (Realtime `postgres_changes`, solo INSERT filtrado por `group_id`, payload limitado a `id`/`group_id`) vuelve a pedir la página por RPC, también cuando la suscripción queda lista y al reconectar; ráfagas agrupadas en una consulta, canal cerrado al salir del chat.
-- [ ] Moderación en la UI y E2E `e2e/group-chat.spec.ts`.
+- [x] Moderación en la UI: borrar solo los mensajes propios con confirmación (diálogo en web; mantener pulsado o acción de accesibilidad en móvil), aviso del límite de 10 mensajes por minuto y estado "Ya no formas parte de este grupo" tras una expulsión. E2E `e2e/group-chat.spec.ts` con dos usuarios (enviar → la otra lo ve sin recargar, borrar, expulsión, "Antiguo miembro", axe sin violaciones); pendiente de ejecutar con Supabase local al integrar.
 
 ### C6
 

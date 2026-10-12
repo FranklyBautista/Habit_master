@@ -9,6 +9,7 @@ import { SendHorizontal } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   AccessibilityInfo,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Pressable,
@@ -39,6 +40,7 @@ export function GroupChatView({
   const theme = useTheme();
   const [draft, setDraft] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   // Lo que ya estaba al terminar la primera carga no se anuncia.
   const [baselineId, setBaselineId] = useState<string | null | undefined>(undefined);
 
@@ -78,20 +80,40 @@ export function GroupChatView({
     else setSendError(result.error);
   }
 
+  // Solo los mensajes propios se pueden borrar (el dueño modera expulsando).
+  function confirmDelete(message: GroupMessage) {
+    Alert.alert(
+      "¿Borrar este mensaje?",
+      "Desaparecerá del chat para todo el grupo. No se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Borrar",
+          style: "destructive",
+          onPress: () => {
+            setDeleteError(null);
+            void chat.deleteMessage(message.id).then((result) => {
+              if (!result.ok) setDeleteError(result.error);
+            });
+          },
+        },
+      ],
+    );
+  }
+
   function renderMessage({ item }: { item: GroupMessage }) {
     const time = formatGroupMessageTime(item.createdAt, now, timezone);
     const author = item.isMine ? "Tú" : item.authorName;
-    return (
-      <View
-        accessible
-        accessibilityLabel={`${author}, ${time}: ${item.body}`}
-        style={[
-          styles.bubble,
-          item.isMine
-            ? [styles.mine, { backgroundColor: theme.accentSoft }]
-            : { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-        ]}
-      >
+    const bubbleStyle = [
+      styles.bubble,
+      item.isMine
+        ? [styles.mine, { backgroundColor: theme.accentSoft }]
+        : { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+      chat.deletingId === item.id && styles.disabled,
+    ];
+    const label = `${author}, ${time}: ${item.body}`;
+    const body = (
+      <>
         <View style={styles.meta}>
           <ThemedText type="smallBold">{author}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -99,7 +121,29 @@ export function GroupChatView({
           </ThemedText>
         </View>
         <ThemedText>{item.body}</ThemedText>
-      </View>
+      </>
+    );
+    if (!item.isMine) {
+      return (
+        <View accessible accessibilityLabel={label} style={bubbleStyle}>
+          {body}
+        </View>
+      );
+    }
+    return (
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityHint="Mantén pulsado para borrarlo."
+        accessibilityActions={[{ name: "delete", label: "Borrar mensaje" }]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === "delete") confirmDelete(item);
+        }}
+        onLongPress={() => confirmDelete(item)}
+        disabled={chat.deletingId === item.id}
+        style={bubbleStyle}
+      >
+        {body}
+      </Pressable>
     );
   }
 
@@ -210,6 +254,7 @@ export function GroupChatView({
           {over ? " · Demasiado largo" : ""}
         </ThemedText>
         <FieldError message={sendError} />
+        <FieldError message={deleteError} />
       </View>
     </KeyboardAvoidingView>
   );

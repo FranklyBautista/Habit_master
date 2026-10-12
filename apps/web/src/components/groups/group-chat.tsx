@@ -5,9 +5,10 @@ import {
   formatGroupMessageTime,
   groupChatLimits,
 } from "@habit-tracker/domain";
-import { CloudOff, SendHorizontal } from "lucide-react";
+import { CloudOff, SendHorizontal, Trash2 } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
+import { ConfirmDialog } from "@/components/groups/confirm-dialog";
 import { NotMemberState } from "@/components/groups/not-member-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,9 @@ export function GroupChat({
   const chat = useGroupChat(groupId);
   const [draft, setDraft] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
+  // Mensaje propio que se va a borrar (pide confirmación antes).
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   // Último mensaje visible al terminar la primera carga: lo anterior no se
   // anuncia a los lectores de pantalla, solo lo que llega después.
   const [baselineId, setBaselineId] = useState<string | null | undefined>(undefined);
@@ -69,6 +73,14 @@ export function GroupChat({
     const result = await chat.send(draft);
     if (result.ok) setDraft("");
     else setSendError(result.error);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleteError(null);
+    const result = await chat.deleteMessage(pendingDelete);
+    if (result.ok) setPendingDelete(null);
+    else setDeleteError(result.error);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -137,6 +149,21 @@ export function GroupChat({
                 <time dateTime={message.createdAt}>
                   {formatGroupMessageTime(message.createdAt, now, timezone)}
                 </time>
+                {message.isMine ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={styles.delete}
+                    aria-label="Borrar mensaje"
+                    disabled={chat.deletingId === message.id}
+                    onClick={() => {
+                      setDeleteError(null);
+                      setPendingDelete(message.id);
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                ) : null}
               </div>
               <p className={styles.body}>{message.body}</p>
             </li>
@@ -195,6 +222,18 @@ export function GroupChat({
           </p>
         ) : null}
       </form>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="¿Borrar este mensaje?"
+        description="Desaparecerá del chat para todo el grupo. No se puede deshacer."
+        confirmLabel="Borrar"
+        variant="danger"
+        busy={chat.deletingId !== null}
+        error={deleteError}
+        onConfirm={() => void confirmDelete()}
+        onClose={() => setPendingDelete(null)}
+      />
     </Card>
   );
 }

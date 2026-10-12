@@ -1,7 +1,7 @@
 import type { GroupMessage } from "@habit-tracker/domain";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Alert } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GroupChatView } from "./group-chat-view";
@@ -210,5 +210,44 @@ describe("GroupChatView", () => {
     expect(screen.getByText("Ya no formas parte de este grupo.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Ir a Grupos" }));
     expect(router.replace).toHaveBeenCalledWith("/grupos");
+  });
+
+  it("asks before deleting my own message on long press", async () => {
+    chat.deleteMessage.mockResolvedValue({ ok: true, data: undefined });
+    chat.state.messages = [message(1), message(12, { isMine: true, body: "Hecho" })];
+    renderChat();
+
+    // Solo el propio es pulsable.
+    expect(
+      screen.queryByRole("button", { name: /Sam, 09:01/ }),
+    ).not.toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Tú, 09:12: Hecho" }));
+    expect(chat.deleteMessage).not.toHaveBeenCalled();
+    const [title, , buttons] = vi.mocked(Alert.alert).mock.calls[0];
+    expect(title).toBe("¿Borrar este mensaje?");
+
+    await act(async () => {
+      buttons?.find((button) => button.text === "Borrar")?.onPress?.();
+    });
+    expect(chat.deleteMessage).toHaveBeenCalledWith(message(12).id);
+  });
+
+  it("shows why a delete failed", async () => {
+    chat.deleteMessage.mockResolvedValue({
+      ok: false,
+      error: "Este mensaje ya no está disponible.",
+    });
+    chat.state.messages = [message(12, { isMine: true, body: "Hecho" })];
+    renderChat();
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Tú, 09:12: Hecho" }));
+    const buttons = vi.mocked(Alert.alert).mock.calls[0][2];
+    await act(async () => {
+      buttons?.find((button) => button.text === "Borrar")?.onPress?.();
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Este mensaje ya no está disponible.",
+    );
   });
 });
