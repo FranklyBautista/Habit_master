@@ -127,6 +127,28 @@ export function useGroupChat(groupId: string) {
     }
   }, [applyWindow, groupId, handleFailure, repository]);
 
+  // Las señales de Realtime pueden llegar en ráfaga: como mucho una consulta
+  // en curso y otra pendiente, que recoge todo lo llegado mientras tanto.
+  const signalRef = useRef<{ running: boolean; queued: boolean }>({
+    running: false,
+    queued: false,
+  });
+  const onSignal = useCallback(() => {
+    const signal = signalRef.current;
+    if (signal.running) {
+      signal.queued = true;
+      return;
+    }
+    signal.running = true;
+    void (async () => {
+      do {
+        signal.queued = false;
+        await refresh();
+      } while (signal.queued);
+      signal.running = false;
+    })();
+  }, [refresh]);
+
   const loadOlder = useCallback(async () => {
     const cursor = getOlderMessagesCursor(windowRef.current.messages);
     if (!cursor || !windowRef.current.hasMore) return;
@@ -210,6 +232,13 @@ export function useGroupChat(groupId: string) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Tiempo real como señal (ADR 0001): cada aviso vuelve a pedir la página.
+  // La suscripción se cierra al salir del chat o cambiar de grupo.
+  useEffect(() => {
+    if (!groupIdSchema.safeParse(groupId).success) return;
+    return repository.subscribeToMessages(groupId, onSignal);
+  }, [groupId, onSignal, repository]);
 
   useEffect(() => {
     const revalidate = () => void refresh();

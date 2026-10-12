@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { GroupAccessError, SupabaseGroupRepository } from "./supabase-group-repository";
 
@@ -427,5 +427,88 @@ describe("SupabaseGroupRepository chat", () => {
     await expect(removed.repository.getMessages(GROUP_ID)).rejects.toBeInstanceOf(
       GroupAccessError,
     );
+  });
+});
+
+// Tiempo real (C5): canal falso que guarda los manejadores registrados.
+function createRealtimeRepository() {
+  type Handler = (payload: Record<string, unknown>) => void;
+  const handlers: { type: string; filter: unknown; handler: Handler }[] = [];
+  let statusCallback: ((status: string) => void) | null = null;
+  const removeChannel = vi.fn().mockResolvedValue("ok");
+  const channelNames: string[] = [];
+  const channel = {
+    on(type: string, filter: unknown, handler: Handler) {
+      handlers.push({ type, filter, handler });
+      return channel;
+    },
+    subscribe(callback: (status: string) => void) {
+      statusCallback = callback;
+      return channel;
+    },
+  };
+  const client = {
+    channel(name: string) {
+      channelNames.push(name);
+      return channel;
+    },
+    removeChannel,
+  };
+  const repository = new SupabaseGroupRepository(
+    client as unknown as SupabaseClient,
+    USER_ID,
+  );
+  const emit = (type: string, payload: Record<string, unknown> = {}) => {
+    for (const item of handlers.filter((entry) => entry.type === type)) {
+      item.handler(payload);
+    }
+  };
+  const status = (value: string) => statusCallback?.(value);
+  return { repository, handlers, channel, channelNames, removeChannel, emit, status };
+}
+
+describe("SupabaseGroupRepository realtime", () => {
+  it("listens only to new messages of the group and treats them as a signal", () => {
+    const realtime = createRealtimeRepository();
+    const onSignal = vi.fn();
+
+    realtime.repository.subscribeToMessages(GROUP_ID, onSignal);
+
+    expect(realtime.channelNames[0]).toMatch(`group-messages:${GROUP_ID}:`);
+    expect(
+      realtime.handlers.find((item) => item.type === "postgres_changes")?.filter,
+    ).toEqual({
+      event: "INSERT",
+      schema: "public",
+      table: "group_messages",
+      filter: `group_id=eq.${GROUP_ID}`,
+    });
+    realtime.emit("postgres_changes", { new: { id: "x", group_id: GROUP_ID } });
+    expect(onSignal).toHaveBeenCalledTimes(1);
+  });
+
+  it("signals when Postgres changes are ready and after reconnecting, not on the first subscribe", () => {
+    const realtime = createRealtimeRepository();
+    const onSignal = vi.fn();
+    realtime.repository.subscribeToMessages(GROUP_ID, onSignal);
+
+    realtime.status("SUBSCRIBED");
+    expect(onSignal).not.toHaveBeenCalled();
+    realtime.emit("system", { extension: "postgres_changes", status: "ok" });
+    expect(onSignal).toHaveBeenCalledTimes(1);
+    realtime.emit("system", { extension: "postgres_changes", status: "error" });
+    realtime.status("CHANNEL_ERROR");
+    expect(onSignal).toHaveBeenCalledTimes(1);
+    realtime.status("SUBSCRIBED");
+    expect(onSignal).toHaveBeenCalledTimes(2);
+  });
+
+  it("removes the channel when unsubscribing", () => {
+    const realtime = createRealtimeRepository();
+    const unsubscribe = realtime.repository.subscribeToMessages(GROUP_ID, vi.fn());
+
+    unsubscribe();
+
+    expect(realtime.removeChannel).toHaveBeenCalledWith(realtime.channel);
   });
 });

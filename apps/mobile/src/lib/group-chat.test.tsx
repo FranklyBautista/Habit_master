@@ -15,6 +15,7 @@ const { repository, netInfo, appState } = vi.hoisted(() => ({
     getMessages: vi.fn(),
     sendMessage: vi.fn(),
     deleteMessage: vi.fn(),
+    subscribeToMessages: vi.fn(),
   },
   netInfo: {
     listeners: [] as ((state: { isConnected: boolean | null }) => void)[],
@@ -56,6 +57,7 @@ vi.mock("./supabase-group-repository", async (importOriginal) => {
       getMessages = repository.getMessages;
       sendMessage = repository.sendMessage;
       deleteMessage = repository.deleteMessage;
+      subscribeToMessages = repository.subscribeToMessages;
     },
   };
 });
@@ -79,6 +81,14 @@ function message(index: number, overrides: Partial<GroupMessage> = {}): GroupMes
     isMine: false,
     ...overrides,
   };
+}
+
+const unsubscribe = vi.fn();
+
+function lastSignal(): () => void {
+  const call = repository.subscribeToMessages.mock.calls.at(-1);
+  if (!call) throw new Error("No realtime subscription.");
+  return call[1] as () => void;
 }
 
 function page(messages: GroupMessage[], hasMore = false): GroupMessagePage {
@@ -116,6 +126,8 @@ beforeEach(() => {
   repository.getMessages.mockResolvedValue(page([message(1), message(2)]));
   repository.sendMessage.mockResolvedValue("ok");
   repository.deleteMessage.mockResolvedValue(undefined);
+  unsubscribe.mockReset();
+  repository.subscribeToMessages.mockReturnValue(unsubscribe);
 });
 
 describe("useGroupChat", () => {
@@ -301,5 +313,62 @@ describe("useGroupChat", () => {
     await act(async () => emitNetInfo(true));
     expect(result.current.online).toBe(true);
     expect(repository.getMessages.mock.calls.length).toBe(calls + 2);
+  });
+});
+
+describe("useGroupChat realtime", () => {
+  it("subscribes to the group and closes the channel on unmount", async () => {
+    const { result, unmount } = renderChat();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(repository.subscribeToMessages).toHaveBeenCalledWith(
+      GROUP_ID,
+      expect.any(Function),
+    );
+    unmount();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("refetches the page when a signal arrives instead of trusting the payload", async () => {
+    const { result } = renderChat();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    repository.getMessages.mockResolvedValueOnce(
+      page([message(1), message(2), message(3, { body: "¡Hola!" })]),
+    );
+
+    await act(async () => {
+      lastSignal()();
+    });
+
+    await waitFor(() => expect(result.current.messages.at(-1)?.body).toBe("¡Hola!"));
+  });
+
+  it("coalesces a burst of signals into one extra request", async () => {
+    const { result } = renderChat();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const calls = repository.getMessages.mock.calls.length;
+    const slow = deferred<GroupMessagePage>();
+    repository.getMessages.mockReturnValueOnce(slow.promise);
+
+    act(() => {
+      const signal = lastSignal();
+      signal();
+      signal();
+      signal();
+      signal();
+    });
+    expect(repository.getMessages.mock.calls.length).toBe(calls + 1);
+
+    await act(async () => {
+      slow.resolve(page([message(1), message(2)]));
+    });
+    await waitFor(() =>
+      expect(repository.getMessages.mock.calls.length).toBe(calls + 2),
+    );
+  });
+
+  it("does not subscribe for a malformed group id", () => {
+    renderChat("no-es-un-id");
+    expect(repository.subscribeToMessages).not.toHaveBeenCalled();
   });
 });

@@ -137,6 +137,10 @@ function mapProgress(raw: unknown): GroupProgress {
   });
 }
 
+// Nombre de canal único: montar dos veces el mismo chat (por ejemplo en
+// desarrollo) no debe reutilizar un canal que otra instancia está cerrando.
+let channelCounter = 0;
+
 export class SupabaseGroupRepository {
   constructor(
     private readonly client: SupabaseClient<Database>,
@@ -313,6 +317,45 @@ export class SupabaseGroupRepository {
       message_id: messageId,
     });
     if (error) throw rpcError(error);
+  }
+
+  /**
+   * Señal de mensajes nuevos por Realtime (`postgres_changes`, solo INSERT del
+   * grupo; la RLS de `group_messages` solo deja pasar a miembros actuales). El
+   * evento trae solo `id` y `group_id` (addendum de ADR 0002): quien escucha
+   * vuelve a pedir la página por RPC. También avisa cuando la suscripción a
+   * Postgres queda lista y al reconectar, para recuperar lo que llegara
+   * mientras tanto. Devuelve la función que cancela la suscripción.
+   */
+  subscribeToMessages(groupId: string, onSignal: () => void): () => void {
+    let subscribedBefore = false;
+    const channel = this.client
+      .channel(`group-messages:${groupId}:${++channelCounter}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "group_messages",
+          filter: `group_id=eq.${groupId}`,
+        },
+        () => onSignal(),
+      )
+      .on("system", {}, (payload: { extension?: string; status?: string }) => {
+        if (payload.extension === "postgres_changes" && payload.status === "ok") {
+          onSignal();
+        }
+      })
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        // La primera vez ya hay una carga en marcha; las siguientes son
+        // reconexiones tras perder el socket.
+        if (subscribedBefore) onSignal();
+        subscribedBefore = true;
+      });
+    return () => {
+      void this.client.removeChannel(channel);
+    };
   }
 
   async regenerateUserCode(): Promise<string> {
