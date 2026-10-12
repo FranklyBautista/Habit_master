@@ -1,6 +1,6 @@
 import { getGroupTodaySummary } from "@habit-tracker/domain";
 import { router, useLocalSearchParams } from "expo-router";
-import { Settings } from "lucide-react-native";
+import { MessageCircle, Settings } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -76,6 +76,23 @@ export default function GrupoScreen() {
     </Pressable>
   ) : undefined;
 
+  const headerActions = progress ? (
+    <View style={styles.headerActions}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Chat de ${progress.name}`}
+        hitSlop={hitSlop}
+        onPress={() =>
+          router.push({ pathname: "/grupos/[id]/chat", params: { id: progress.id } })
+        }
+        style={styles.iconButton}
+      >
+        <MessageCircle size={22} color={theme.text} />
+      </Pressable>
+      {settingsButton}
+    </View>
+  ) : undefined;
+
   if (notMember) {
     return (
       <GroupScreen title="Grupo">
@@ -111,7 +128,7 @@ export default function GrupoScreen() {
   const alone = progress.members.length === 1;
 
   return (
-    <GroupScreen title={progress.name} action={settingsButton}>
+    <GroupScreen title={progress.name} action={headerActions}>
       <ThemedText type="smallBold" accessibilityRole="summary">
         {summary.participating
           ? `Hoy: ${summary.upToDate} de ${summary.participating} al día`
@@ -183,6 +200,7 @@ export default function GrupoScreen() {
 
 const styles = StyleSheet.create({
   iconButton: { padding: Spacing.one },
+  headerActions: { flexDirection: "row", gap: Spacing.one },
   section: { gap: Spacing.two },
   row: { flexDirection: "row", gap: Spacing.two },
   flex: { flex: 1 },

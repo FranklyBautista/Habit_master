@@ -41,6 +41,11 @@ export type GroupChatState = {
   online: boolean;
   sending: boolean;
   deletingId: string | null;
+  /**
+   * Momento de la última página recibida (ms). Sirve de "ahora" para decir
+   * "ayer" u "hoy" sin leer el reloj durante el render.
+   */
+  checkedAt: number;
 };
 
 const groupIdSchema = z.uuid();
@@ -66,6 +71,7 @@ export function useGroupChat(groupId: string) {
     online: true,
     sending: false,
     deletingId: null,
+    checkedAt: Date.now(),
   }));
   const windowRef = useRef<GroupMessagePage>(emptyWindow);
   // Solo la consulta más reciente escribe el estado (mismo patrón que el store).
@@ -85,6 +91,7 @@ export function useGroupChat(groupId: string) {
       loading: false,
       error: null,
       notMember: false,
+      checkedAt: Date.now(),
     }));
   }, []);
 

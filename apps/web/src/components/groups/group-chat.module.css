@@ -1,0 +1,106 @@
+/* Chat del grupo (C5). Módulo propio para no tocar los estilos globales; usa
+   las variables de color de globals.css, así sigue al tema de la app. */
+
+.chat {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.loadOlder {
+  justify-self: center;
+}
+
+.messages {
+  display: grid;
+  max-height: min(60vh, 640px);
+  gap: 10px;
+  margin: 0;
+  overflow-y: auto;
+  padding: 2px;
+  list-style: none;
+}
+
+.message {
+  display: grid;
+  max-width: min(85%, 560px);
+  gap: 4px;
+  justify-self: start;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--background);
+  padding: 10px 12px;
+}
+
+.mine {
+  justify-self: end;
+  border-color: transparent;
+  background: var(--primary-soft);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.author {
+  color: var(--foreground);
+  font-weight: 650;
+}
+
+.body {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+.composer {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+}
+
+.composerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.composerRow textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 180px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  padding: 9px 11px;
+}
+
+.composerFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+.over {
+  color: var(--error);
+  font-weight: 650;
+}

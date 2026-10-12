@@ -1,7 +1,7 @@
 "use client";
 
 import { getGroupTodaySummary } from "@habit-tracker/domain";
-import { ArrowLeft, Settings2, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, MessageCircle, Settings2, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -102,12 +102,20 @@ export default function GroupPage() {
         <Link className="button button--ghost button--default" href="/grupos">
           <ArrowLeft size={17} /> Grupos
         </Link>
-        <Link
-          className="button button--secondary button--default"
-          href={`/grupos/${groupId}/ajustes`}
-        >
-          <Settings2 size={17} /> Ajustes del grupo
-        </Link>
+        <div className="group-actions">
+          <Link
+            className="button button--secondary button--default"
+            href={`/grupos/${groupId}/chat`}
+          >
+            <MessageCircle size={17} /> Chat
+          </Link>
+          <Link
+            className="button button--secondary button--default"
+            href={`/grupos/${groupId}/ajustes`}
+          >
+            <Settings2 size={17} /> Ajustes del grupo
+          </Link>
+        </div>
       </nav>
       {error ? (
         <div className="sync-error" role="alert">

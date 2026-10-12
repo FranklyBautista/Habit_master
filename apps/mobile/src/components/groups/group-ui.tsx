@@ -30,12 +30,15 @@ export function GroupScreen({
   subtitle,
   onBack = () => (router.canGoBack() ? router.back() : router.replace("/grupos")),
   action,
+  scrollable = true,
   children,
 }: {
   title: string;
   subtitle?: string;
   onBack?: () => void;
   action?: ReactNode;
+  /** `false` para pantallas con su propia lista (el chat). */
+  scrollable?: boolean;
   children: ReactNode;
 }) {
   const theme = useTheme();
@@ -64,13 +67,17 @@ export function GroupScreen({
           </View>
           {action}
         </View>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
+        {scrollable ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={styles.fixedContent}>{children}</View>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -257,6 +264,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: Spacing.six,
   },
+  fixedContent: { flex: 1 },
   centered: {
     alignItems: "center",
     justifyContent: "center",

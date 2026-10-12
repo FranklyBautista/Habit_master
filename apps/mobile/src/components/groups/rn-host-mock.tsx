@@ -15,6 +15,15 @@ type HostProps = {
   disabled?: boolean;
   value?: string;
   onChangeText?: (text: string) => void;
+  editable?: boolean;
+};
+
+type FlatListProps<T> = {
+  data: T[];
+  renderItem: (info: { item: T; index: number }) => ReactNode;
+  keyExtractor: (item: T) => string;
+  accessibilityLabel?: string;
+  ListFooterComponent?: ReactNode;
 };
 
 function renderChildren(children: HostProps["children"]) {
@@ -58,9 +67,28 @@ export const reactNativeHostMock = {
       },
       renderChildren(children),
     ),
-  TextInput: ({ accessibilityLabel, value, onChangeText }: HostProps) =>
+  KeyboardAvoidingView: host("div"),
+  // Sin virtualización: pinta los elementos en el orden de `data` y el pie al
+  // final (con `inverted`, en la app el pie queda arriba).
+  FlatList: <T,>({
+    data,
+    renderItem,
+    keyExtractor,
+    accessibilityLabel,
+    ListFooterComponent,
+  }: FlatListProps<T>) =>
+    createElement(
+      "div",
+      { "aria-label": accessibilityLabel },
+      ...data.map((item, index) =>
+        createElement("div", { key: keyExtractor(item) }, renderItem({ item, index })),
+      ),
+      ListFooterComponent ?? null,
+    ),
+  TextInput: ({ accessibilityLabel, value, onChangeText, editable }: HostProps) =>
     createElement("input", {
       "aria-label": accessibilityLabel,
+      disabled: editable === false,
       value,
       onChange: (event: { target: { value: string } }) =>
         onChangeText?.(event.target.value),
@@ -75,5 +103,6 @@ export const reactNativeHostMock = {
   },
   Share: { share: vi.fn() },
   Alert: { alert: vi.fn() },
+  AccessibilityInfo: { announceForAccessibility: vi.fn() },
   useColorScheme: () => "light",
 };
