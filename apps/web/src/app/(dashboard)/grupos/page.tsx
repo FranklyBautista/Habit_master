@@ -22,7 +22,6 @@ export default function GroupsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Juntos"
         title="Grupos"
         description="Comparte algunos hábitos con tu gente y anímense entre todos."
       />

@@ -17,7 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useHabitStore } from "@/lib/habit-store";
 
-function calendarTone(value: number | null) {
+// Los días futuros no tienen color: todavía no pueden contar como incumplidos.
+function calendarTone(value: number | null, isFuture: boolean) {
+  if (isFuture) return "is-future";
   if (value === null) return "tone-none";
   if (value === 0) return "tone-zero";
   if (value < 100) return value <= 50 ? "tone-low" : "tone-mid";
@@ -60,6 +62,8 @@ export default function CalendarPage() {
       (scope === "general" || habit.id === scope) &&
       isHabitActiveOnDate(habit, selectedDate, snapshot.settings.timezone),
   );
+
+  const selectedIsFuture = selectedDate > today;
 
   function changeMonth(amount: number) {
     const nextMonth = addMonthsToDateKey(monthKey, amount);
@@ -132,14 +136,16 @@ export default function CalendarPage() {
                 day: "numeric",
                 month: "long",
               });
-              const status =
-                metrics.percentage === null
+              const isFuture = metrics.date > today;
+              const status = isFuture
+                ? "todavía no llega"
+                : metrics.percentage === null
                   ? "sin hábitos previstos"
                   : `${metrics.percentage}% completado`;
               return (
                 <button
                   key={metrics.date}
-                  className={`calendar-day ${calendarTone(metrics.percentage)} ${metrics.date === today ? "is-today" : ""} ${metrics.date === selectedDate ? "is-selected" : ""}`}
+                  className={`calendar-day ${calendarTone(metrics.percentage, isFuture)} ${metrics.date === today ? "is-today" : ""} ${metrics.date === selectedDate ? "is-selected" : ""}`}
                   aria-label={`${dateLabel}, ${status}`}
                   aria-pressed={metrics.date === selectedDate}
                   onClick={() => setSelectedDate(metrics.date)}
@@ -172,20 +178,32 @@ export default function CalendarPage() {
         <Card className="day-summary" aria-live="polite">
           <span className="section-kicker">{selectedLabel}</span>
           <h2>
-            {selectedMetrics.percentage === null
-              ? "Sin datos para este día"
-              : selectedMetrics.percentage === 100
-                ? "Día completo"
-                : "Progreso del día"}
+            {selectedIsFuture
+              ? "Este día todavía no llega"
+              : selectedMetrics.percentage === null
+                ? "Sin datos para este día"
+                : selectedMetrics.percentage === 100
+                  ? "Día completo"
+                  : "Progreso del día"}
           </h2>
-          <strong>
-            {selectedMetrics.completed} de {selectedMetrics.expected}
-          </strong>
-          <p>
-            {selectedMetrics.percentage === null
-              ? "Ningún hábito contaba todavía en esta fecha."
-              : `${selectedMetrics.percentage}% de los hábitos previstos fue completado.`}
-          </p>
+          {selectedIsFuture ? (
+            <p>
+              {expectedHabits.length === 1
+                ? "Tienes 1 hábito previsto."
+                : `Tienes ${expectedHabits.length} hábitos previstos.`}
+            </p>
+          ) : (
+            <>
+              <strong>
+                {selectedMetrics.completed} de {selectedMetrics.expected}
+              </strong>
+              <p>
+                {selectedMetrics.percentage === null
+                  ? "Ningún hábito contaba todavía en esta fecha."
+                  : `${selectedMetrics.percentage}% de los hábitos previstos fue completado.`}
+              </p>
+            </>
+          )}
           {expectedHabits.length ? (
             <div className="mini-habits">
               {expectedHabits.map((habit) => (
@@ -196,9 +214,11 @@ export default function CalendarPage() {
                     <Circle size={17} aria-hidden="true" />
                   )}
                   {habit.name}
-                  <span className="sr-only">
-                    {completedIds.has(habit.id) ? ", completado" : ", pendiente"}
-                  </span>
+                  {selectedIsFuture ? null : (
+                    <span className="sr-only">
+                      {completedIds.has(habit.id) ? ", completado" : ", pendiente"}
+                    </span>
+                  )}
                 </span>
               ))}
             </div>

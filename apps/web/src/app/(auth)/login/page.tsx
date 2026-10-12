@@ -12,7 +12,6 @@ export default async function LoginPage({
   return (
     <>
       <div className="auth-heading">
-        <span className="section-kicker">Tu cuenta</span>
         <h1>Iniciar sesión</h1>
         <p>Continúa tus hábitos desde cualquier navegador.</p>
       </div>

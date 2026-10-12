@@ -1,7 +1,7 @@
 "use client";
 
 import { userSettingsSchema } from "@habit-tracker/domain";
-import { Cloud, LogOut, SlidersHorizontal } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 
@@ -45,33 +45,26 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Preferencias"
         title="Ajustes"
-        description="Adapta la experiencia a tu forma de organizarte."
+        description="Tu nombre, tu zona horaria y tu código para grupos."
       />
       <div
         className="settings-form"
         key={`${snapshot.settings.displayName}-${snapshot.settings.timezone}`}
       >
-        <form className="settings-form-content" onSubmit={submit}>
-          <Card>
+        <form onSubmit={submit}>
+          <Card className="settings-fields">
             <div className="account-row">
-              <span className="avatar">
+              <span className="avatar" aria-hidden="true">
                 {snapshot.settings.displayName.slice(0, 1).toUpperCase()}
               </span>
               <div>
-                <h2>Cuenta sincronizada</h2>
-                <p>Tu sesión y tus datos están protegidos por Supabase.</p>
+                <h2>Tu perfil</h2>
+                <p>
+                  Tus hábitos se guardan en tu cuenta y se sincronizan entre tus
+                  dispositivos.
+                </p>
               </div>
-            </div>
-          </Card>
-          <Card className="settings-fields">
-            <div className="section-heading">
-              <div>
-                <span className="section-kicker">Tu contexto</span>
-                <h2>Preferencias regionales</h2>
-              </div>
-              <SlidersHorizontal size={21} />
             </div>
             <FormField htmlFor="display-name" label="Nombre">
               <input
@@ -82,15 +75,10 @@ export default function SettingsPage() {
                 required
               />
             </FormField>
-            <FormField htmlFor="locale" label="Idioma">
-              <select id="locale" defaultValue="es" disabled>
-                <option value="es">Español</option>
-              </select>
-            </FormField>
             <FormField
               htmlFor="timezone"
               label="Zona horaria"
-              hint="Se toma automáticamente del reloj de tu dispositivo y sirve para asignar cada check-in al día correcto."
+              hint="Se toma del reloj de tu dispositivo para que cada hábito cuente en el día correcto."
             >
               <input
                 id="timezone"
@@ -98,11 +86,6 @@ export default function SettingsPage() {
                 readOnly
                 aria-describedby="timezone-hint"
               />
-            </FormField>
-            <FormField htmlFor="week" label="La semana inicia">
-              <select id="week" defaultValue="monday" disabled>
-                <option value="monday">Lunes</option>
-              </select>
             </FormField>
             {error ? (
               <p className="form-error" role="alert">
@@ -115,26 +98,12 @@ export default function SettingsPage() {
               </Button>
             </div>
           </Card>
-          <Card className="offline-note">
-            <span>
-              <Cloud size={20} />
-            </span>
-            <div>
-              <strong>Servidor como fuente de verdad</strong>
-              <p>
-                Los cambios se refrescan después de cada mutación y al volver a enfocar
-                la aplicación.
-              </p>
-            </div>
-          </Card>
         </form>
         <UserCodeCard />
-        <Card>
+        <Card className="settings-footer">
           <Link className="privacy-link" href="/privacidad">
             Política de privacidad
           </Link>
-        </Card>
-        <Card>
           <form action={logout}>
             <Button type="submit" variant="secondary">
               <LogOut size={18} /> Cerrar sesión

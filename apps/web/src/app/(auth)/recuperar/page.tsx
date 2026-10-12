@@ -6,7 +6,6 @@ export default function RecoverPage() {
   return (
     <>
       <div className="auth-heading">
-        <span className="section-kicker">Recuperación</span>
         <h1>Restablecer contraseña</h1>
         <p>Te enviaremos un código si el correo corresponde a una cuenta.</p>
       </div>

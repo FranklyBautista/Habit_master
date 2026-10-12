@@ -48,7 +48,6 @@ export default function HabitsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Tu rutina"
         title="Hábitos"
         description="Crea, ordena y cuida lo que quieres repetir cada día."
         action={

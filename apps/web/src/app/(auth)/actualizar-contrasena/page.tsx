@@ -6,7 +6,6 @@ export default function UpdatePasswordPage() {
   return (
     <>
       <div className="auth-heading">
-        <span className="section-kicker">Seguridad</span>
         <h1>Nueva contraseña</h1>
         <p>Elige una contraseña de al menos ocho caracteres.</p>
       </div>

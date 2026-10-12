@@ -52,7 +52,9 @@ la comparación por hábito; el progreso general usa el acento.
 - Familia: Geist Sans (`next/font`) en la web; la del sistema en móvil.
 - Jerarquía (la de `ThemedText`): título 28–34 px / 800 con tracking negativo;
   subtítulo 19–22 px / 700; cuerpo 15–16 px; secundario 14 px / 500 en
-  `--muted`; rótulos 12–13 px / 700 en mayúsculas y `--muted`.
+  `--muted`; rótulos 14 px / 600 en `--muted`, con mayúscula inicial (en la
+  web ya no van en mayúsculas sostenidas). Un rótulo sobre un título solo se
+  pone si aporta contexto que el título no da (el mes, el periodo, el paso).
 - Cifras grandes (porcentajes, rachas) en 22–34 px / 800.
 - Geist Mono solo para el código de usuario.
 
@@ -90,7 +92,8 @@ la comparación por hábito; el progreso general usa el acento.
   superficie.
 - **Calendario**: celdas con el acento al 23 %, 60 % y 100 % según el
   cumplimiento (texto `--on-accent` en las dos más intensas); hoy con borde
-  `--tint` y el día elegido con borde del color del texto.
+  `--tint` y el día elegido con borde del color del texto. Los días futuros
+  van sin relleno y con la cifra en `--muted`: no cuentan como 0 %.
 - **Gráficas** (Recharts): ejes y rejilla con `--muted`/`--border-soft`,
   tendencia en `--tint` con relleno de `--accent`, barras con el color de cada
   hábito; los colores son variables CSS, así que siguen el modo del sistema.

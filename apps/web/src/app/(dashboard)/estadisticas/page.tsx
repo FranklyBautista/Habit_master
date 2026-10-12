@@ -8,7 +8,7 @@ import {
   getLocalDateKey,
   getPeriodStartDate,
 } from "@habit-tracker/domain";
-import { CalendarDays, Flame, Medal, Target } from "lucide-react";
+import { CalendarDays, Flame, Medal } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 
@@ -68,33 +68,33 @@ export default function StatisticsPage() {
       <div className="view-grid view-grid--stats">
         <PeriodTabs value={period} onChange={setPeriod} />
         <div className="summary-grid">
-          {summaries.map((summary, index) => (
-            <Card className="summary-card" key={summary.startDate}>
-              <span>{index === 0 ? "Hoy" : `${[7, 30, 90][index - 1]} días`}</span>
-              <strong>
-                {summary.percentage === null ? "—" : `${summary.percentage}%`}
-              </strong>
-              <small>
-                {summary.expected
-                  ? `${summary.completed} de ${summary.expected} registros`
-                  : "Sin hábitos previstos"}
-              </small>
-            </Card>
-          ))}
+          {summaries.map((summary, index) => {
+            const days = [1, 7, 30, 90][index];
+            const isSelected = days === period;
+            return (
+              <Card
+                className={`summary-card ${isSelected ? "is-selected" : ""}`}
+                key={summary.startDate}
+              >
+                <span>
+                  {index === 0 ? "Hoy" : `${days} días`}
+                  {isSelected ? (
+                    <span className="sr-only">, periodo elegido</span>
+                  ) : null}
+                </span>
+                <strong>
+                  {summary.percentage === null ? "—" : `${summary.percentage}%`}
+                </strong>
+                <small>
+                  {summary.expected
+                    ? `${summary.completed} de ${summary.expected} registros`
+                    : "Sin hábitos previstos"}
+                </small>
+              </Card>
+            );
+          })}
         </div>
         <div className="metric-grid">
-          <Card className="metric-card">
-            <span className="metric-icon">
-              <Target size={20} />
-            </span>
-            <span>Cumplimiento del periodo</span>
-            <strong>
-              {selected.percentage === null ? "—" : `${selected.percentage}%`}
-            </strong>
-            <small>
-              {selected.completed} de {selected.expected} check-ins esperados
-            </small>
-          </Card>
           <Card className="metric-card">
             <span className="metric-icon">
               <Flame size={20} />
@@ -124,7 +124,6 @@ export default function StatisticsPage() {
         <Card className="accessible-summary">
           <div className="section-heading">
             <div>
-              <span className="section-kicker">Alternativa textual</span>
               <h2>Resumen por hábito</h2>
             </div>
           </div>

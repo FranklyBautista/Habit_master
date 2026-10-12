@@ -13,6 +13,20 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { WeekStrip } from "@/components/week-strip";
 import { getTodaySnapshot, useHabitActions, useHabitStore } from "@/lib/habit-store";
 
+// Saludo según la hora en la zona del usuario, no la del servidor.
+function greeting(timezone: string) {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hourCycle: "h23",
+      timeZone: timezone,
+    }).format(new Date()),
+  );
+  if (hour >= 5 && hour < 12) return "Buenos días";
+  if (hour >= 12 && hour < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 // Composición de la pantalla Hoy de móvil (apps/mobile/src/app/(app)/index.tsx):
 // saludo con la fecha, cifras rápidas, semana, grupos, progreso con anillo y
 // la lista de hábitos. En escritorio se reparte en dos columnas.
@@ -47,7 +61,9 @@ export default function TodayPage() {
           <p className="today-header__date">
             {dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}
           </p>
-          <h1>Buenos días, {settings.displayName}</h1>
+          <h1>
+            {greeting(settings.timezone)}, {settings.displayName}
+          </h1>
         </div>
         <Link className="avatar-ring" href="/ajustes" aria-label="Abrir ajustes">
           <span aria-hidden="true">{initial}</span>

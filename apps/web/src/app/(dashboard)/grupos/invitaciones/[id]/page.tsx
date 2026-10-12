@@ -45,7 +45,6 @@ export default function InvitationPage() {
     return (
       <>
         <PageHeader
-          eyebrow="Grupos"
           title="Invitación"
           description="Las invitaciones caducan a los 7 días."
         />
@@ -94,7 +93,6 @@ export default function InvitationPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Invitación"
         title={`Unirte a «${current.groupName}»`}
         description={`Dueño: ${current.inviterName ?? "sin nombre"} · ${membersLabel(current.memberCount)}`}
       />

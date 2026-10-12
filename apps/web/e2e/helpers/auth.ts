@@ -13,7 +13,9 @@ export async function login(page: Page, credentials = demoCredentials): Promise<
   await expect(page).toHaveURL(/\/hoy$/);
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      await expect(page.getByRole("heading", { name: /Buenos días/ })).toBeVisible({
+      await expect(
+        page.getByRole("heading", { name: /Buenos días|Buenas tardes|Buenas noches/ }),
+      ).toBeVisible({
         timeout: 2_000,
       });
       return;

@@ -214,9 +214,6 @@ h3 {
 .migration-message {
   color: var(--muted);
 }
-.settings-form-content {
-  display: contents;
-}
 
 .auth-shell {
   display: grid;
@@ -590,15 +587,18 @@ h3 {
   color: var(--muted);
   font-size: 15px;
 }
-/* Rótulos pequeños en mayúsculas, en texto secundario como en móvil
-   ("PROGRESO DE HOY", "TU CONTEXTO"). */
+/* Rótulos de contexto sobre un título ("octubre de 2026", "Progreso de
+   hoy"): en minúscula inicial y texto secundario. Solo se ponen cuando dicen
+   algo que el título no dice. */
 .eyebrow,
 .section-kicker {
   display: block;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 600;
+}
+.eyebrow::first-letter,
+.section-kicker::first-letter {
   text-transform: uppercase;
 }
 .page-header__action {
@@ -934,14 +934,7 @@ h3 {
   font-size: 14px;
 }
 .insight-card,
-.offline-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  padding: 18px 20px;
-}
-.insight-card > span,
-.offline-note > span {
+.insight-card > span {
   display: grid;
   width: 40px;
   height: 40px;
@@ -951,8 +944,7 @@ h3 {
   background: var(--accent-soft);
   color: var(--tint);
 }
-.insight-card p,
-.offline-note p {
+.insight-card p {
   margin-top: 4px;
   color: var(--muted);
   font-size: 14px;
@@ -965,10 +957,6 @@ h3 {
 }
 .habit-section > .list-heading {
   justify-content: flex-start;
-  color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .habit-manage-list {
   display: grid;
@@ -1286,6 +1274,11 @@ h3 {
 .calendar-legend .tone-high {
   background: var(--accent);
 }
+/* Días futuros: sin relleno y con la cifra apagada, para que no se lean
+   como días incumplidos. */
+.calendar-day.is-future span {
+  color: var(--muted);
+}
 /* Hoy con borde de acento; el día elegido con borde del color del texto
    (gana sobre el de hoy), como en móvil. */
 .calendar-day.is-today i {
@@ -1413,6 +1406,11 @@ h3 {
   color: var(--muted);
   font-size: 14px;
   font-weight: 500;
+}
+/* La tarjeta del periodo elegido en las pestañas lleva el borde de acento. */
+.summary-card.is-selected {
+  border-color: var(--tint);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 .summary-card > strong {
   font-size: 28px;
@@ -1551,11 +1549,13 @@ h3 {
   max-width: 720px;
   gap: 16px;
 }
-.settings-form > .card:not(.settings-fields, .group-card, .offline-note) {
-  padding: 20px 24px;
-}
-.settings-form-content > .card:first-child {
-  padding: 20px 24px;
+.settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 16px 16px 16px 24px;
 }
 .account-row {
   display: flex;
@@ -1627,9 +1627,6 @@ h3 {
   .form-actions > .button {
     width: 100%;
   }
-}
-.offline-note {
-  box-shadow: none;
 }
 
 .dialog {
@@ -2304,10 +2301,9 @@ h3 {
   }
   .metric-grid {
     grid-column: span 2;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .metric-card {
-    min-height: 190px;
     padding: 24px;
   }
   .charts-grid {

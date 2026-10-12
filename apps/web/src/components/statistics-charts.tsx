@@ -8,7 +8,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Tooltip,
   XAxis,
   YAxis,
@@ -36,7 +35,6 @@ const tooltipStyles = {
   itemStyle: { color: "var(--foreground)" },
   cursor: { fill: "var(--surface-selected)", stroke: "var(--border)" },
 };
-const legendStyle = { color: "var(--muted)", fontSize: 13 };
 
 export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
   return (
@@ -44,7 +42,6 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
       <Card className="chart-card">
         <div className="section-heading">
           <div>
-            <span className="section-kicker">Constancia</span>
             <h2>Cumplimiento diario</h2>
           </div>
           <span className="chart-legend">
@@ -96,10 +93,6 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
               formatter={(value) => [`${value}%`, "Cumplimiento"]}
               labelFormatter={(_, payload) => payload[0]?.payload.date ?? ""}
             />
-            <Legend
-              wrapperStyle={legendStyle}
-              formatter={() => "Cumplimiento diario"}
-            />
             <Area
               type="monotone"
               dataKey="percentage"
@@ -116,7 +109,6 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
       <Card className="chart-card">
         <div className="section-heading">
           <div>
-            <span className="section-kicker">Comparación</span>
             <h2>Cumplimiento por hábito</h2>
           </div>
           <span className="chart-legend chart-legend--habits">
@@ -152,7 +144,7 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
             <YAxis
               type="category"
               dataKey="name"
-              width={110}
+              width={150}
               tickLine={false}
               axisLine={false}
               tick={{ ...axisTick, fill: "var(--foreground)" }}
@@ -160,10 +152,6 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
             <Tooltip
               {...tooltipStyles}
               formatter={(value) => [`${value}%`, "Cumplimiento"]}
-            />
-            <Legend
-              wrapperStyle={legendStyle}
-              formatter={() => "Cumplimiento por hábito"}
             />
             <Bar
               dataKey="percentage"
