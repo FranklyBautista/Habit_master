@@ -29,7 +29,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#047857",
+  // Mismo fondo de página que la app (claro u oscuro según el sistema).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2F3EF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0B0C" },
+  ],
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
 };

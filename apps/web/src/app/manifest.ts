@@ -11,8 +11,10 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait-primary",
     lang: "es",
-    background_color: "#F8FAFC",
-    theme_color: "#047857",
+    // El manifest no admite colores por esquema: se usa el oscuro de la marca
+    // (superficies casi negras con acento lima, como la app móvil).
+    background_color: "#0B0B0C",
+    theme_color: "#0B0B0C",
     icons: [
       {
         src: "/icons/icon-192.png",
