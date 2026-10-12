@@ -601,7 +601,7 @@ Ritmo sugerido:
 ### C5 — Chat del grupo
 
 - [x] Migración `20261012120000_create_group_messages.sql`: `group_messages` y RPC `security definer` para enviar (máx. 1000 caracteres, 10 por minuto, id generado por la app para reintentos idempotentes), listar por páginas de 50 con cursor y borrar solo lo propio; autor "Antiguo miembro" al salir, cascada al borrar cuenta o grupo. Única política `select` (miembros actuales, `grant` solo de `id` y `group_id`) para Realtime, documentada en el addendum de ADR 0002; pgTAP `group_messages.test.sql` (47 casos) y tipos regenerados.
-- [ ] Dominio y repositorio del chat en web y móvil.
+- [x] Dominio (`group-messages.ts`: esquemas Zod, longitud en caracteres como Postgres, ventana de mensajes con cursor, hora del mensaje e id v4 para reintentos), métodos de chat en `SupabaseGroupRepository` y hook `useGroupChat` en web y móvil, con el mismo contrato: sin UI optimista (ADR 0001), dedupe de dobles envíos y revalidación por foco/conexión o AppState/NetInfo.
 - [ ] Pantallas `/grupos/[id]/chat` en web y móvil.
 - [ ] Tiempo real como señal para volver a consultar.
 - [ ] Moderación en la UI y E2E `e2e/group-chat.spec.ts`.

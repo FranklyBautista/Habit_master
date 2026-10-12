@@ -1,7 +1,12 @@
 import type { Database } from "@habit-tracker/database";
 import {
+  groupChatLimits,
   type GroupInvitation,
   groupInvitationSchema,
+  type GroupMessage,
+  type GroupMessageCursor,
+  type GroupMessagePage,
+  groupMessagePageSchema,
   type GroupProgress,
   groupProgressSchema,
   type GroupSummary,
@@ -22,6 +27,8 @@ import { z } from "zod";
 type GroupRow = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
 type InvitationRow =
   Database["public"]["Functions"]["get_my_invitations"]["Returns"][number];
+type MessageRow =
+  Database["public"]["Functions"]["get_group_messages"]["Returns"][number];
 
 /** La RPC respondió 42501: quien llama no es miembro (o el grupo no existe). */
 export class GroupAccessError extends Error {}
@@ -55,6 +62,18 @@ function mapInvitation(row: InvitationRow): GroupInvitation {
     inviterName: row.inviter_name,
     memberCount: row.member_count,
     expiresAt: row.expires_at,
+  };
+}
+
+function mapMessage(row: MessageRow): GroupMessage {
+  return {
+    id: row.id,
+    body: row.body,
+    createdAt: row.created_at,
+    // Los tipos generados no saben que es nulo para los antiguos miembros.
+    memberId: row.member_id ?? null,
+    authorName: row.author_name,
+    isMine: row.is_mine,
   };
 }
 
@@ -252,6 +271,47 @@ export class SupabaseGroupRepository {
 
   async leaveGroup(groupId: string): Promise<void> {
     const { error } = await this.client.rpc("leave_group", { group_id: groupId });
+    if (error) throw rpcError(error);
+  }
+
+  /**
+   * Una página del chat en orden de lectura (más antiguo primero). Sin cursor,
+   * la más reciente; con cursor, la anterior a ese mensaje. Se pide un mensaje
+   * de más para saber si quedan otros más antiguos.
+   */
+  async getMessages(
+    groupId: string,
+    before: GroupMessageCursor | null = null,
+    pageSize: number = groupChatLimits.pageSize,
+  ): Promise<GroupMessagePage> {
+    const { data, error } = await this.client.rpc("get_group_messages", {
+      group_id: groupId,
+      page_size: pageSize + 1,
+      ...(before ? { before_created_at: before.createdAt, before_id: before.id } : {}),
+    });
+    if (error) throw rpcError(error);
+    const rows = data ?? [];
+    return groupMessagePageSchema.parse({
+      messages: rows.slice(0, pageSize).map(mapMessage).reverse(),
+      hasMore: rows.length > pageSize,
+    });
+  }
+
+  /** `messageId` lo genera la app: reintentar con el mismo id no duplica. */
+  async sendMessage(groupId: string, body: string, messageId: string): Promise<string> {
+    const { data, error } = await this.client.rpc("send_group_message", {
+      group_id: groupId,
+      body,
+      message_id: messageId,
+    });
+    if (error) throw rpcError(error);
+    return z.uuid().parse(data);
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    const { error } = await this.client.rpc("delete_group_message", {
+      message_id: messageId,
+    });
     if (error) throw rpcError(error);
   }
 

@@ -273,3 +273,112 @@ describe("SupabaseGroupRepository", () => {
     ]);
   });
 });
+
+// Chat (C5): la RPC devuelve del más reciente al más antiguo; el repositorio
+// pide uno de más para saber si hay otra página y devuelve orden de lectura.
+const MESSAGE_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+
+function messageRow(index: number, overrides: Record<string, unknown> = {}) {
+  return {
+    id: `88888888-8888-4888-8888-${String(index).padStart(12, "0")}`,
+    body: `Mensaje ${index}`,
+    created_at: `2026-10-12T10:${String(index).padStart(2, "0")}:00.123456+00:00`,
+    member_id: MEMBER_OTHER,
+    author_name: "Beto",
+    is_mine: false,
+    ...overrides,
+  };
+}
+
+describe("SupabaseGroupRepository chat", () => {
+  it("maps a page to reading order and asks for one extra message", async () => {
+    const { repository, interactions } = createRepository(() => ({
+      data: [
+        messageRow(3, { member_id: null, author_name: "Antiguo miembro" }),
+        messageRow(2, { is_mine: true, member_id: MEMBER_ME, author_name: "Ana" }),
+        messageRow(1),
+      ],
+      error: null,
+    }));
+
+    const page = await repository.getMessages(GROUP_ID, null, 2);
+
+    expect(page.hasMore).toBe(true);
+    expect(page.messages.map((message) => message.body)).toEqual([
+      "Mensaje 2",
+      "Mensaje 3",
+    ]);
+    expect(page.messages[1]).toMatchObject({
+      memberId: null,
+      authorName: "Antiguo miembro",
+      isMine: false,
+    });
+    expect(interactions[0]).toEqual({
+      name: "rpc:get_group_messages",
+      args: [{ group_id: GROUP_ID, page_size: 3 }],
+    });
+  });
+
+  it("passes the cursor for older pages", async () => {
+    const { repository, interactions } = createRepository(() => ({
+      data: [messageRow(1)],
+      error: null,
+    }));
+
+    const page = await repository.getMessages(GROUP_ID, {
+      createdAt: "2026-10-12T10:02:00.123456+00:00",
+      id: MESSAGE_ID,
+    });
+
+    expect(page.hasMore).toBe(false);
+    expect(interactions[0].args[0]).toEqual({
+      group_id: GROUP_ID,
+      page_size: 51,
+      before_created_at: "2026-10-12T10:02:00.123456+00:00",
+      before_id: MESSAGE_ID,
+    });
+  });
+
+  it("sends with the app-generated id and deletes by id", async () => {
+    const { repository, interactions } = createRepository((interaction) =>
+      interaction.name === "rpc:send_group_message"
+        ? { data: MESSAGE_ID, error: null }
+        : { data: null, error: null },
+    );
+
+    await expect(repository.sendMessage(GROUP_ID, "Hola", MESSAGE_ID)).resolves.toBe(
+      MESSAGE_ID,
+    );
+    await repository.deleteMessage(MESSAGE_ID);
+
+    expect(interactions.map((item) => [item.name, item.args[0]])).toEqual([
+      [
+        "rpc:send_group_message",
+        { group_id: GROUP_ID, body: "Hola", message_id: MESSAGE_ID },
+      ],
+      ["rpc:delete_group_message", { message_id: MESSAGE_ID }],
+    ]);
+  });
+
+  it("keeps the rate limit message and maps lost access", async () => {
+    const limited = createRepository(() => ({
+      data: null,
+      error: {
+        code: "P0001",
+        message:
+          "Has enviado 10 mensajes en el último minuto. Espera un poco antes de seguir.",
+      },
+    }));
+    await expect(
+      limited.repository.sendMessage(GROUP_ID, "Hola", MESSAGE_ID),
+    ).rejects.toThrow("Has enviado 10 mensajes en el último minuto.");
+
+    const removed = createRepository(() => ({
+      data: null,
+      error: { code: "42501", message: "No formas parte de este grupo." },
+    }));
+    await expect(removed.repository.getMessages(GROUP_ID)).rejects.toBeInstanceOf(
+      GroupAccessError,
+    );
+  });
+});

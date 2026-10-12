@@ -88,7 +88,7 @@ const groupIdSchema = z.uuid();
 const genericError = "No se pudo sincronizar. Revisa tu conexión e inténtalo de nuevo.";
 const duplicateError = "Ya se está procesando. Espera un momento.";
 
-function errorMessage(reason: unknown) {
+export function groupErrorMessage(reason: unknown) {
   // Los errores de las RPC llegan con el mensaje en español del servidor; un
   // fallo de red (`TypeError: Failed to fetch`) o de validación no.
   if (reason instanceof GroupAccessError) return reason.message;
@@ -151,7 +151,7 @@ export function GroupStoreProvider({
       setSnapshot((current) => ({
         ...current,
         syncing: false,
-        error: errorMessage(reason),
+        error: groupErrorMessage(reason),
       }));
       return false;
     }
@@ -166,7 +166,7 @@ export function GroupStoreProvider({
         try {
           data = await operation();
         } catch (reason) {
-          return { ok: false, error: errorMessage(reason) };
+          return { ok: false, error: groupErrorMessage(reason) };
         }
         // La escritura ya está confirmada; el resumen se vuelve a pedir y la
         // revisión avisa a las vistas de grupo abiertas.
@@ -294,6 +294,11 @@ export function useGroupActions() {
   return useGroupStoreContext().actions;
 }
 
+/** Repositorio compartido, para hooks de una sola vista (por ejemplo el chat). */
+export function useGroupRepository() {
+  return useGroupStoreContext().repository;
+}
+
 type ProgressState = {
   progress: GroupProgress | null;
   loading: boolean;
@@ -338,7 +343,7 @@ export function useGroupProgress(groupId: string) {
       setState((current) => ({
         ...current,
         loading: false,
-        error: errorMessage(reason),
+        error: groupErrorMessage(reason),
       }));
     }
   }, [groupId, repository]);

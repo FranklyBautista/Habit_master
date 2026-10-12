@@ -86,7 +86,7 @@ export function isDisplayNameRequiredError(message: string): boolean {
   return message.startsWith("Elige un nombre visible");
 }
 
-function errorMessage(reason: unknown) {
+export function groupErrorMessage(reason: unknown) {
   if (reason instanceof Error && reason.message) return reason.message;
   return genericError;
 }
@@ -142,7 +142,7 @@ export function GroupStoreProvider({
       setSnapshot((current) => ({
         ...current,
         syncing: false,
-        error: errorMessage(reason),
+        error: groupErrorMessage(reason),
       }));
       return false;
     }
@@ -161,7 +161,7 @@ export function GroupStoreProvider({
         try {
           data = await operation();
         } catch (reason) {
-          return { ok: false, error: errorMessage(reason) };
+          return { ok: false, error: groupErrorMessage(reason) };
         }
         await refresh();
         setSnapshot((current) => ({ ...current, revision: current.revision + 1 }));
@@ -297,6 +297,11 @@ export function useGroupActions() {
   return useGroupStoreContext().actions;
 }
 
+/** Repositorio compartido, para hooks de una sola vista (por ejemplo el chat). */
+export function useGroupRepository() {
+  return useGroupStoreContext().repository;
+}
+
 export function useGroupProgress(groupId: string): {
   progress: GroupProgress | null;
   loading: boolean;
@@ -342,7 +347,7 @@ export function useGroupProgress(groupId: string): {
         ...current,
         groupId,
         loading: false,
-        error: errorMessage(reason),
+        error: groupErrorMessage(reason),
       }));
     }
   }, [groupId, repository]);

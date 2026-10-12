@@ -1,7 +1,11 @@
 import type { Database, Json } from "@habit-tracker/database";
 import {
+  groupChatLimits,
   type GroupInvitation,
   groupInvitationSchema,
+  type GroupMessageCursor,
+  type GroupMessagePage,
+  groupMessagePageSchema,
   type GroupProgress,
   groupProgressSchema,
   type GroupSummary,
@@ -236,6 +240,58 @@ export class SupabaseGroupRepository {
 
   async leaveGroup(groupId: string): Promise<void> {
     const { error } = await this.client.rpc("leave_group", { group_id: groupId });
+    if (error) throw toGroupError(error);
+  }
+
+  /**
+   * Una página del chat en orden de lectura (más antiguo primero). Sin cursor,
+   * la más reciente; con cursor, la anterior a ese mensaje. Se pide un mensaje
+   * de más para saber si quedan otros más antiguos.
+   */
+  async getMessages(
+    groupId: string,
+    before: GroupMessageCursor | null = null,
+    pageSize: number = groupChatLimits.pageSize,
+  ): Promise<GroupMessagePage> {
+    const { data, error } = await this.client.rpc("get_group_messages", {
+      group_id: groupId,
+      page_size: pageSize + 1,
+      ...(before ? { before_created_at: before.createdAt, before_id: before.id } : {}),
+    });
+    if (error) throw toGroupError(error);
+    const rows = data ?? [];
+    return groupMessagePageSchema.parse({
+      messages: rows
+        .slice(0, pageSize)
+        .map((row) => ({
+          id: row.id,
+          body: row.body,
+          createdAt: row.created_at,
+          // Los tipos generados no saben que es nulo para los antiguos miembros.
+          memberId: row.member_id ?? null,
+          authorName: row.author_name,
+          isMine: row.is_mine,
+        }))
+        .reverse(),
+      hasMore: rows.length > pageSize,
+    });
+  }
+
+  /** `messageId` lo genera la app: reintentar con el mismo id no duplica. */
+  async sendMessage(groupId: string, body: string, messageId: string): Promise<string> {
+    const { data, error } = await this.client.rpc("send_group_message", {
+      group_id: groupId,
+      body,
+      message_id: messageId,
+    });
+    if (error) throw toGroupError(error);
+    return data;
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    const { error } = await this.client.rpc("delete_group_message", {
+      message_id: messageId,
+    });
     if (error) throw toGroupError(error);
   }
 
