@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { Card } from "@/components/card";
+import { GroupPetCard } from "@/components/groups/group-pet-card";
 import {
   FieldError,
   GroupButton,
@@ -136,6 +137,7 @@ export default function GrupoScreen() {
       </ThemedText>
       {error ? <FieldError message={error} /> : null}
       <FieldError message={toggleError} />
+      <GroupPetCard progress={progress} />
 
       {members.map((member) => (
         <MemberProgressCard

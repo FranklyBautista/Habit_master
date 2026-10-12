@@ -179,3 +179,38 @@ export function getGroupPetState(progress: GroupProgress): GroupPetState {
     ),
   };
 }
+
+export const petStageLabels: Record<PetStage, string> = {
+  cria: "Cría",
+  pequena: "Pequeña",
+  joven: "Joven",
+  adulta: "Adulta",
+};
+
+export const petMoodLabels: Record<PetMood, string> = {
+  contenta: "Contenta",
+  hambrienta: "Hambrienta",
+  triste: "Triste",
+  dormida: "Dormida",
+};
+
+function missing(count: number): string {
+  return count === 1 ? "falta 1 persona" : `faltan ${count} personas`;
+}
+
+/** Frase principal de la tarjeta de la mascota. */
+export function getPetMessage(state: GroupPetState): string {
+  const { todayDay } = state;
+  switch (state.mood) {
+    case "dormida":
+      return "Duerme: hoy nadie tiene hábitos compartidos activos.";
+    case "contenta":
+      return todayDay.feast
+        ? "¡Festín! Todo el grupo está al día."
+        : `Ya comió: ${todayDay.upToDate} de ${todayDay.participating} al día.`;
+    case "triste":
+      return `Está triste porque se cortó la racha. Para que coma hoy, ${missing(todayDay.needed - todayDay.upToDate)} por ponerse al día.`;
+    case "hambrienta":
+      return `Tiene hambre: ${missing(todayDay.needed - todayDay.upToDate)} por ponerse al día.`;
+  }
+}

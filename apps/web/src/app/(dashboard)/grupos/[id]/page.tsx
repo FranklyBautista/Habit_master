@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
+import { GroupPetCard } from "@/components/groups/group-pet-card";
 import { activeHabitsOf } from "@/components/groups/group-utils";
 import { MemberProgressCard } from "@/components/groups/member-progress-card";
 import { NotMemberState } from "@/components/groups/not-member-state";
@@ -125,6 +126,7 @@ export default function GroupPage() {
           </Button>
         </div>
       ) : null}
+      <GroupPetCard progress={progress} />
       <div className="member-grid">
         {progress.members.map((member) => (
           <MemberProgressCard

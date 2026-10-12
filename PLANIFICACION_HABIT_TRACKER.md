@@ -610,5 +610,5 @@ Ritmo sugerido:
 
 - [x] Reglas en `docs/product/MASCOTA_GRUPO.md`: un pulpito que come si al menos la mitad de quienes participan ese día completan sus hábitos compartidos, etapas por mejor racha (3/7/30 días), ánimo contenta/hambrienta/triste/dormida y nunca muere; se calcula, no se guarda.
 - [x] `getGroupPetState` en `packages/domain` (`group-pet.ts`): función pura sobre `GroupProgress` que recorre la historia del grupo con las fechas locales de cada miembro (días sin participantes neutros, hoy no corta la racha) y devuelve etapa, ánimo, racha actual y mejor, progreso de hoy, siguiente etapa y últimos 7 días; 11 tests.
-- [ ] Ilustración SVG por etapa y ánimo con animaciones básicas en web y móvil, en la vista del grupo.
+- [x] Pulpito genérico en SVG (cría/pequeña/joven/adulta con manchas y corona; cara y color por ánimo) en la vista del grupo, web y móvil: tarjeta con etapa, ánimo, mensaje, racha, siguiente etapa y últimos 7 días con alternativa textual. Animaciones básicas: CSS en web (flota, rebota, tentáculos, parpadeo, "Zz"), `Animated` en móvil (flota/rebota/balanceo y parpadeo, sin módulos nativos nuevos); quietas con "reducir movimiento".
 - [ ] Recordatorio local en móvil cuando la mascota tiene hambre.

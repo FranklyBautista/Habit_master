@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { addDaysToDateKey, getDateRange } from "./dates";
-import { getGroupPetState, getPetStage, petMealsNeeded } from "./group-pet";
+import {
+  getGroupPetState,
+  getPetMessage,
+  getPetStage,
+  petMealsNeeded,
+} from "./group-pet";
 import type { GroupMemberProgress, GroupProgress, SharedHabit } from "./groups";
 
 const today = "2026-10-12";
@@ -189,5 +194,16 @@ describe("getGroupPetState", () => {
     expect(state.stage).toBe("adulta");
     expect(state.currentStreak).toBe(30);
     expect(state.nextStage).toBeNull();
+  });
+});
+
+describe("getPetMessage", () => {
+  it("tells how many people are still missing", () => {
+    const members = [true, false, false].map((isMe) =>
+      member({ isMe, habits: [sharedHabit({ startDate: today })] }),
+    );
+    expect(getPetMessage(getGroupPetState(group(members)))).toBe(
+      "Tiene hambre: faltan 2 personas por ponerse al día.",
+    );
   });
 });
