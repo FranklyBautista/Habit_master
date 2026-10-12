@@ -598,6 +598,14 @@ Ritmo sugerido:
 - [x] Web: "Grupos" en la barra lateral con contador; móvil: rutas ocultas en Tabs (`href: null`) y tarjeta en Hoy, sin cambios nativos.
 - [x] E2E `e2e/groups.spec.ts` con dos usuarios (invitar → aceptar → marcar → el otro lo ve) + axe sin violaciones en `/grupos` y `/grupos/[id]`.
 
-### C5–C6
+### C5 — Chat del grupo
 
-- [ ] C5 Chat · C6 Mascota.
+- [x] Migración `20261012120000_create_group_messages.sql`: `group_messages` y RPC `security definer` para enviar (máx. 1000 caracteres, 10 por minuto, id generado por la app para reintentos idempotentes), listar por páginas de 50 con cursor y borrar solo lo propio; autor "Antiguo miembro" al salir, cascada al borrar cuenta o grupo. Única política `select` (miembros actuales, `grant` solo de `id` y `group_id`) para Realtime, documentada en el addendum de ADR 0002; pgTAP `group_messages.test.sql` (47 casos) y tipos regenerados.
+- [ ] Dominio y repositorio del chat en web y móvil.
+- [ ] Pantallas `/grupos/[id]/chat` en web y móvil.
+- [ ] Tiempo real como señal para volver a consultar.
+- [ ] Moderación en la UI y E2E `e2e/group-chat.spec.ts`.
+
+### C6
+
+- [ ] C6 Mascota.

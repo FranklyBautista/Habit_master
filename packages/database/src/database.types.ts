@@ -119,6 +119,38 @@ export type Database = {
           },
         ];
       };
+      group_messages: {
+        Row: {
+          body: string;
+          created_at: string;
+          group_id: string;
+          id: string;
+          user_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_messages_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       groups: {
         Row: {
           created_at: string;
@@ -300,6 +332,23 @@ export type Database = {
         Returns: string;
       };
       delete_group: { Args: { group_id: string }; Returns: undefined };
+      delete_group_message: { Args: { message_id: string }; Returns: undefined };
+      get_group_messages: {
+        Args: {
+          before_created_at?: string;
+          before_id?: string;
+          group_id: string;
+          page_size?: number;
+        };
+        Returns: {
+          author_name: string;
+          body: string;
+          created_at: string;
+          id: string;
+          is_mine: boolean;
+          member_id: string;
+        }[];
+      };
       get_group_progress: { Args: { group_id: string }; Returns: Json };
       get_my_groups: {
         Args: never;
@@ -349,6 +398,10 @@ export type Database = {
           new_display_name?: string;
         };
         Returns: undefined;
+      };
+      send_group_message: {
+        Args: { body: string; group_id: string; message_id?: string };
+        Returns: string;
       };
       set_shared_habits: {
         Args: { group_id: string; habit_ids: string[] };

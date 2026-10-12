@@ -111,3 +111,44 @@ Consecuencias técnicas obligatorias:
   canal. Se acepta esa fricción a cambio de no exponer cuentas.
 - Una persona puede deducir de forma aproximada la zona de otra viendo cuándo
   cambia su "hoy"; se acepta, porque no se expone la zona ni la hora exacta.
+
+## Addendum C5 — Chat del grupo (12 de octubre de 2026)
+
+Migración `20261012120000_create_group_messages.sql`.
+
+- **Modelo:** `group_messages (id, group_id, user_id, body, created_at)`, con
+  `body` de 1 a 1000 caracteres tras quitar los espacios de los extremos.
+  Borrar el grupo o la cuenta borra los mensajes en cascada; salir o ser
+  expulsado no, y el autor pasa a mostrarse como "Antiguo miembro".
+- **Acceso por RPC, como el resto de grupos:** `send_group_message`,
+  `get_group_messages` (páginas de 50, de más reciente a más antiguo, con
+  cursor `(created_at, id)`) y `delete_group_message` son `security definer` y
+  comprueban la pertenencia en cada llamada. De cada mensaje devuelven el
+  texto, la fecha, si es propio, el nombre visible del autor y el id opaco de su
+  membresía (el mismo que ya expone `get_group_progress`); nunca su id de
+  usuario, correo ni código.
+- **Moderación:** cada persona solo borra sus propios mensajes y solo mientras
+  es miembro; el dueño modera expulsando. Máximo 10 mensajes por minuto, por
+  persona y grupo, comprobado en `send_group_message`. La app genera el id del
+  mensaje para que reintentar un envío no lo duplique.
+- **Excepción a "tablas de grupos sin políticas":** Realtime
+  (`postgres_changes`) decide a quién enviar cada evento leyendo la fila con el
+  rol del cliente, así que `group_messages` tiene:
+  - una política `select` para miembros actuales, que consulta la pertenencia
+    con `private.is_group_member(group_id)` (`security definer`, sin dar
+    permisos sobre `group_members`). Para ello `authenticated` recibe `usage`
+    sobre el esquema `private` y `execute` solo sobre esa función; el resto de
+    funciones de `private` siguen sin permiso (lo comprueba pgTAP);
+  - `grant select (id, group_id)`: Realtime omite del payload las columnas que
+    el rol no puede leer, así que el evento nunca lleva el texto, el autor ni la
+    hora. La app lo trata solo como señal y vuelve a pedir la página por RPC
+    (ADR 0001: el estado viene del servidor, sin UI optimista);
+  - la tabla en la publicación `supabase_realtime`.
+
+  Sigue sin haber permisos de `insert`, `update` ni `delete` para clientes.
+- **Borrados sin tiempo real:** Realtime no aplica la RLS a los `DELETE`; con la
+  identidad de réplica por defecto, el filtro por `group_id` no los deja pasar a
+  nadie. Así ningún exmiembro recibe señales del grupo, a cambio de que los
+  demás vean un borrado al siguiente refresco (otro mensaje, volver a la
+  pestaña o a la app, o recuperar la conexión). No se usa `replica identity
+  full`: haría llegar los borrados a cualquiera que conociera el id del grupo.
