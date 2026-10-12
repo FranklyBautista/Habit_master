@@ -606,6 +606,9 @@ Ritmo sugerido:
 - [x] Tiempo real como señal: `subscribeToMessages` (Realtime `postgres_changes`, solo INSERT filtrado por `group_id`, payload limitado a `id`/`group_id`) vuelve a pedir la página por RPC, también cuando la suscripción queda lista y al reconectar; ráfagas agrupadas en una consulta, canal cerrado al salir del chat.
 - [x] Moderación en la UI: borrar solo los mensajes propios con confirmación (diálogo en web; mantener pulsado o acción de accesibilidad en móvil), aviso del límite de 10 mensajes por minuto y estado "Ya no formas parte de este grupo" tras una expulsión. E2E `e2e/group-chat.spec.ts` con dos usuarios (enviar → la otra lo ve sin recargar, borrar, expulsión, "Antiguo miembro", axe sin violaciones); verificado 2026-10-12 tras integrar: 24/24 E2E y 198 pgTAP en verde.
 
-### C6
+### C6 — Mascota del grupo (2026-10-12)
 
-- [ ] C6 Mascota.
+- [x] Reglas en `docs/product/MASCOTA_GRUPO.md`: un pulpito que come si al menos la mitad de quienes participan ese día completan sus hábitos compartidos, etapas por mejor racha (3/7/30 días), ánimo contenta/hambrienta/triste/dormida y nunca muere; se calcula, no se guarda.
+- [ ] `getGroupPetState` en `packages/domain`, función pura sobre `GroupProgress`, con tests.
+- [ ] Ilustración SVG por etapa y ánimo con animaciones básicas en web y móvil, en la vista del grupo.
+- [ ] Recordatorio local en móvil cuando la mascota tiene hambre.
