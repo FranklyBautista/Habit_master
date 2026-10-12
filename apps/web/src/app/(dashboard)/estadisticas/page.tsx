@@ -96,7 +96,7 @@ export default function StatisticsPage() {
             </small>
           </Card>
           <Card className="metric-card">
-            <span className="metric-icon blue">
+            <span className="metric-icon">
               <Flame size={20} />
             </span>
             <span>Racha actual</span>
@@ -104,7 +104,7 @@ export default function StatisticsPage() {
             <small>Puede continuar desde ayer si hoy aún está incompleto</small>
           </Card>
           <Card className="metric-card">
-            <span className="metric-icon amber">
+            <span className="metric-icon">
               <Medal size={20} />
             </span>
             <span>Mejor racha</span>

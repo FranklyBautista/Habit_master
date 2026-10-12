@@ -81,39 +81,42 @@ export default function CalendarPage() {
         title="Calendario"
         description="El color representa el porcentaje cumplido, no una cantidad absoluta."
       />
+      {/* Ámbito como chips desplazables, igual que en móvil. */}
+      <div className="scope-chips" role="group" aria-label="Vista del calendario">
+        {[{ id: "general", name: "Resumen general" }, ...snapshot.habits].map(
+          (item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="chip"
+              aria-pressed={scope === item.id}
+              onClick={() => setScope(item.id)}
+            >
+              {item.name}
+            </button>
+          ),
+        )}
+      </div>
       <div className="view-grid view-grid--calendar">
         <Card className="calendar-card">
-          <div className="calendar-toolbar">
-            <label className="calendar-scope">
-              <span className="sr-only">Vista del calendario</span>
-              <select value={scope} onChange={(event) => setScope(event.target.value)}>
-                <option value="general">Resumen general</option>
-                {snapshot.habits.map((habit) => (
-                  <option key={habit.id} value={habit.id}>
-                    {habit.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="month-controls">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Mes anterior"
-                onClick={() => changeMonth(-1)}
-              >
-                <ChevronLeft size={20} />
-              </Button>
-              <strong aria-live="polite">{monthLabel}</strong>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Mes siguiente"
-                onClick={() => changeMonth(1)}
-              >
-                <ChevronRight size={20} />
-              </Button>
-            </div>
+          <div className="month-controls">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Mes anterior"
+              onClick={() => changeMonth(-1)}
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            <strong aria-live="polite">{monthLabel}</strong>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Mes siguiente"
+              onClick={() => changeMonth(1)}
+            >
+              <ChevronRight size={20} />
+            </Button>
           </div>
           <div className="calendar-grid calendar-weekdays" aria-hidden="true">
             {["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"].map((day) => (

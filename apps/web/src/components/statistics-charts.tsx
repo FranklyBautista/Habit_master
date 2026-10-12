@@ -7,6 +7,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Tooltip,
   XAxis,
@@ -17,6 +18,25 @@ import { Card } from "@/components/ui/card";
 
 type TrendPoint = { date: string; label: string; percentage: number | null };
 type StatisticsChartsProps = { trend: TrendPoint[]; comparison: HabitComparison[] };
+
+// Colores del sistema visual como variables CSS: las gráficas cambian con el
+// modo claro/oscuro sin volver a renderizar. Tendencia en `--tint` (texto e
+// iconos, legible sobre la superficie) con relleno de `--accent`; las barras
+// usan el color de cada hábito, como la comparación de móvil.
+const axisTick = { fill: "var(--muted)", fontSize: 12 };
+const gridStroke = "var(--border-soft)";
+const tooltipStyles = {
+  contentStyle: {
+    background: "var(--surface)",
+    border: "1px solid var(--border-soft)",
+    borderRadius: 12,
+    color: "var(--foreground)",
+  },
+  labelStyle: { color: "var(--muted)" },
+  itemStyle: { color: "var(--foreground)" },
+  cursor: { fill: "var(--surface-selected)", stroke: "var(--border)" },
+};
+const legendStyle = { color: "var(--muted)", fontSize: 13 };
 
 export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
   return (
@@ -45,29 +65,48 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
           >
             <defs>
               <linearGradient id="completion-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#047857" stopOpacity={0.28} />
-                <stop offset="95%" stopColor="#047857" stopOpacity={0.02} />
+                <stop
+                  offset="5%"
+                  style={{ stopColor: "var(--accent)", stopOpacity: 0.45 }}
+                />
+                <stop
+                  offset="95%"
+                  style={{ stopColor: "var(--accent)", stopOpacity: 0.02 }}
+                />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="label" minTickGap={24} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+            <XAxis
+              dataKey="label"
+              minTickGap={24}
+              tickLine={false}
+              axisLine={false}
+              tick={axisTick}
+            />
             <YAxis
               domain={[0, 100]}
               tickFormatter={(value) => `${value}%`}
               tickLine={false}
               axisLine={false}
+              tick={axisTick}
             />
             <Tooltip
+              {...tooltipStyles}
+              cursor={{ stroke: "var(--border)" }}
               formatter={(value) => [`${value}%`, "Cumplimiento"]}
               labelFormatter={(_, payload) => payload[0]?.payload.date ?? ""}
             />
-            <Legend formatter={() => "Cumplimiento diario"} />
+            <Legend
+              wrapperStyle={legendStyle}
+              formatter={() => "Cumplimiento diario"}
+            />
             <Area
               type="monotone"
               dataKey="percentage"
               name="Cumplimiento"
-              stroke="#047857"
+              stroke="var(--tint)"
               strokeWidth={3}
+              activeDot={{ r: 5, fill: "var(--accent)", stroke: "var(--tint)" }}
               fill="url(#completion-fill)"
               connectNulls={false}
             />
@@ -80,8 +119,8 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
             <span className="section-kicker">Comparación</span>
             <h2>Cumplimiento por hábito</h2>
           </div>
-          <span className="chart-legend blue">
-            <i /> Porcentaje
+          <span className="chart-legend chart-legend--habits">
+            <i /> Color de cada hábito
           </span>
         </div>
         <div
@@ -97,13 +136,18 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
             margin={{ top: 12, right: 16, left: 8, bottom: 0 }}
             accessibilityLayer
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={false}
+              stroke={gridStroke}
+            />
             <XAxis
               type="number"
               domain={[0, 100]}
               tickFormatter={(value) => `${value}%`}
               tickLine={false}
               axisLine={false}
+              tick={axisTick}
             />
             <YAxis
               type="category"
@@ -111,16 +155,28 @@ export function StatisticsCharts({ trend, comparison }: StatisticsChartsProps) {
               width={110}
               tickLine={false}
               axisLine={false}
+              tick={{ ...axisTick, fill: "var(--foreground)" }}
             />
-            <Tooltip formatter={(value) => [`${value}%`, "Cumplimiento"]} />
-            <Legend formatter={() => "Cumplimiento por hábito"} />
+            <Tooltip
+              {...tooltipStyles}
+              formatter={(value) => [`${value}%`, "Cumplimiento"]}
+            />
+            <Legend
+              wrapperStyle={legendStyle}
+              formatter={() => "Cumplimiento por hábito"}
+            />
             <Bar
               dataKey="percentage"
               name="Cumplimiento"
-              fill="#0369a1"
-              radius={[0, 6, 6, 0]}
-              maxBarSize={28}
-            />
+              fill="var(--tint)"
+              radius={[0, 8, 8, 0]}
+              maxBarSize={24}
+              background={{ fill: "var(--surface-selected)", radius: 8 }}
+            >
+              {comparison.map((habit) => (
+                <Cell key={habit.habitId} fill={habit.color} />
+              ))}
+            </Bar>
           </BarChart>
         </div>
       </Card>
