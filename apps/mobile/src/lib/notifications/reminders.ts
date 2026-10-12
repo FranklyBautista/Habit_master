@@ -22,7 +22,7 @@ const STORAGE_KEY = "habit-tracker:reminder";
 // cancela exactamente las nuestras. Incluye el identificador único de la
 // versión con un solo recordatorio ("habit-tracker-daily-reminder").
 const NOTIFICATION_PREFIX = "habit-tracker-";
-const ANDROID_CHANNEL_ID = "reminders";
+export const ANDROID_CHANNEL_ID = "reminders";
 
 // expo-notifications no programa notificaciones locales en web (Expo web se usa
 // solo como banco de pruebas), así que la sección se oculta ahí.
@@ -83,7 +83,7 @@ export async function getReminderSettings(): Promise<ReminderSettings> {
   return parseStoredSettings(await AsyncStorage.getItem(STORAGE_KEY));
 }
 
-async function ensureAndroidChannel() {
+export async function ensureAndroidChannel() {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: "Recordatorios de hábitos",
@@ -123,6 +123,10 @@ export function reapplyReminderSettings(): Promise<void> {
   pending = run.catch(() => undefined);
   return run;
 }
+
+// Aviso de la mascota con hambre (ver pet-reminder.ts). Va fuera del prefijo
+// para que reprogramar los diarios no lo cancele, salvo al desactivarlos.
+export const PET_REMINDER_ID = "constancia-pet-hungry";
 
 // Fuera del prefijo de los recordatorios: reprogramarlos (p. ej. al volver a
 // la app) no debe cancelar un aviso de prueba pendiente.
@@ -203,7 +207,10 @@ async function applyReminderSettings(settings: ReminderSettings): Promise<void> 
       await Notifications.cancelScheduledNotificationAsync(identifier);
     }
   }
-  if (!valid.enabled) return;
+  if (!valid.enabled) {
+    await Notifications.cancelScheduledNotificationAsync(PET_REMINDER_ID);
+    return;
+  }
 
   await ensureAndroidChannel();
   for (const reminder of [...valid.reminders].sort(compareTimes)) {

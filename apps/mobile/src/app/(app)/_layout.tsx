@@ -20,6 +20,7 @@ import { Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { initialLoadErrorDetail, loadWithRetry } from "@/lib/initial-load";
+import { PetReminderSync } from "@/lib/pet-reminder-sync";
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseHabitRepository } from "@/lib/supabase-habit-repository";
 
@@ -94,6 +95,7 @@ export default function AppLayout() {
     <AppProviders initialState={initialState} userId={session.user.id}>
       <ThemedView style={{ flex: 1 }}>
         <ConnectionBanner />
+        <PetReminderSync />
         <Tabs
           screenOptions={{
             headerShown: false,

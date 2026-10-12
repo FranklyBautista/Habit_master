@@ -58,11 +58,18 @@ Para un día `D`:
 
 ## Recordatorio cuando tiene hambre
 
-En móvil, si la mascota de algún grupo tiene hambre, se programa un aviso local
-(`expo-notifications`) para las 20:00 de ese día: "Tu pulpito tiene hambre".
-Se recalcula cada vez que se cargan los grupos; si ya comió o pasó la hora, se
-cancela. Es un aviso aproximado: refleja el estado de la última vez que la app
-cargó los grupos. La web no envía avisos (no hay push en v1, ADR 0002 §3).
+En móvil, si la mascota de algún grupo no ha comido hoy (hambrienta o triste),
+se programa un aviso local (`expo-notifications`) para las 20:00 de ese día:
+"El pulpito de Familia tiene hambre: marca tus hábitos compartidos." (o "Los
+pulpitos de N grupos…" si son varios). Solo se programa si el usuario activó los
+recordatorios en Ajustes y concedió el permiso; nunca se pide el permiso para
+esto, y desactivar los recordatorios también lo cancela.
+
+Se recalcula al cargar los grupos, tras cada cambio en ellos y cuando cambian
+los check-ins propios; si ya comió o pasó la hora, se cancela. Es un aviso
+aproximado: refleja el estado de la última vez que la app cargó los grupos (si
+otro miembro le da de comer después, el aviso puede llegar igual). La web no
+envía avisos (no hay push en v1, ADR 0002 §3).
 
 ## Limitaciones aceptadas
 
