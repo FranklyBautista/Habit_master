@@ -609,6 +609,6 @@ Ritmo sugerido:
 ### C6 — Mascota del grupo (2026-10-12)
 
 - [x] Reglas en `docs/product/MASCOTA_GRUPO.md`: un pulpito que come si al menos la mitad de quienes participan ese día completan sus hábitos compartidos, etapas por mejor racha (3/7/30 días), ánimo contenta/hambrienta/triste/dormida y nunca muere; se calcula, no se guarda.
-- [ ] `getGroupPetState` en `packages/domain`, función pura sobre `GroupProgress`, con tests.
+- [x] `getGroupPetState` en `packages/domain` (`group-pet.ts`): función pura sobre `GroupProgress` que recorre la historia del grupo con las fechas locales de cada miembro (días sin participantes neutros, hoy no corta la racha) y devuelve etapa, ánimo, racha actual y mejor, progreso de hoy, siguiente etapa y últimos 7 días; 11 tests.
 - [ ] Ilustración SVG por etapa y ánimo con animaciones básicas en web y móvil, en la vista del grupo.
 - [ ] Recordatorio local en móvil cuando la mascota tiene hambre.
