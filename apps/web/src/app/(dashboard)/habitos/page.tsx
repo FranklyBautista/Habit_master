@@ -52,24 +52,19 @@ export default function HabitsPage() {
         title="Hábitos"
         description="Crea, ordena y cuida lo que quieres repetir cada día."
         action={
-          <Button onClick={openCreate}>
-            <Plus size={18} /> Crear
+          // Redondo con "+" en el teléfono (como móvil) y con texto en
+          // escritorio; el nombre accesible es el mismo en ambos.
+          <Button className="create-habit-button" onClick={openCreate}>
+            <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+            <span className="create-habit-button__label">Crear hábito</span>
           </Button>
         }
       />
       <div className="view-grid view-grid--habits">
-        <Card className="habits-manage-card">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">En tu día</span>
-              <h2>
-                Activos <span className="count">{activeHabits.length}</span>
-              </h2>
-            </div>
-            <Button className="desktop-only" onClick={openCreate}>
-              <Plus size={18} /> Crear hábito
-            </Button>
-          </div>
+        <section className="habit-section" aria-labelledby="active-habits-title">
+          <h2 id="active-habits-title" className="list-heading">
+            Activos <span className="count">{activeHabits.length}</span>
+          </h2>
           {activeHabits.length ? (
             <div className="habit-manage-list">
               {activeHabits.map((habit, index) => {
@@ -84,7 +79,7 @@ export default function HabitsPage() {
                         disabled={index === 0}
                         aria-label={`Subir ${habit.name}`}
                       >
-                        <ArrowUp size={17} />
+                        <ArrowUp size={16} />
                       </Button>
                       <Button
                         variant="ghost"
@@ -93,15 +88,13 @@ export default function HabitsPage() {
                         disabled={index === activeHabits.length - 1}
                         aria-label={`Bajar ${habit.name}`}
                       >
-                        <ArrowDown size={17} />
+                        <ArrowDown size={16} />
                       </Button>
                     </div>
                     <span
                       className="habit-icon"
-                      style={{
-                        backgroundColor: `${habit.color}18`,
-                        color: habit.color,
-                      }}
+                      style={{ backgroundColor: habit.color }}
+                      aria-hidden="true"
                     >
                       <Icon size={20} />
                     </span>
@@ -132,47 +125,46 @@ export default function HabitsPage() {
               })}
             </div>
           ) : (
-            <div className="inline-empty">
+            <Card className="inline-empty">
               <p>No tienes hábitos activos.</p>
               <Button onClick={openCreate}>
                 <Plus size={18} /> Crear el primero
               </Button>
-            </div>
+            </Card>
           )}
-        </Card>
-        <Card className="archive-card">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Historial</span>
-              <h2>Archivados</h2>
-            </div>
-            <span className="quiet-badge">{archivedHabits.length}</span>
-          </div>
+        </section>
+        <section className="habit-section" aria-labelledby="archived-habits-title">
+          <h2 id="archived-habits-title" className="list-heading">
+            Archivados <span className="count">{archivedHabits.length}</span>
+          </h2>
           {archivedHabits.length ? (
-            archivedHabits.map((habit) => {
-              const Icon = habitIconComponents[habit.icon];
-              return (
-                <article className="archived-row" key={habit.id}>
-                  <span className="habit-icon is-muted" style={{ color: habit.color }}>
-                    <Icon size={19} />
-                  </span>
-                  <span>{habit.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void restore(habit)}
-                    aria-label={`Restaurar ${habit.name}`}
-                    title="Restaurar"
-                  >
-                    <RotateCcw size={18} />
-                  </Button>
-                </article>
-              );
-            })
+            <div className="habit-manage-list">
+              {archivedHabits.map((habit) => {
+                const Icon = habitIconComponents[habit.icon];
+                return (
+                  <article className="archived-row" key={habit.id}>
+                    <span className="habit-icon is-muted" aria-hidden="true">
+                      <Icon size={19} />
+                    </span>
+                    <span>{habit.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="restore-button"
+                      onClick={() => void restore(habit)}
+                      aria-label={`Restaurar ${habit.name}`}
+                      title="Restaurar"
+                    >
+                      <RotateCcw size={18} />
+                    </Button>
+                  </article>
+                );
+              })}
+            </div>
           ) : (
             <EmptyState />
           )}
-        </Card>
+        </section>
       </div>
       <HabitFormDialog
         key={editingHabit?.id ?? "create"}
