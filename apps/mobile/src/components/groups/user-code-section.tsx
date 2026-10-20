@@ -85,10 +85,10 @@ export function UserCodeSection() {
               message: `Mi código en Habit Tracker para invitarme a un grupo: ${formatted}`,
             })
           }
-          style={[styles.button, { backgroundColor: theme.tint }]}
+          style={[styles.button, { backgroundColor: theme.accent }]}
         >
-          <Share2 size={16} color="#FFFFFF" />
-          <ThemedText type="smallBold" style={{ color: "#FFFFFF" }}>
+          <Share2 size={16} color={theme.onAccent} />
+          <ThemedText type="smallBold" style={{ color: theme.onAccent }}>
             Compartir
           </ThemedText>
         </Pressable>

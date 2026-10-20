@@ -43,8 +43,11 @@ export function GroupsCard() {
             {empty ? "Comparte hábitos con tu gente" : "Grupos"}
           </ThemedText>
           {pending ? (
-            <View style={[styles.badge, { backgroundColor: theme.tint }]}>
-              <ThemedText type="smallBold" style={styles.badgeText}>
+            <View style={[styles.badge, { backgroundColor: theme.accent }]}>
+              <ThemedText
+                type="smallBold"
+                style={[styles.badgeText, { color: theme.onAccent }]}
+              >
                 {pending === 1 ? "1 nueva" : `${pending} nuevas`}
               </ThemedText>
             </View>
@@ -76,5 +79,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: 1,
   },
-  badgeText: { color: "#FFFFFF", fontSize: 12, lineHeight: 16 },
+  badgeText: { fontSize: 12, lineHeight: 16 },
 });

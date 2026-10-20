@@ -140,11 +140,16 @@ export function GroupButton({
   const inactive = disabled || busy;
   const background =
     variant === "primary"
-      ? theme.tint
+      ? theme.accent
       : variant === "danger"
         ? groupColors.danger
         : theme.backgroundElement;
-  const foreground = variant === "secondary" ? theme.text : "#FFFFFF";
+  const foreground =
+    variant === "primary"
+      ? theme.onAccent
+      : variant === "secondary"
+        ? theme.text
+        : "#FFFFFF";
   return (
     <Pressable
       accessibilityRole="button"

@@ -6,6 +6,7 @@ import { AppState, useColorScheme } from "react-native";
 import { Colors } from "@/constants/theme";
 import { AuthGate } from "@/lib/auth/auth-gate";
 import { SessionProvider } from "@/lib/auth/session-provider";
+import { applyStoredColorScheme } from "@/lib/color-scheme-preference";
 // Importarlo aquí también registra el manejador de notificaciones en cuanto
 // arranca la app, sin esperar a que se monte la pantalla de Ajustes.
 import { reapplyReminderSettings } from "@/lib/notifications/reminders";
@@ -30,6 +31,11 @@ function navigationTheme(scheme: "light" | "dark") {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme() === "dark" ? "dark" : "light";
+
+  // El modo claro/oscuro elegido en Ajustes manda sobre el del sistema.
+  useEffect(() => {
+    void applyStoredColorScheme().catch(() => undefined);
+  }, []);
 
   // Reprograma los recordatorios al abrir la app y al volver a ella: corrige
   // los que quedaron como alarmas inexactas antes de conceder el permiso.

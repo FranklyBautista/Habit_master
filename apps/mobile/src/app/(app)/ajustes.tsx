@@ -4,6 +4,7 @@ import {
   Cloud,
   ExternalLink,
   LogOut,
+  Moon,
   Pencil,
   Plus,
   SlidersHorizontal,
@@ -30,8 +31,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Toast } from "@/components/toast";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
+import { saveColorSchemePreference } from "@/lib/color-scheme-preference";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 import {
   compareTimes,
@@ -64,6 +67,8 @@ export default function AjustesScreen() {
   const actions = useHabitActions();
   const { session } = useSession();
   const theme = useTheme();
+  const darkMode = useColorScheme() === "dark";
+  const [appearanceError, setAppearanceError] = useState<string | null>(null);
 
   const [name, setName] = useState(snapshot.settings.displayName);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +103,17 @@ export default function AjustesScreen() {
       cancelled = true;
     };
   }, []);
+
+  async function toggleDarkMode(nextDark: boolean) {
+    setAppearanceError(null);
+    try {
+      await saveColorSchemePreference(nextDark ? "dark" : "light");
+    } catch {
+      setAppearanceError(
+        "No se pudo guardar el modo. Se aplicará solo en esta sesión.",
+      );
+    }
+  }
 
   function refreshNextReminder() {
     getNextReminderDate()
@@ -280,6 +296,48 @@ export default function AjustesScreen() {
               disabled={snapshot.syncing}
               onPress={() => void save()}
             />
+          </Card>
+
+          <Card style={styles.card}>
+            <View style={styles.sectionHeading}>
+              <View style={styles.sectionCopy}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  APARIENCIA
+                </ThemedText>
+                <ThemedText type="smallBold">Modo oscuro</ThemedText>
+              </View>
+              <Moon size={20} color={theme.textSecondary} />
+            </View>
+
+            <View style={styles.reminderToggleRow}>
+              <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+                Usa colores oscuros en toda la aplicación.
+              </ThemedText>
+              <Switch
+                accessibilityLabel="Modo oscuro"
+                value={darkMode}
+                onValueChange={(value) => void toggleDarkMode(value)}
+                trackColor={{ true: theme.accent, false: theme.backgroundSelected }}
+                thumbColor={
+                  Platform.OS === "android"
+                    ? darkMode
+                      ? theme.onAccent
+                      : theme.textSecondary
+                    : undefined
+                }
+                ios_backgroundColor={theme.backgroundSelected}
+              />
+            </View>
+
+            {appearanceError ? (
+              <ThemedText
+                type="small"
+                style={{ color: theme.danger }}
+                accessibilityRole="alert"
+              >
+                {appearanceError}
+              </ThemedText>
+            ) : null}
           </Card>
 
           <UserCodeSection />
