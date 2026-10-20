@@ -53,6 +53,24 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+// Cabecera de las pantallas de auth: siempre oscura (negro → oliva) en ambos
+// modos, como seña de marca. Su texto es fijo claro; nunca usar `theme.text`
+// encima. El degradado del botón principal va del lima a un verde algo más
+// profundo y siempre lleva `onAccent` (oscuro) encima.
+export const AuthPalette = {
+  heroFrom: "#3A5212",
+  heroVia: "#18200C",
+  heroTo: "#0B0B0C",
+  heroText: "#F5F5F7",
+  heroTextSecondary: "rgba(245, 245, 247, 0.72)",
+  heroAccent: "#C6F432",
+  heroGlow: "rgba(198, 244, 50, 0.16)",
+  heroBorder: "rgba(245, 245, 247, 0.55)",
+  buttonFrom: "#C6F432",
+  buttonTo: "#84CC16",
+  onButton: "#0B0B0C",
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

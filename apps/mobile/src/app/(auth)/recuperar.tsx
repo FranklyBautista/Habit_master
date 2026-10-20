@@ -1,15 +1,15 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 
-import { Button } from "@/components/button";
-import { TextField } from "@/components/text-field";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useTheme } from "@/hooks/use-theme";
+import { AuthButton } from "@/components/auth/auth-button";
+import { AuthField } from "@/components/auth/auth-field";
+import {
+  AuthError,
+  AuthFooterLink,
+  AuthScaffold,
+} from "@/components/auth/auth-scaffold";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -20,7 +20,6 @@ export default function RecoverPasswordScreen() {
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const theme = useTheme();
 
   async function handleSubmit() {
     setError(undefined);
@@ -50,30 +49,37 @@ export default function RecoverPasswordScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Recuperar contraseña</ThemedText>
-        <TextField
-          accessibilityLabel="Correo electrónico"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="Correo electrónico"
-          value={email}
-          onChangeText={setEmail}
+    <AuthScaffold
+      title="¿Olvidaste tu"
+      highlight="contraseña?"
+      subtitle="Te enviaremos un código a tu correo para restablecerla."
+      showBack
+      footer={
+        <AuthFooterLink
+          prompt="¿La recordaste?"
+          label="Inicia sesión"
+          href="/(auth)/login"
         />
-        {error ? (
-          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
-        ) : null}
-        <Button
-          label={submitting ? "Enviando…" : "Enviar código"}
-          accessibilityLabel="Enviar código"
-          disabled={submitting}
-          onPress={handleSubmit}
-        />
-        <Link href="/(auth)/login">
-          <ThemedText type="link">Volver a iniciar sesión</ThemedText>
-        </Link>
-      </SafeAreaView>
-    </ThemedView>
+      }
+    >
+      <AuthField
+        label="Correo electrónico"
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        placeholder="tu@correo.com"
+        value={email}
+        valid={emailSchema.safeParse(email).success}
+        onChangeText={setEmail}
+        onSubmitEditing={handleSubmit}
+      />
+      {error ? <AuthError>{error}</AuthError> : null}
+      <AuthButton
+        label={submitting ? "Enviando…" : "Enviar código"}
+        accessibilityLabel="Enviar código"
+        disabled={submitting}
+        onPress={handleSubmit}
+      />
+    </AuthScaffold>
   );
 }

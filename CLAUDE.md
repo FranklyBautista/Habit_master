@@ -88,8 +88,8 @@ Consume state via `useHabitStore()` (snapshot) / `useHabitActions()` (mutations)
 
 ### Auth
 
-- `apps/web/src/proxy.ts` is the request middleware (Next 16 renamed `middleware` → `proxy`). It delegates to `updateSession` (`src/lib/supabase/proxy.ts`), which refreshes session cookies and redirects: unauthenticated → `/login?next=…`; authenticated on an auth page → `/hoy`.
-- Route groups: `(auth)` (login, registro, recuperar, verificar, actualizar-contrasena) and `(dashboard)` (the app). Auth is handled by server actions in `app/(auth)/actions.ts`.
+- `apps/web/src/proxy.ts` is the request middleware (Next 16 renamed `middleware` → `proxy`). It delegates to `updateSession` (`src/lib/supabase/proxy.ts`), which refreshes session cookies and redirects: unauthenticated → `/login?next=…` (or `/bienvenida` from `/`); authenticated on an auth page → `/hoy`.
+- Route groups: `(auth)` (bienvenida, login, registro, recuperar, verificar, actualizar-contrasena) and `(dashboard)` (the app). Auth is handled by server actions in `app/(auth)/actions.ts`.
 - Email verification uses a **6-digit code** on both web and mobile: signup (when confirmation is required) and password recovery redirect to `/verificar?type=signup|recovery&email=…`, which calls `verifyOtp`. The emailed link (`/auth/confirm`, PKCE) still works, but only in the browser that requested it. Registering an existing email or recovering an unknown one shows the same screen (no account enumeration). The code length is fixed by `OTP_CODE_LENGTH` (`apps/web/src/lib/auth/otp.ts`, `apps/mobile/src/lib/auth/credentials-schema.ts`) and must match `otp_length` in `supabase/config.toml` and "Email OTP Length" in the production dashboard.
 - Email templates live in `supabase/templates/` (code + link). Production doesn't read them: they are pasted into the dashboard, which requires custom SMTP (Gmail) to be editable — see `docs/setup/DEPLOY.md`.
 - Three Supabase client factories in `src/lib/supabase/`: `client.ts` (browser), `server.ts` (server components — cannot write cookies, `proxy` handles refresh), `proxy.ts` (middleware).

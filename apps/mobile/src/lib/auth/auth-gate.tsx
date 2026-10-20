@@ -7,7 +7,7 @@ import { useSession } from "./session-provider";
 // "actualizar-contrasena" is deliberately excluded from this set — like on
 // web, it must stay reachable while authenticated (a password-recovery deep
 // link signs the user in with a temporary session before landing there).
-const AUTH_REDIRECT_PATHS = new Set(["login", "registro", "recuperar"]);
+const AUTH_REDIRECT_PATHS = new Set(["bienvenida", "login", "registro", "recuperar"]);
 // Reachable without a session, but — unlike the set above — never redirected
 // away once one exists: verifying a recovery code signs the user in, and
 // verificar.tsx must be the one to send them on to actualizar-contrasena.
@@ -34,7 +34,7 @@ export function AuthGate({ children }: PropsWithChildren) {
     const isConfirmRoute = segments[0] === "auth" && segments[1] === "confirm";
 
     if (!session && !isPublicAuthPage && !isConfirmRoute) {
-      router.replace("/(auth)/login");
+      router.replace("/(auth)/bienvenida");
       return;
     }
     if (session && isAuthRedirectPage) {

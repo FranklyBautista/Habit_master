@@ -1,19 +1,20 @@
-import { AuthForm, AuthLink } from "@/components/auth-form";
+import { AuthForm } from "@/components/auth-form";
+import { AuthFooterLink, AuthScreen } from "@/components/auth-screen";
 
 import { recoverPassword } from "../actions";
 
 export default function RecoverPage() {
   return (
-    <>
-      <div className="auth-heading">
-        <h1>Restablecer contraseña</h1>
-        <p>Te enviaremos un código si el correo corresponde a una cuenta.</p>
-      </div>
-      <AuthForm action={recoverPassword} fields="email" submitLabel="Enviar código">
-        <div className="auth-links">
-          <AuthLink href="/login">Volver al inicio de sesión</AuthLink>
-        </div>
-      </AuthForm>
-    </>
+    <AuthScreen
+      title="¿Olvidaste tu"
+      highlight="contraseña?"
+      subtitle="Te enviaremos un código si el correo corresponde a una cuenta."
+      backHref="/login"
+      footer={
+        <AuthFooterLink prompt="¿La recordaste?" label="Inicia sesión" href="/login" />
+      }
+    >
+      <AuthForm action={recoverPassword} fields="email" submitLabel="Enviar código" />
+    </AuthScreen>
   );
 }

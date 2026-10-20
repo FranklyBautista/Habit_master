@@ -50,7 +50,32 @@ beforeEach(() => {
 });
 
 describe("register", () => {
-  const fields = { email, password: "CuentaSegura2026" };
+  const fields = {
+    email,
+    password: "CuentaSegura2026",
+    confirmPassword: "CuentaSegura2026",
+  };
+
+  it("rejects a confirmation that doesn't match without calling Supabase", async () => {
+    const result = await register(
+      {},
+      form({ ...fields, confirmPassword: "CuentaSegura2025" }),
+    );
+
+    expect(result).toEqual({ error: "Las contraseñas no coinciden." });
+    expect(auth.signUp).not.toHaveBeenCalled();
+  });
+
+  it("sends only the email and password to Supabase", async () => {
+    auth.signUp.mockResolvedValue({ data: { session: {} }, error: null });
+    await redirectOf(register({}, form(fields)));
+
+    expect(auth.signUp).toHaveBeenCalledWith({
+      email,
+      password: "CuentaSegura2026",
+      options: { emailRedirectTo: "https://constancia.test/auth/confirm?next=/hoy" },
+    });
+  });
 
   it("goes straight to the app when signUp already returns a session", async () => {
     auth.signUp.mockResolvedValue({ data: { session: {} }, error: null });
@@ -191,12 +216,25 @@ describe("resendCode", () => {
 });
 
 describe("updatePassword", () => {
+  it("rejects a confirmation that doesn't match without calling Supabase", async () => {
+    const result = await updatePassword(
+      {},
+      form({ password: "CuentaSegura2026", confirmPassword: "CuentaSegura2025" }),
+    );
+
+    expect(result).toEqual({ error: "Las contraseñas no coinciden." });
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
   it("explains that the new password must differ from the current one", async () => {
     auth.updateUser.mockResolvedValue({
       error: { message: "New password should be different from the old password." },
     });
 
-    const result = await updatePassword({}, form({ password: "CuentaSegura2026" }));
+    const result = await updatePassword(
+      {},
+      form({ password: "CuentaSegura2026", confirmPassword: "CuentaSegura2026" }),
+    );
 
     expect(result).toEqual({
       error: "La contraseña nueva debe ser distinta de la actual.",

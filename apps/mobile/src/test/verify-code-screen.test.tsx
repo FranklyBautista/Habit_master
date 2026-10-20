@@ -41,20 +41,36 @@ vi.mock("react-native", () => ({
         onChangeText?.(event.target.value),
     }),
 }));
-vi.mock("react-native-safe-area-context", () => ({
-  SafeAreaView: ({ children }: RNProps) => createElement("div", null, children),
+// La cabecera con degradado (react-native-svg) no se pinta en jsdom: basta con
+// el contenido del formulario y el pie.
+vi.mock("@/components/auth/auth-scaffold", () => ({
+  AuthScaffold: ({ children, footer }: RNProps & { footer?: ReactNode }) =>
+    createElement("div", null, children, footer),
+  AuthFooterLink: ({ label }: { label: string }) => createElement("a", null, label),
+  AuthError: ({ children }: RNProps) =>
+    createElement("span", { role: "alert" }, children),
 }));
-vi.mock("@/components/themed-view", () => ({
-  ThemedView: ({ children }: RNProps) => createElement("div", null, children),
+vi.mock("@/components/auth/auth-button", () => ({
+  AuthButton: ({
+    label,
+    onPress,
+    disabled,
+    accessibilityLabel,
+  }: RNProps & { label: string }) =>
+    createElement(
+      "button",
+      { onClick: onPress, disabled, "aria-label": accessibilityLabel ?? label },
+      label,
+    ),
 }));
 vi.mock("@/components/themed-text", () => ({
   ThemedText: ({ children, accessibilityRole }: RNProps) =>
     createElement("span", { role: accessibilityRole }, children),
 }));
-vi.mock("@/lib/auth/form-styles", () => ({ authFormStyles: {} }));
 vi.mock("@/hooks/use-theme", () => ({
   useTheme: () => ({
     backgroundElement: "#fff",
+    backgroundSelected: "#eee",
     border: "#ccc",
     tint: "#0a0",
     accent: "#cf3",

@@ -28,10 +28,25 @@ const newPasswordSchema = z
     "La contraseña debe incluir al menos una letra y un número.",
   );
 
-const registerSchema = z.object({
-  email: z.email("Escribe un correo válido."),
-  password: newPasswordSchema,
-});
+const PASSWORD_MISMATCH = "Las contraseñas no coinciden.";
+
+const updatePasswordSchema = z
+  .object({ password: newPasswordSchema, confirmPassword: z.string() })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+  });
+
+const registerSchema = z
+  .object({
+    email: z.email("Escribe un correo válido."),
+    password: newPasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+  });
 
 const verifySchema = z.object({
   email: z.email("No se pudo abrir la verificación."),
@@ -106,12 +121,16 @@ export async function register(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const parsed = registerSchema.safeParse(values(formData));
+  const parsed = registerSchema.safeParse({
+    ...values(formData),
+    confirmPassword: formData.get("confirmPassword"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
-    ...parsed.data,
+    email: parsed.data.email,
+    password: parsed.data.password,
     options: { emailRedirectTo: `${await origin()}/auth/confirm?next=/hoy` },
   });
   if (error) {
@@ -191,11 +210,14 @@ export async function updatePassword(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const parsed = newPasswordSchema.safeParse(formData.get("password"));
+  const parsed = updatePasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({ password: parsed.data });
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { error: authError(error.message) };
   redirect("/hoy");
 }

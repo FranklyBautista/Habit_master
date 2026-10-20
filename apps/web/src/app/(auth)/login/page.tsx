@@ -1,4 +1,5 @@
 import { AuthForm, AuthLink } from "@/components/auth-form";
+import { AuthFooterLink, AuthScreen } from "@/components/auth-screen";
 
 import { login } from "../actions";
 
@@ -10,19 +11,30 @@ export default async function LoginPage({
   const params = await searchParams;
   const next = typeof params.next === "string" ? params.next : "/hoy";
   return (
-    <>
-      <div className="auth-heading">
-        <h1>Iniciar sesión</h1>
-        <p>Continúa tus hábitos desde cualquier navegador.</p>
-      </div>
-      <AuthForm action={login} fields="credentials" next={next} submitLabel="Entrar">
-        <div className="auth-links">
-          <AuthLink href="/recuperar">Olvidé mi contraseña</AuthLink>
-          <span>
-            ¿Primera vez? <AuthLink href="/registro">Crear cuenta</AuthLink>
-          </span>
-        </div>
-      </AuthForm>
-    </>
+    <AuthScreen
+      title="Hola de nuevo,"
+      highlight="inicia sesión"
+      subtitle="Continúa tus hábitos desde cualquier navegador."
+      backHref="/bienvenida"
+      footer={
+        <AuthFooterLink
+          prompt="¿No tienes cuenta?"
+          label="Regístrate"
+          href="/registro"
+        />
+      }
+    >
+      <AuthForm
+        action={login}
+        fields="credentials"
+        next={next}
+        submitLabel="Entrar"
+        belowFields={
+          <div className="auth-forgot">
+            <AuthLink href="/recuperar">¿Olvidaste tu contraseña?</AuthLink>
+          </div>
+        }
+      />
+    </AuthScreen>
   );
 }

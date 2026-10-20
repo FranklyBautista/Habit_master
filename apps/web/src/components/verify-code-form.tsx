@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useState } from "react";
 
 import { type AuthActionState, resendCode, verifyCode } from "@/app/(auth)/actions";
-import { AuthLink } from "@/components/auth-form";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { OtpCodeInput } from "@/components/ui/otp-code-input";
@@ -93,7 +92,6 @@ export function VerifyCodeForm({ email, type }: VerifyCodeFormProps) {
               ? `Reenviar código en ${cooldown} s`
               : "Reenviar código"}
         </Button>
-        <AuthLink href="/login">Volver a iniciar sesión</AuthLink>
       </div>
     </form>
   );

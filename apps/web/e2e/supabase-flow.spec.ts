@@ -50,7 +50,8 @@ test("recovers the password with the emailed code", async ({ page }) => {
   await page.getByRole("button", { name: "Verificar código" }).click();
   await expect(page).toHaveURL(/\/actualizar-contrasena$/);
 
-  await page.getByLabel("Contraseña").fill("NuevaClave2026");
+  await page.getByLabel("Contraseña", { exact: true }).fill("NuevaClave2026");
+  await page.getByLabel("Confirmar contraseña").fill("NuevaClave2026");
   await page.getByRole("button", { name: "Guardar contraseña" }).click();
   await expect(page).toHaveURL(/\/hoy$/);
 

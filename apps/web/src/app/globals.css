@@ -215,64 +215,228 @@ h3 {
   color: var(--muted);
 }
 
+/* Pantallas de auth (como AuthScaffold en móvil): cabecera oscura con
+   degradado oliva → negro y una hoja redondeada con el formulario. La
+   cabecera es igual en claro y oscuro; su texto es siempre claro. En el
+   teléfono ocupa toda la pantalla; desde 640 px es una tarjeta centrada
+   sobre el fondo de página con círculos decorativos. */
+:root {
+  --auth-hero-from: #3a5212;
+  --auth-hero-via: #18200c;
+  --auth-hero-to: #0b0b0c;
+  --auth-hero-text: #f5f5f7;
+  --auth-hero-muted: rgb(245 245 247 / 0.72);
+  --auth-hero-accent: #c6f432;
+  --auth-hero-glow: rgb(198 244 50 / 0.16);
+  --auth-hero-border: rgb(245 245 247 / 0.55);
+  --auth-button-from: #c6f432;
+  --auth-button-to: #84cc16;
+  --auth-on-button: #0b0b0c;
+  --auth-hero-gradient:
+    radial-gradient(
+      circle at 105% -10%,
+      var(--auth-hero-glow) 0 130px,
+      transparent 131px
+    ),
+    linear-gradient(
+      135deg,
+      var(--auth-hero-from),
+      var(--auth-hero-via) 55%,
+      var(--auth-hero-to)
+    );
+}
 .auth-shell {
+  position: relative;
   display: grid;
   min-height: 100vh;
-  place-items: center;
-  padding: 24px 16px;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--auth-hero-to);
 }
-/* En el teléfono el formulario va directamente sobre el fondo, como las
-   pantallas de auth de móvil; desde 640 px se apoya en una tarjeta. */
+.auth-orb {
+  display: none;
+}
 .auth-card {
-  width: min(100%, 440px);
-  padding: 8px 4px;
-}
-.auth-brand {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-  color: var(--foreground);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  width: 100%;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--auth-hero-gradient);
 }
-.auth-brand .brand-mark {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--rounded-md);
-}
-.auth-heading {
+.auth-hero {
+  position: relative;
   display: grid;
   gap: 8px;
-  margin-bottom: 24px;
+  padding: 40px 32px 56px;
+  color: var(--auth-hero-text);
 }
-.auth-heading h1 {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
+/* Anillo decorativo a la izquierda, como en móvil. */
+.auth-hero::before {
+  position: absolute;
+  top: 110px;
+  left: -60px;
+  width: 120px;
+  height: 120px;
+  border: 1.5px solid var(--auth-hero-glow);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
 }
-.auth-heading p,
-.auth-links {
+.auth-back {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  margin: -8px 0 8px -8px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--auth-hero-text);
+}
+.auth-back:hover {
+  background: rgb(245 245 247 / 0.1);
+}
+.auth-back:focus-visible,
+.auth-card--welcome a:focus-visible {
+  outline-color: var(--auth-hero-accent);
+}
+.auth-hero h1 {
+  font-size: 34px;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+}
+.auth-hero h1 span {
+  color: var(--auth-hero-accent);
+}
+.auth-hero p {
+  max-width: 34ch;
+  color: var(--auth-hero-muted);
+  font-size: 15px;
+}
+.auth-sheet {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  border-radius: 48px 48px 0 0;
+  background: var(--surface);
+  padding: 40px 32px 28px;
+}
+.auth-sheet__text {
   color: var(--muted);
 }
-.auth-form,
+.auth-form {
+  display: grid;
+  gap: 24px;
+}
+.auth-sheet .form-field label {
+  color: var(--tint);
+}
+/* Campos subrayados con la etiqueta de acento. */
+.auth-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.auth-sheet .auth-input input {
+  min-height: 44px;
+  border: 0;
+  border-bottom: 1.5px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 36px 8px 0;
+}
+.auth-sheet .auth-input input:focus {
+  border-bottom-color: var(--tint);
+}
+.auth-sheet .auth-input input:focus-visible {
+  outline: none;
+}
+/* Edge añade su propio ojito; duplicaba el botón de mostrar/ocultar. */
+.auth-input input::-ms-reveal,
+.auth-input input::-ms-clear {
+  display: none;
+}
+/* El autofill de Chromium pinta su propio fondo y texto, que en oscuro
+   dejaban el campo ilegible. */
+.auth-sheet .auth-input input:-webkit-autofill {
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--tint);
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+}
+.auth-input__icon {
+  position: absolute;
+  right: 4px;
+  color: var(--tint);
+  pointer-events: none;
+}
+.auth-input__toggle {
+  position: absolute;
+  right: -6px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.auth-input__toggle[aria-pressed="true"] {
+  color: var(--tint);
+}
+.auth-forgot {
+  margin-top: -12px;
+  text-align: right;
+  font-size: 14px;
+}
+.auth-forgot a,
+.auth-footer-link a {
+  color: var(--foreground);
+  font-weight: 700;
+}
+/* Botón principal: píldora con degradado lima, como en móvil. */
+.auth-card .button--primary {
+  width: 100%;
+  min-height: 52px;
+  background: linear-gradient(90deg, var(--auth-button-from), var(--auth-button-to));
+  box-shadow: 0 8px 20px rgb(132 204 22 / 0.3);
+  color: var(--auth-on-button);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.auth-card .button--primary:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--auth-button-from), var(--auth-button-to));
+  filter: brightness(1.05);
+}
+.auth-card .auth-button--outline {
+  width: 100%;
+  min-height: 52px;
+  border: 1.5px solid var(--auth-hero-border);
+  background: transparent;
+  color: var(--auth-hero-text);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.auth-card .auth-button--outline:hover {
+  background: rgb(245 245 247 / 0.08);
+}
 .auth-links {
   display: grid;
-  gap: 16px;
-}
-.auth-form > .button {
-  width: 100%;
-}
-.auth-links {
   justify-items: center;
   font-size: 14px;
-  text-align: center;
 }
-.auth-links a {
-  color: var(--tint);
-  font-weight: 700;
+.auth-footer {
+  margin-top: auto;
+  padding-top: 32px;
+}
+.auth-footer-link {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 14px;
 }
 .auth-message {
   border-radius: var(--rounded-md);
@@ -281,13 +445,89 @@ h3 {
   padding: 12px 14px;
   font-weight: 600;
 }
+/* Portada: la cabecera ocupa toda la tarjeta. */
+.auth-card--welcome {
+  justify-content: space-between;
+  gap: 32px;
+  padding: 72px 32px 40px;
+  color: var(--auth-hero-text);
+  text-align: center;
+}
+.auth-welcome__brand {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+}
+.auth-welcome__mark {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: var(--rounded-lg);
+  background: var(--auth-hero-accent);
+  color: var(--auth-on-button);
+}
+.auth-welcome__center {
+  display: grid;
+  gap: 16px;
+}
+.auth-welcome__center h1 {
+  font-size: 34px;
+  letter-spacing: -0.02em;
+}
+.auth-welcome__center p {
+  color: var(--auth-hero-muted);
+  font-size: 16px;
+}
+.auth-welcome__actions {
+  display: grid;
+  gap: 16px;
+}
 @media (min-width: 640px) {
+  .auth-shell {
+    place-items: center;
+    background: var(--background);
+    padding: 40px 16px;
+  }
+  .auth-orb {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .auth-orb--one {
+    top: -120px;
+    left: -100px;
+    width: 320px;
+    height: 320px;
+  }
+  .auth-orb--two {
+    right: -160px;
+    bottom: -180px;
+    width: 460px;
+    height: 460px;
+    background: var(--auth-hero-from);
+    opacity: 0.85;
+  }
+  .auth-orb--three {
+    top: 18%;
+    right: 12%;
+    width: 90px;
+    height: 90px;
+    background: var(--surface-selected);
+    opacity: 1;
+  }
   .auth-card {
-    border: 1px solid var(--border-soft);
-    border-radius: var(--rounded-lg);
-    background: var(--surface);
-    padding: 40px;
-    box-shadow: var(--shadow);
+    width: min(100%, 440px);
+    min-height: 720px;
+    overflow: hidden;
+    border-radius: 40px;
+    box-shadow: var(--shadow-raised);
   }
 }
 /* One-digit boxes under a single transparent input (otp-code-input.tsx): the

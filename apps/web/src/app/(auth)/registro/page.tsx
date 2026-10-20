@@ -1,21 +1,29 @@
-import { AuthForm, AuthLink } from "@/components/auth-form";
+import { AuthForm } from "@/components/auth-form";
+import { AuthFooterLink, AuthScreen } from "@/components/auth-screen";
 
 import { register } from "../actions";
 
 export default function RegisterPage() {
   return (
-    <>
-      <div className="auth-heading">
-        <h1>Crear cuenta</h1>
-        <p>Usa un correo y una contraseña de al menos ocho caracteres.</p>
-      </div>
-      <AuthForm action={register} fields="credentials" submitLabel="Crear cuenta">
-        <div className="auth-links">
-          <span>
-            ¿Ya tienes cuenta? <AuthLink href="/login">Iniciar sesión</AuthLink>
-          </span>
-        </div>
-      </AuthForm>
-    </>
+    <AuthScreen
+      title="Crea tu"
+      highlight="cuenta"
+      subtitle="Usa un correo y una contraseña de al menos ocho caracteres."
+      backHref="/bienvenida"
+      footer={
+        <AuthFooterLink
+          prompt="¿Ya tienes cuenta?"
+          label="Inicia sesión"
+          href="/login"
+        />
+      }
+    >
+      <AuthForm
+        action={register}
+        fields="credentials"
+        confirmPassword
+        submitLabel="Crear cuenta"
+      />
+    </AuthScreen>
   );
 }

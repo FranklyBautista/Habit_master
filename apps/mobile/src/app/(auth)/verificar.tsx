@@ -1,16 +1,17 @@
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Button } from "@/components/button";
+import { AuthButton } from "@/components/auth/auth-button";
+import {
+  AuthError,
+  AuthFooterLink,
+  AuthScaffold,
+} from "@/components/auth/auth-scaffold";
 import { OtpCodeInput } from "@/components/otp-code-input";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useTheme } from "@/hooks/use-theme";
 import { OTP_CODE_LENGTH, otpCodeSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
@@ -35,7 +36,6 @@ export default function VerifyCodeScreen() {
   const email = Array.isArray(params.email) ? params.email[0] : params.email;
   const type = parseType(params.type);
   const router = useRouter();
-  const theme = useTheme();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
@@ -51,14 +51,14 @@ export default function VerifyCodeScreen() {
 
   if (!email || !type) {
     return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText>No se pudo abrir la verificación.</ThemedText>
-          <Link href="/(auth)/login">
-            <ThemedText type="link">Volver a iniciar sesión</ThemedText>
-          </Link>
-        </SafeAreaView>
-      </ThemedView>
+      <AuthScaffold
+        title="Algo"
+        highlight="no cuadra"
+        showBack
+        footer={<AuthFooterLink label="Volver a iniciar sesión" href="/(auth)/login" />}
+      >
+        <ThemedText>No se pudo abrir la verificación.</ThemedText>
+      </AuthScaffold>
     );
   }
 
@@ -115,52 +115,49 @@ export default function VerifyCodeScreen() {
   const resendDisabled = resending || cooldown > 0;
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">
-          {type === "signup" ? "Confirma tu correo" : "Recupera tu cuenta"}
-        </ThemedText>
-        <ThemedText themeColor="textSecondary">
-          Escribe el código que enviamos a {email}. Puede tardar un minuto; revisa
-          también la carpeta de spam.
-        </ThemedText>
-        <OtpCodeInput
-          accessibilityLabel="Código de verificación"
-          length={OTP_CODE_LENGTH}
-          value={code}
-          onChangeText={setCode}
+    <AuthScaffold
+      title={type === "signup" ? "Confirma tu" : "Recupera tu"}
+      highlight={type === "signup" ? "correo" : "cuenta"}
+      subtitle={`Escribe el código que enviamos a ${email}. Puede tardar un minuto; revisa también la carpeta de spam.`}
+      showBack
+      footer={
+        <AuthFooterLink
+          prompt="¿Correo equivocado?"
+          label="Volver a iniciar sesión"
+          href="/(auth)/login"
         />
-        {error ? (
-          <ThemedText accessibilityRole="alert" style={{ color: theme.danger }}>
-            {error}
-          </ThemedText>
-        ) : null}
-        {message ? <ThemedText>{message}</ThemedText> : null}
-        <Button
-          label={submitting ? "Verificando…" : "Verificar código"}
-          accessibilityLabel="Verificar código"
-          disabled={submitting}
-          onPress={handleVerify}
-        />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Reenviar código"
-          accessibilityState={{ disabled: resendDisabled }}
-          disabled={resendDisabled}
-          onPress={handleResend}
-        >
-          <ThemedText type="link">
-            {resending
-              ? "Reenviando…"
-              : cooldown > 0
-                ? `Reenviar código en ${cooldown} s`
-                : "Reenviar código"}
-          </ThemedText>
-        </Pressable>
-        <Link href="/(auth)/login">
-          <ThemedText type="link">Volver a iniciar sesión</ThemedText>
-        </Link>
-      </SafeAreaView>
-    </ThemedView>
+      }
+    >
+      <OtpCodeInput
+        accessibilityLabel="Código de verificación"
+        length={OTP_CODE_LENGTH}
+        value={code}
+        onChangeText={setCode}
+      />
+      {error ? <AuthError>{error}</AuthError> : null}
+      {message ? <ThemedText type="small">{message}</ThemedText> : null}
+      <AuthButton
+        label={submitting ? "Verificando…" : "Verificar código"}
+        accessibilityLabel="Verificar código"
+        disabled={submitting}
+        onPress={handleVerify}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Reenviar código"
+        accessibilityState={{ disabled: resendDisabled }}
+        disabled={resendDisabled}
+        style={{ alignSelf: "center" }}
+        onPress={handleResend}
+      >
+        <ThemedText type="linkPrimary">
+          {resending
+            ? "Reenviando…"
+            : cooldown > 0
+              ? `Reenviar código en ${cooldown} s`
+              : "Reenviar código"}
+        </ThemedText>
+      </Pressable>
+    </AuthScaffold>
   );
 }

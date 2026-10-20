@@ -35,7 +35,7 @@ export function OtpCodeInput({
           style={[
             styles.cell,
             {
-              backgroundColor: theme.backgroundElement,
+              backgroundColor: theme.backgroundSelected,
               borderColor: focused && index === activeIndex ? theme.tint : theme.border,
             },
           ]}

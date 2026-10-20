@@ -18,10 +18,26 @@ export const newPasswordSchema = z
     "La contraseña debe incluir al menos una letra y un número.",
   );
 
-export const registerSchema = z.object({
-  email: z.email("Escribe un correo válido."),
-  password: newPasswordSchema,
-});
+const PASSWORD_MISMATCH = "Las contraseñas no coinciden.";
+
+// Mirrors apps/web/src/app/(auth)/actions.ts#updatePasswordSchema.
+export const updatePasswordSchema = z
+  .object({ password: newPasswordSchema, confirmPassword: z.string() })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+  });
+
+export const registerSchema = z
+  .object({
+    email: z.email("Escribe un correo válido."),
+    password: newPasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+  });
 
 // Must match `[auth.email] otp_length` in supabase/config.toml and "Email OTP
 // Length" in the production dashboard: the verify screen draws one box per

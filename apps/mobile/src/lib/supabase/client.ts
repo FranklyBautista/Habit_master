@@ -1,5 +1,5 @@
 import type { Database } from "@habit-tracker/database";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, processLock } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
 import { getSupabaseEnvironment } from "./env";
@@ -21,6 +21,11 @@ export const supabase = createClient<Database>(url, publishableKey, {
     // email link redirected with access_token/refresh_token in the fragment
     // and no `code` at all.
     flowType: "pkce",
+    // React Native has no Web Locks API, so without this the refresh on
+    // startup and the one restarted by the AppState listener below can run
+    // at once. With refresh-token rotation the loser gets "Already Used" and
+    // Supabase signs the user out. The session should only end from Ajustes.
+    lock: processLock,
   },
 });
 

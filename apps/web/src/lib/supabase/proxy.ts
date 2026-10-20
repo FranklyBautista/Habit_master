@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getSupabaseEnvironment } from "./env";
 
-const authPaths = ["/login", "/registro", "/recuperar", "/verificar"];
+const authPaths = ["/bienvenida", "/login", "/registro", "/recuperar", "/verificar"];
 // Reachable without a session: the offline fallback must render even when a
 // visitor has no cookies yet (first load with no connection, or before login),
 // and the privacy policy is linked from the app stores for anonymous visitors.
@@ -36,8 +36,14 @@ export async function updateSession(request: NextRequest) {
 
   if (!authenticated && !isAuthPage && !pathname.startsWith("/auth/")) {
     const destination = request.nextUrl.clone();
-    destination.pathname = "/login";
-    destination.searchParams.set("next", pathname);
+    // La raíz no es una página concreta a la que volver: sin sesión abre la
+    // portada, como la app móvil. El resto vuelve a su ruta tras el login.
+    if (pathname === "/") {
+      destination.pathname = "/bienvenida";
+    } else {
+      destination.pathname = "/login";
+      destination.searchParams.set("next", pathname);
+    }
     const redirect = NextResponse.redirect(destination);
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;

@@ -1,16 +1,17 @@
 import { Link } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
 
-import { AuthBrand } from "@/components/auth-brand";
-import { Button } from "@/components/button";
-import { TextField } from "@/components/text-field";
+import { AuthButton } from "@/components/auth/auth-button";
+import { AuthField } from "@/components/auth/auth-field";
+import {
+  AuthError,
+  AuthFooterLink,
+  AuthScaffold,
+} from "@/components/auth/auth-scaffold";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useTheme } from "@/hooks/use-theme";
 import { credentialsSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginScreen() {
@@ -18,7 +19,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
-  const theme = useTheme();
 
   async function handleSubmit() {
     setError(undefined);
@@ -36,41 +36,55 @@ export default function LoginScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <AuthBrand tagline="Bienvenido de nuevo a Constancia." />
-        <ThemedText type="title">Iniciar sesión</ThemedText>
-        <TextField
-          accessibilityLabel="Correo electrónico"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="Correo electrónico"
-          value={email}
-          onChangeText={setEmail}
+    <AuthScaffold
+      title="Hola de nuevo,"
+      highlight="inicia sesión"
+      showBack
+      footer={
+        <AuthFooterLink
+          prompt="¿No tienes cuenta?"
+          label="Regístrate"
+          href="/(auth)/registro"
         />
-        <TextField
-          accessibilityLabel="Contraseña"
-          placeholder="Contraseña"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        {error ? (
-          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
-        ) : null}
-        <Button
-          label={submitting ? "Entrando…" : "Entrar"}
-          accessibilityLabel="Entrar"
-          disabled={submitting}
-          onPress={handleSubmit}
-        />
+      }
+    >
+      <AuthField
+        label="Correo electrónico"
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        placeholder="tu@correo.com"
+        value={email}
+        valid={credentialsSchema.shape.email.safeParse(email).success}
+        onChangeText={setEmail}
+      />
+      <AuthField
+        label="Contraseña"
+        autoComplete="current-password"
+        placeholder="••••••••"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        onSubmitEditing={handleSubmit}
+      />
+      <View style={styles.forgot}>
         <Link href="/(auth)/recuperar">
-          <ThemedText type="link">¿Olvidaste tu contraseña?</ThemedText>
+          <ThemedText type="linkPrimary" themeColor="text">
+            ¿Olvidaste tu contraseña?
+          </ThemedText>
         </Link>
-        <Link href="/(auth)/registro">
-          <ThemedText type="link">Crear una cuenta</ThemedText>
-        </Link>
-      </SafeAreaView>
-    </ThemedView>
+      </View>
+      {error ? <AuthError>{error}</AuthError> : null}
+      <AuthButton
+        label={submitting ? "Entrando…" : "Entrar"}
+        accessibilityLabel="Entrar"
+        disabled={submitting}
+        onPress={handleSubmit}
+      />
+    </AuthScaffold>
   );
 }
+
+const styles = StyleSheet.create({
+  forgot: { alignItems: "flex-end", marginTop: -8 },
+});

@@ -1,19 +1,21 @@
 import { AuthForm } from "@/components/auth-form";
+import { AuthScreen } from "@/components/auth-screen";
 
 import { updatePassword } from "../actions";
 
 export default function UpdatePasswordPage() {
   return (
-    <>
-      <div className="auth-heading">
-        <h1>Nueva contraseña</h1>
-        <p>Elige una contraseña de al menos ocho caracteres.</p>
-      </div>
+    <AuthScreen
+      title="Crea una nueva"
+      highlight="contraseña"
+      subtitle="Elige una contraseña de al menos ocho caracteres."
+    >
       <AuthForm
         action={updatePassword}
         fields="password"
+        confirmPassword
         submitLabel="Guardar contraseña"
       />
-    </>
+    </AuthScreen>
   );
 }

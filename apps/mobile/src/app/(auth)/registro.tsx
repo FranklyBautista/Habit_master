@@ -1,26 +1,25 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AuthBrand } from "@/components/auth-brand";
-import { Button } from "@/components/button";
-import { TextField } from "@/components/text-field";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useTheme } from "@/hooks/use-theme";
+import { AuthButton } from "@/components/auth/auth-button";
+import { AuthField } from "@/components/auth/auth-field";
+import {
+  AuthError,
+  AuthFooterLink,
+  AuthScaffold,
+} from "@/components/auth/auth-scaffold";
 import { registerSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { authFormStyles as styles } from "@/lib/auth/form-styles";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
 import { supabase } from "@/lib/supabase/client";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const theme = useTheme();
 
   function goToVerify(address: string) {
     router.push({
@@ -31,14 +30,15 @@ export default function RegisterScreen() {
 
   async function handleSubmit() {
     setError(undefined);
-    const parsed = registerSchema.safeParse({ email, password });
+    const parsed = registerSchema.safeParse({ email, password, confirmPassword });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message);
       return;
     }
     setSubmitting(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
-      ...parsed.data,
+      email: parsed.data.email,
+      password: parsed.data.password,
       options: { emailRedirectTo: getMobileAuthRedirect("/(app)") },
     });
     setSubmitting(false);
@@ -59,38 +59,53 @@ export default function RegisterScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <AuthBrand tagline="Empieza a construir tus hábitos con Constancia." />
-        <ThemedText type="title">Crear cuenta</ThemedText>
-        <TextField
-          accessibilityLabel="Correo electrónico"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="Correo electrónico"
-          value={email}
-          onChangeText={setEmail}
+    <AuthScaffold
+      title="Crea tu"
+      highlight="cuenta"
+      subtitle="Empieza a construir tus hábitos con Constancia."
+      showBack
+      footer={
+        <AuthFooterLink
+          prompt="¿Ya tienes cuenta?"
+          label="Inicia sesión"
+          href="/(auth)/login"
         />
-        <TextField
-          accessibilityLabel="Contraseña"
-          placeholder="Contraseña"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        {error ? (
-          <ThemedText style={{ color: theme.danger }}>{error}</ThemedText>
-        ) : null}
-        <Button
-          label={submitting ? "Creando…" : "Crear cuenta"}
-          accessibilityLabel="Crear cuenta"
-          disabled={submitting}
-          onPress={handleSubmit}
-        />
-        <Link href="/(auth)/login">
-          <ThemedText type="link">Ya tengo una cuenta</ThemedText>
-        </Link>
-      </SafeAreaView>
-    </ThemedView>
+      }
+    >
+      <AuthField
+        label="Correo electrónico"
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        placeholder="tu@correo.com"
+        value={email}
+        valid={registerSchema.shape.email.safeParse(email).success}
+        onChangeText={setEmail}
+      />
+      <AuthField
+        label="Contraseña"
+        autoComplete="new-password"
+        placeholder="Mínimo 8, con letras y números"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+      <AuthField
+        label="Confirmar contraseña"
+        autoComplete="new-password"
+        placeholder="Repite la contraseña"
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        onSubmitEditing={handleSubmit}
+      />
+      {error ? <AuthError>{error}</AuthError> : null}
+      <AuthButton
+        label={submitting ? "Creando…" : "Crear cuenta"}
+        accessibilityLabel="Crear cuenta"
+        disabled={submitting}
+        onPress={handleSubmit}
+      />
+    </AuthScaffold>
   );
 }

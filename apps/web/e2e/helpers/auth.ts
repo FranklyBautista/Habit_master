@@ -30,7 +30,8 @@ export async function login(page: Page, credentials = demoCredentials): Promise<
 export async function register(page: Page, email: string): Promise<void> {
   await page.goto("/registro");
   await page.getByLabel("Correo").fill(email);
-  await page.getByLabel("Contraseña").fill("CuentaSegura2026");
+  await page.getByLabel("Contraseña", { exact: true }).fill("CuentaSegura2026");
+  await page.getByLabel("Confirmar contraseña").fill("CuentaSegura2026");
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page).toHaveURL(/\/hoy$/);
 }
