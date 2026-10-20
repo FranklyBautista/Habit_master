@@ -58,9 +58,6 @@ export default function HoyScreen() {
               <ThemedText type="small" themeColor="textSecondary">
                 {dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}
               </ThemedText>
-              <ThemedText type="title" numberOfLines={1}>
-                Hola, {settings.displayName}
-              </ThemedText>
             </View>
             <Link href="/(app)/ajustes" asChild>
               <Pressable
