@@ -2,7 +2,6 @@ import {
   calculatePeriodMetrics,
   calculateStreaks,
   compareHabits,
-  formatLocalDate,
   getLocalDateKey,
   getPeriodStartDate,
 } from "@habit-tracker/domain";
@@ -12,6 +11,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/card";
+import { HabitHeatmapCard } from "@/components/habit-heatmap-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
@@ -48,7 +48,7 @@ export default function EstadisticasScreen() {
   );
   const streaks = calculateStreaks(today, options);
   const comparison = compareHabits(selected.startDate, today, options);
-  const maxTrend = Math.max(1, ...selected.days.map((day) => day.percentage ?? 0));
+  const activeHabits = snapshot.habits.filter((habit) => !habit.archivedAt);
 
   return (
     <ThemedView style={styles.container}>
@@ -61,6 +61,22 @@ export default function EstadisticasScreen() {
           <ThemedText themeColor="textSecondary">
             Las cifras cuentan solo los días en que cada hábito estaba activo.
           </ThemedText>
+
+          {activeHabits.length ? (
+            <View style={styles.history}>
+              <ThemedText type="smallBold">Historial por hábito</ThemedText>
+              {activeHabits.map((habit) => (
+                <HabitHeatmapCard
+                  key={habit.id}
+                  habit={habit}
+                  habits={snapshot.habits}
+                  checkins={snapshot.checkins}
+                  today={today}
+                  timezone={snapshot.settings.timezone}
+                />
+              ))}
+            </View>
+          ) : null}
 
           <View
             accessibilityRole="tablist"
@@ -129,91 +145,49 @@ export default function EstadisticasScreen() {
           />
 
           {selected.expected ? (
-            <>
-              <Card>
-                <ThemedText type="smallBold">Tendencia diaria</ThemedText>
-                <ThemedText
-                  type="small"
-                  themeColor="textSecondary"
-                  accessibilityLabel={`Cumplimiento diario en los últimos ${period} días: ${selected.days
-                    .map(
-                      (day) =>
-                        `${formatLocalDate(day.date, {
-                          day: "numeric",
-                          month: "short",
-                        })} ${day.percentage ?? 0}%`,
-                    )
-                    .join(", ")}`}
-                >
-                  Cumplimiento de cada día del periodo.
-                </ThemedText>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.trendRow}
-                >
-                  {selected.days.map((day) => (
-                    <View
-                      key={day.date}
-                      style={[
-                        styles.trendBar,
-                        {
-                          height: Math.max(3, ((day.percentage ?? 0) / maxTrend) * 96),
-                          backgroundColor:
-                            day.percentage === null
-                              ? theme.backgroundSelected
-                              : theme.tint,
-                        },
-                      ]}
-                    />
-                  ))}
-                </ScrollView>
-              </Card>
-
-              <Card>
-                <ThemedText type="smallBold">Comparación por hábito</ThemedText>
-                {comparison.length ? (
-                  comparison.map((habit) => (
-                    <View
-                      key={habit.habitId}
-                      style={styles.comparisonRow}
-                      accessibilityRole="text"
-                      accessibilityLabel={`${habit.name}: ${habit.completed} de ${habit.expected} completados, ${habit.percentage ?? 0} por ciento`}
-                    >
-                      <View style={styles.comparisonHeader}>
-                        <ThemedText type="small">{habit.name}</ThemedText>
-                        <ThemedText type="smallBold">
-                          {formatPercentage(habit.percentage)}
-                        </ThemedText>
-                      </View>
-                      <View
-                        style={[
-                          styles.track,
-                          { backgroundColor: theme.backgroundSelected },
-                        ]}
-                      >
-                        <View
-                          style={[
-                            styles.trackFill,
-                            {
-                              width: `${habit.percentage ?? 0}%`,
-                              backgroundColor: habit.color,
-                            },
-                          ]}
-                        />
-                      </View>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {habit.completed} de {habit.expected} registros
+            <Card>
+              <ThemedText type="smallBold">Comparación por hábito</ThemedText>
+              {comparison.length ? (
+                comparison.map((habit) => (
+                  <View
+                    key={habit.habitId}
+                    style={styles.comparisonRow}
+                    accessibilityRole="text"
+                    accessibilityLabel={`${habit.name}: ${habit.completed} de ${habit.expected} completados, ${habit.percentage ?? 0} por ciento`}
+                  >
+                    <View style={styles.comparisonHeader}>
+                      <ThemedText type="small">{habit.name}</ThemedText>
+                      <ThemedText type="smallBold">
+                        {formatPercentage(habit.percentage)}
                       </ThemedText>
                     </View>
-                  ))
-                ) : (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    No hay hábitos que comparar en estas fechas.
-                  </ThemedText>
-                )}
-              </Card>
-            </>
+                    <View
+                      style={[
+                        styles.track,
+                        { backgroundColor: theme.backgroundSelected },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.trackFill,
+                          {
+                            width: `${habit.percentage ?? 0}%`,
+                            backgroundColor: habit.color,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {habit.completed} de {habit.expected} registros
+                    </ThemedText>
+                  </View>
+                ))
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary">
+                  No hay hábitos que comparar en estas fechas.
+                </ThemedText>
+              )}
+            </Card>
           ) : (
             <Card style={styles.emptyCard}>
               <CalendarDays size={24} color={theme.textSecondary} />
@@ -223,7 +197,7 @@ export default function EstadisticasScreen() {
                 themeColor="textSecondary"
                 style={{ textAlign: "center" }}
               >
-                Crea o marca hábitos para ver la tendencia y la comparación.
+                Crea o marca hábitos para ver la comparación.
               </ThemedText>
             </Card>
           )}
@@ -274,6 +248,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: "center",
   },
+  history: { gap: Spacing.two, marginTop: Spacing.two },
   periodTabs: {
     flexDirection: "row",
     borderRadius: Radius.pill,
@@ -298,14 +273,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  trendRow: {
-    alignItems: "flex-end",
-    gap: 2,
-    height: 100,
-    marginTop: Spacing.one,
-    paddingHorizontal: Spacing.half,
-  },
-  trendBar: { width: 6, borderRadius: 3 },
   comparisonRow: { gap: Spacing.one, marginTop: Spacing.two },
   comparisonHeader: {
     flexDirection: "row",
