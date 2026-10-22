@@ -8,6 +8,7 @@ import {
   AuthFooterLink,
   AuthScaffold,
 } from "@/components/auth/auth-scaffold";
+import { GoogleSignIn } from "@/components/auth/google-button";
 import { registerSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { getMobileAuthRedirect } from "@/lib/auth/redirect";
@@ -106,6 +107,7 @@ export default function RegisterScreen() {
         disabled={submitting}
         onPress={handleSubmit}
       />
+      <GoogleSignIn />
     </AuthScaffold>
   );
 }

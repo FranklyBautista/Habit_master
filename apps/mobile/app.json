@@ -53,7 +53,8 @@
           "color": "#047857",
           "defaultChannel": "reminders"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

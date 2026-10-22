@@ -31,9 +31,13 @@ export function AuthGate({ children }: PropsWithChildren) {
     const isPublicAuthPage = currentAuthPath
       ? PUBLIC_AUTH_PATHS.has(currentAuthPath)
       : false;
-    const isConfirmRoute = segments[0] === "auth" && segments[1] === "confirm";
+    // auth/confirm (enlaces de correo) y auth/callback (vuelta de Google)
+    // llegan sin sesión: son ellas las que la crean.
+    const isAuthLinkRoute =
+      segments[0] === "auth" &&
+      (segments[1] === "confirm" || segments[1] === "callback");
 
-    if (!session && !isPublicAuthPage && !isConfirmRoute) {
+    if (!session && !isPublicAuthPage && !isAuthLinkRoute) {
       router.replace("/(auth)/bienvenida");
       return;
     }

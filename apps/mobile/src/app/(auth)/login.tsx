@@ -9,6 +9,7 @@ import {
   AuthFooterLink,
   AuthScaffold,
 } from "@/components/auth/auth-scaffold";
+import { GoogleSignIn } from "@/components/auth/google-button";
 import { ThemedText } from "@/components/themed-text";
 import { credentialsSchema } from "@/lib/auth/credentials-schema";
 import { authErrorMessage } from "@/lib/auth/errors";
@@ -81,6 +82,7 @@ export default function LoginScreen() {
         disabled={submitting}
         onPress={handleSubmit}
       />
+      <GoogleSignIn />
     </AuthScaffold>
   );
 }
