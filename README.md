@@ -36,6 +36,10 @@ interna; faltan la prueba en iOS y cerrar la beta.
   (el enlace del correo sigue funcionando); las rutas privadas validan la identidad en el servidor mediante
   el middleware `proxy.ts` y clientes Supabase separados para navegador y
   servidor.
+- «Continuar con Google» en login y registro (OAuth de Supabase con PKCE, vuelta
+  por `/auth/callback`); si el correo ya tenía cuenta, Google se vincula a ella.
+  Requiere activar el proveedor en Supabase: ver
+  [`docs/setup/SUPABASE.md`](docs/setup/SUPABASE.md#login-con-google).
 - Sincronización con Postgres como fuente de verdad (ADR
   [`docs/decisions/0001-supabase-sync.md`](docs/decisions/0001-supabase-sync.md)):
   sin UI optimista, revalidación tras cada mutación y al recuperar foco/conexión,
@@ -80,6 +84,9 @@ que debe resolverse antes de cerrar el criterio de salida de la Fase 8.
 - Autenticación completa (login, registro, recuperación y cambio de contraseña)
   con código de 6 dígitos enviado por correo, igual que la web, y sesión
   guardada con `expo-secure-store`.
+- «Continuar con Google» en el navegador del sistema (`expo-web-browser` + PKCE,
+  vuelta por `habittracker://auth/callback`), con el mismo cliente OAuth Web que
+  la web; verificado en local, llega al APK con el próximo build.
 - Mismo modelo de sincronización que la web (ADR 0001): Supabase bajo las mismas
   RLS, check-ins idempotentes, revalidación al volver a la app o recuperar
   conexión y banner de estado de conexión.
@@ -177,6 +184,11 @@ pnpm db:test                 # pruebas pgTAP de supabase/tests/
 pnpm db:lint / pnpm db:advisors
 pnpm db:types                # regenera packages/database/src/database.types.ts
 ```
+
+El login con Google está desactivado en local por defecto
+(`[auth.external.google] enabled = false`); para probarlo hacen falta las
+credenciales de Google en el `.env` de la raíz y activarlo solo en tu copia, como
+explica [`docs/setup/SUPABASE.md`](docs/setup/SUPABASE.md#login-con-google).
 
 La guía reproducible de base de datos, separación de entornos y variables está en
 [`docs/setup/SUPABASE.md`](docs/setup/SUPABASE.md). Usa [`.env.example`](.env.example)
