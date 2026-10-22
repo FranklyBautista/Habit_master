@@ -1,5 +1,7 @@
 import { AuthForm, AuthLink } from "@/components/auth-form";
 import { AuthFooterLink, AuthScreen } from "@/components/auth-screen";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { GOOGLE_SIGN_IN_ERROR } from "@/lib/auth/google";
 
 import { login } from "../actions";
 
@@ -34,6 +36,10 @@ export default async function LoginPage({
             <AuthLink href="/recuperar">¿Olvidaste tu contraseña?</AuthLink>
           </div>
         }
+      />
+      <GoogleSignInButton
+        next={next}
+        initialError={params.error === "google" ? GOOGLE_SIGN_IN_ERROR : undefined}
       />
     </AuthScreen>
   );

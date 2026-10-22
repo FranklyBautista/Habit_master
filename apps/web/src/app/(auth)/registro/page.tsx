@@ -1,5 +1,6 @@
 import { AuthForm } from "@/components/auth-form";
 import { AuthFooterLink, AuthScreen } from "@/components/auth-screen";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 import { register } from "../actions";
 
@@ -24,6 +25,7 @@ export default function RegisterPage() {
         confirmPassword
         submitLabel="Crear cuenta"
       />
+      <GoogleSignInButton />
     </AuthScreen>
   );
 }

@@ -6,6 +6,7 @@ const auth = vi.hoisted(() => ({
   verifyOtp: vi.fn(),
   resend: vi.fn(),
   updateUser: vi.fn(),
+  signInWithOAuth: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -28,8 +29,14 @@ class Redirect extends Error {
   }
 }
 
-const { recoverPassword, register, resendCode, updatePassword, verifyCode } =
-  await import("./actions");
+const {
+  recoverPassword,
+  register,
+  resendCode,
+  signInWithGoogle,
+  updatePassword,
+  verifyCode,
+} = await import("./actions");
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -100,6 +107,48 @@ describe("register", () => {
     expect(await redirectOf(register({}, form(fields)))).toBe(
       "/verificar?type=signup&email=ana%40example.test",
     );
+  });
+});
+
+describe("signInWithGoogle", () => {
+  const googleUrl = "https://example.supabase.co/auth/v1/authorize?provider=google";
+
+  it("sends the visitor to Google and back through /auth/callback", async () => {
+    auth.signInWithOAuth.mockResolvedValue({ data: { url: googleUrl }, error: null });
+
+    const url = await redirectOf(signInWithGoogle({}, form({ next: "/estadisticas" })));
+
+    expect(url).toBe(googleUrl);
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "https://constancia.test/auth/callback?next=%2Festadisticas",
+      },
+    });
+  });
+
+  it("returns to /hoy when next is missing or points off-site", async () => {
+    auth.signInWithOAuth.mockResolvedValue({ data: { url: googleUrl }, error: null });
+
+    await redirectOf(signInWithGoogle({}, form({ next: "//evil.example" })));
+    await redirectOf(signInWithGoogle({}, form({})));
+
+    for (const [call] of auth.signInWithOAuth.mock.calls) {
+      expect(call.options.redirectTo).toBe(
+        "https://constancia.test/auth/callback?next=%2Fhoy",
+      );
+    }
+  });
+
+  it("shows an error instead of redirecting when Supabase gives no URL", async () => {
+    auth.signInWithOAuth.mockResolvedValue({
+      data: { url: null },
+      error: { message: "Unsupported provider" },
+    });
+
+    expect(await signInWithGoogle({}, form({}))).toEqual({
+      error: "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
+    });
   });
 });
 

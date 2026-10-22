@@ -4,7 +4,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { GOOGLE_SIGN_IN_ERROR } from "@/lib/auth/google";
 import { OTP_CODE_LENGTH, parseVerifyType, verifyPath } from "@/lib/auth/otp";
+import { safeNext } from "@/lib/auth/safe-next";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -67,12 +69,6 @@ function values(formData: FormData) {
   };
 }
 
-function safeNext(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/hoy";
-}
-
 function authError(message: string) {
   if (message.includes("Invalid login credentials")) {
     return "El correo o la contraseña no coinciden.";
@@ -115,6 +111,27 @@ export async function login(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: authError(error.message) };
   redirect(safeNext(formData.get("next")));
+}
+
+// Sirve para entrar y para registrarse: si el correo de Google ya tiene cuenta
+// con contraseña, Supabase la vincula como segunda identidad del mismo usuario.
+// El perfil lo crea el trigger de `auth.users`, igual que en el registro.
+export async function signInWithGoogle(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const next = safeNext(formData.get("next"));
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}`,
+    },
+  });
+  if (error || !data.url) return { error: GOOGLE_SIGN_IN_ERROR };
+  // La cookie con el code verifier (PKCE) ya está puesta; app/auth/callback
+  // la usa para canjear el código al volver de Google.
+  redirect(data.url);
 }
 
 export async function register(

@@ -1,10 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { safeNext } from "@/lib/auth/safe-next";
 import { createClient } from "@/lib/supabase/server";
-
-function safeNext(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/hoy";
-}
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");

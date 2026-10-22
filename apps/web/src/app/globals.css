@@ -422,6 +422,37 @@ h3 {
 .auth-card .auth-button--outline:hover {
   background: rgb(245 245 247 / 0.08);
 }
+/* "o" entre el formulario y el botón de Google, con una raya a cada lado. */
+.auth-google {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  flex: 1;
+  border-top: 1px solid var(--border);
+  content: "";
+}
+.auth-card .auth-button--google {
+  width: 100%;
+  min-height: 52px;
+  gap: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+  font-weight: 700;
+}
+.auth-card .auth-button--google:hover:not(:disabled) {
+  background: var(--surface-selected);
+}
 .auth-links {
   display: grid;
   justify-items: center;

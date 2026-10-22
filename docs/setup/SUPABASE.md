@@ -139,6 +139,7 @@ Configuración de `habit_master`:
    migraciones a producción.
 7. Aplica las migraciones a `habit_master` solo después de validar `db:reset`
    en local y de que CI pase en verde.
+8. **Login con Google:** ver «Login con Google» más abajo.
 
 Variables públicas de la web:
 
@@ -149,3 +150,56 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_example
 
 La clave `service_role`, claves secretas y contraseñas de base de datos nunca se
 guardan en el repositorio ni se exponen con el prefijo `NEXT_PUBLIC_`.
+
+## Login con Google
+
+Web y móvil usan el mismo flujo OAuth de Supabase con PKCE en el navegador
+(`signInWithOAuth`): la web vuelve a `/auth/callback` y la app móvil a
+`habittracker://auth/callback` (abre Google con `expo-web-browser`). Por eso
+basta con **un único cliente OAuth "Aplicación web"** en Google Cloud; no hace
+falta cliente Android ni SHA-1 (eso solo lo pediría el módulo nativo
+`@react-native-google-signin`, descartado porque su versión gratuita usa el SDK
+de Android obsoleto). No hay cambios de BD: el trigger de `auth.users` crea el
+perfil.
+
+### Google Cloud (una vez)
+
+1. <https://console.cloud.google.com> → crea (o elige) un proyecto.
+2. *Google Auth Platform → Branding*: nombre «Constancia», correo de soporte,
+   logo opcional, dominio de la web en *Authorized domains* y también
+   `<ref>.supabase.co`.
+3. *Audience*: tipo **External** y pulsa **Publish app** («In production»).
+   Con solo `openid`, `email` y `profile` Google no exige verificación.
+4. *Data Access*: añade los scopes `openid`, `.../auth/userinfo.email` y
+   `.../auth/userinfo.profile`.
+5. *Clients → Create client → Web application*:
+   - *Authorized JavaScript origins*: el dominio de producción y
+     `http://localhost:3000`.
+   - *Authorized redirect URIs*: `https://<ref>.supabase.co/auth/v1/callback`
+     (producción) y `http://127.0.0.1:54321/auth/v1/callback` (Supabase local).
+   - Guarda el *Client ID* y el *Client secret*.
+
+### `habit_master` (producción)
+
+1. *Authentication → Sign In / Providers → Google*: activa, pega Client ID y
+   Client secret y guarda. Deja «Skip nonce checks» desactivado.
+2. *Authentication → URL Configuration → Redirect URLs*: deben estar
+   `https://<dominio>/**` (o al menos `https://<dominio>/auth/callback`) y
+   `habittracker://**` (ya añadido en la Fase 8).
+3. No hace falta activar «Allow manual linking»: Supabase vincula sola la
+   identidad de Google a la cuenta que ya tenga ese mismo correo verificado
+   (1 usuario con 2 filas en `auth.identities`).
+
+### Local
+
+1. Pon `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` y
+   `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` en el `.env` de la raíz (plantilla en
+   `.env.example`).
+2. Cambia `[auth.external.google] enabled` a `true` en tu copia de
+   `supabase/config.toml` — **no comitees ese cambio**: CI no tiene
+   credenciales de Google.
+3. `pnpm exec supabase stop && pnpm supabase:start`.
+
+La app móvil en Expo Go vuelve por `exp://…/--/auth/callback`, ya permitido por
+`exp://**` en `additional_redirect_urls`. Un APK nuevo de EAS es obligatorio
+para probarlo en el `preview`: `expo-web-browser` es un módulo nativo nuevo.

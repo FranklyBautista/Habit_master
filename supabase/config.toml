@@ -364,6 +364,21 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
+# Login con Google (web + móvil). `enabled` se commitea en false: es booleano y
+# la CLI no admite env(...) ahí (igual que el SMTP de Gmail). Para probarlo en
+# local, ver docs/setup/SUPABASE.md → «Login con Google».
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+# DO NOT commit your OAuth provider secret to git.
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+# Solo importa con signInWithIdToken (módulo nativo); el flujo del navegador
+# que usan web y móvil no manda nonce.
+skip_nonce_check = false
+email_optional = false
+
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
 [auth.web3.solana]
