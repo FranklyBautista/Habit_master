@@ -115,15 +115,20 @@ export default function HoyScreen() {
                   },
                 ]}
               >
-                <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-                  <Defs>
-                    <RadialGradient id="heroGlow" cx="100%" cy="0%" r="90%">
-                      <Stop offset="0" stopColor={theme.accent} stopOpacity={0.35} />
-                      <Stop offset="1" stopColor={theme.accent} stopOpacity={0} />
-                    </RadialGradient>
-                  </Defs>
-                  <Rect width="100%" height="100%" fill="url(#heroGlow)" />
-                </Svg>
+                {/* El View absoluto ocupa toda la tarjeta; el Svg directo con
+                    "100%" se medía contra el área sin padding y el brillo quedaba
+                    cortado antes del borde (mismo arreglo que en AuthButton). */}
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                  <Svg width="100%" height="100%">
+                    <Defs>
+                      <RadialGradient id="heroGlow" cx="100%" cy="0%" r="90%">
+                        <Stop offset="0" stopColor={theme.accent} stopOpacity={0.35} />
+                        <Stop offset="1" stopColor={theme.accent} stopOpacity={0} />
+                      </RadialGradient>
+                    </Defs>
+                    <Rect width="100%" height="100%" fill="url(#heroGlow)" />
+                  </Svg>
+                </View>
                 <View style={styles.heroCopy}>
                   <ThemedText type="small" themeColor="textSecondary">
                     PROGRESO DE HOY
