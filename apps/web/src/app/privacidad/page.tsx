@@ -14,9 +14,7 @@ export default function PrivacyPage() {
     <main className="main-content">
       <Card className="privacy-policy">
         <h1>Política de privacidad</h1>
-        <p className="privacy-updated">
-          Última actualización: 23 de septiembre de 2026
-        </p>
+        <p className="privacy-updated">Última actualización: 21 de octubre de 2026</p>
         <p>
           Constancia es una aplicación personal para registrar hábitos diarios,
           disponible en la web y en Android/iOS. Esta política explica qué datos guarda
@@ -25,7 +23,10 @@ export default function PrivacyPage() {
 
         <h2>Qué datos guardamos</h2>
         <ul>
-          <li>Tu correo electrónico y una contraseña cifrada, para iniciar sesión.</li>
+          <li>
+            Tu correo electrónico y una contraseña cifrada, para iniciar sesión. Si
+            entras con Google, no guardamos contraseña (ver más abajo).
+          </li>
           <li>
             Tu nombre visible, zona horaria e idioma, si los configuras en Ajustes.
           </li>
@@ -57,6 +58,26 @@ export default function PrivacyPage() {
           <li>No mostramos publicidad.</li>
           <li>No usamos herramientas de analítica ni seguimiento.</li>
         </ul>
+
+        <h2>Inicio de sesión con Google</h2>
+        <p>
+          Si eliges «Continuar con Google», Google nos comparte solo tu correo
+          electrónico, tu nombre y tu foto de perfil (permisos <code>openid</code>,{" "}
+          <code>email</code> y <code>profile</code>). Los usamos únicamente para crear
+          tu cuenta e iniciar sesión, y si ya tenías una cuenta con ese correo, para
+          vincularla. No accedemos a tu Gmail, contactos, Drive ni a ningún otro dato de
+          tu cuenta de Google, y no compartimos estos datos con nadie. El uso de la
+          información recibida de las APIs de Google cumple la{" "}
+          <a href="https://developers.google.com/terms/api-services-user-data-policy">
+            Política de datos de usuario de los servicios de API de Google
+          </a>
+          , incluidos los requisitos de uso limitado. Puedes retirar el acceso cuando
+          quieras desde{" "}
+          <a href="https://myaccount.google.com/permissions">
+            myaccount.google.com/permissions
+          </a>
+          .
+        </p>
 
         <h2>Recordatorios en el móvil</h2>
         <p>
