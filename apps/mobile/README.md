@@ -88,3 +88,45 @@ npx eas-cli build --profile preview --platform android
   bundle de la app.
 - Para instalar el APK de `preview` fuera de Play Store hay que permitir
   "instalar apps de origen desconocido" en Android.
+
+## Publicar una versión
+
+No hay OTA: cada versión nueva llega solo si la persona descarga e instala otro
+APK. Al abrir la app, `UpdateCheck` (`src/lib/app-update/`) compara
+`expo.version` de `app.json` con las filas publicadas de la tabla
+`app_releases` y, si hay una más nueva, muestra un asistente con lo nuevo, lo
+cambiado y lo quitado, y un botón al enlace de descarga. Sale también sin
+sesión iniciada. Si la consulta falla (sin red), no muestra nada.
+
+1. Sube `expo.version` en `app.json` (`MAYOR.MENOR.PARCHE`). **Si no la subes,
+   el aviso seguirá saliendo después de instalar el APK nuevo.**
+2. Lanza el build: `npx eas-cli build --profile preview --platform android`.
+3. Copia el enlace del build de EAS (página del build o URL del artefacto).
+4. Inserta la versión desde el SQL Editor de Supabase (`habit_master`):
+
+   ```sql
+   insert into public.app_releases
+     (version, title, summary, changes, download_url, mandatory, published_at)
+   values (
+     '1.2.0',
+     'Modo sin conexión',
+     'Ya puedes marcar tus hábitos sin red.',
+     '[
+       {"type": "added",   "text": "Marca y desmarca hábitos sin conexión"},
+       {"type": "changed", "text": "El aviso de conexión muestra los cambios pendientes"},
+       {"type": "removed", "text": "Se quitó la pantalla de notas"}
+     ]',
+     'https://expo.dev/accounts/franklyb/projects/habit-tracker-mobile/builds/<id>',
+     false,
+     now()
+   );
+   ```
+
+- `type` es `added`, `changed` o `removed`; los pasos sin elementos no se
+  muestran y los elementos mal escritos se ignoran.
+- `mandatory = true`: el asistente no se puede cerrar (ni con el botón atrás).
+  Con `false` hay «Más tarde» y vuelve a salir en el siguiente arranque.
+- `published_at` nulo es un borrador y una fecha futura programa el aviso: los
+  clientes solo leen las filas con `published_at <= now()`.
+- Si alguien se salta varias versiones, ve los cambios de todas juntas, el
+  enlace de la más nueva y el aviso es obligatorio si alguna lo era.

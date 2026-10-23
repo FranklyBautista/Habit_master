@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AppState, useColorScheme } from "react-native";
 
 import { Colors } from "@/constants/theme";
+import { UpdateCheck } from "@/lib/app-update/update-check";
 import { AuthGate } from "@/lib/auth/auth-gate";
 import { SessionProvider } from "@/lib/auth/session-provider";
 import { applyStoredColorScheme } from "@/lib/color-scheme-preference";
@@ -55,6 +56,8 @@ export default function RootLayout() {
         <AuthGate>
           <Slot />
         </AuthGate>
+        {/* Fuera de AuthGate: el aviso de versión nueva sale también sin sesión. */}
+        <UpdateCheck />
       </ThemeProvider>
     </SessionProvider>
   );
