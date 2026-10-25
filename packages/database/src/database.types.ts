@@ -407,6 +407,7 @@ export type Database = {
         Args: { group_id: string; habit_ids: string[] };
         Returns: undefined;
       };
+      sync_offline_checkins: { Args: { ops: Json }; Returns: Json };
       transfer_ownership: {
         Args: { group_id: string; member_id: string };
         Returns: undefined;
