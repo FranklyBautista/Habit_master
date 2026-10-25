@@ -21,13 +21,14 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useGroupActions, useGroupProgress } from "@/lib/group-store";
-import { useHabitActions } from "@/lib/habit-store";
+import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
 export default function GrupoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { progress, loading, error, notMember, refresh } = useGroupProgress(id);
   const actions = useGroupActions();
   const habitActions = useHabitActions();
+  const habitSnapshot = useHabitStore();
   const theme = useTheme();
   const [pendingHabitIds, setPendingHabitIds] = useState<string[]>([]);
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -46,7 +47,9 @@ export default function GrupoScreen() {
     setPendingHabitIds((current) => [...current, habitId]);
     setToggleError(null);
     const ok = await habitActions.toggleToday(habitId);
-    if (ok) await refresh();
+    // Sin conexión el check-in queda en la cola (ADR 0003); el progreso del
+    // grupo se vuelve a pedir al reconectar.
+    if (ok && habitSnapshot.online) await refresh();
     else setToggleError("No se pudo guardar el check-in. Inténtalo de nuevo.");
     setPendingHabitIds((current) => current.filter((item) => item !== habitId));
   }

@@ -1,4 +1,4 @@
-import { CloudOff, RefreshCw } from "lucide-react-native";
+import { CloudOff, Info, RefreshCw } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -6,13 +6,18 @@ import { Spacing } from "@/constants/theme";
 import { connectionStatus } from "@/lib/connection-status";
 import { useHabitActions, useHabitStore } from "@/lib/habit-store";
 
-// Persistent bar shown at the top of the app whenever the device is offline or
-// the last sync failed. There is no optimistic UI (ADR 0001), so this is how a
-// failed write surfaces: as a recoverable state the person can retry.
+// Persistent bar shown at the top of the app whenever the device is offline,
+// offline check-ins are waiting to be sent (ADR 0003) or the last sync failed.
+// Writes other than check-ins are server-first (ADR 0001), so this is how a
+// failed one surfaces: as a recoverable state the person can retry.
 const PALETTE = {
   offline: { background: "#B45309", foreground: "#FFFFFF" },
   error: { background: "#B91C1C", foreground: "#FFFFFF" },
+  pending: { background: "#047857", foreground: "#FFFFFF" },
+  notice: { background: "#334155", foreground: "#FFFFFF" },
 } as const;
+
+const ICONS = { offline: CloudOff, error: RefreshCw, pending: RefreshCw, notice: Info };
 
 export function ConnectionBanner() {
   const snapshot = useHabitStore();
@@ -23,7 +28,7 @@ export function ConnectionBanner() {
   if (!status) return null;
 
   const palette = PALETTE[status.kind];
-  const Icon = status.kind === "offline" ? CloudOff : RefreshCw;
+  const Icon = ICONS[status.kind];
 
   return (
     <View
@@ -53,6 +58,22 @@ export function ConnectionBanner() {
         >
           <Text style={[styles.retryLabel, { color: palette.foreground }]}>
             {snapshot.syncing ? "Reintentando…" : "Reintentar"}
+          </Text>
+        </Pressable>
+      ) : null}
+      {status.kind === "notice" ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar aviso"
+          onPress={actions.dismissNotice}
+          style={({ pressed }) => [
+            styles.retry,
+            { borderColor: palette.foreground },
+            pressed && styles.retryActive,
+          ]}
+        >
+          <Text style={[styles.retryLabel, { color: palette.foreground }]}>
+            Entendido
           </Text>
         </Pressable>
       ) : null}

@@ -11,13 +11,15 @@ export function AppProviders({
   children,
   initialState,
   userId,
+  stale,
 }: {
   children: ReactNode;
   initialState: HabitTrackerState;
   userId: string;
+  stale?: boolean;
 }) {
   return (
-    <HabitStoreProvider initialState={initialState} userId={userId}>
+    <HabitStoreProvider initialState={initialState} userId={userId} stale={stale}>
       <GroupStoreProvider userId={userId}>{children}</GroupStoreProvider>
     </HabitStoreProvider>
   );

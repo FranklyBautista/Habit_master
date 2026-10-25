@@ -32,6 +32,8 @@ export default function HabitsScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Sin conexión solo se pueden marcar hábitos (ADR 0003).
+  const offline = !snapshot.online;
 
   const activeHabits = snapshot.habits
     .filter((habit) => !habit.archivedAt)
@@ -67,7 +69,13 @@ export default function HabitsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Crear hábito"
-            style={[styles.createButton, { backgroundColor: theme.accent }]}
+            accessibilityState={{ disabled: offline }}
+            disabled={offline}
+            style={[
+              styles.createButton,
+              { backgroundColor: theme.accent },
+              offline && styles.disabled,
+            ]}
             onPress={openCreate}
           >
             <Plus size={22} strokeWidth={2.5} color={theme.onAccent} />
@@ -76,6 +84,11 @@ export default function HabitsScreen() {
         <ThemedText themeColor="textSecondary">
           Crea, ordena y cuida lo que quieres repetir cada día.
         </ThemedText>
+        {offline ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            Sin conexión no puedes crear, editar, ordenar ni archivar hábitos.
+          </ThemedText>
+        ) : null}
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <ThemedText type="smallBold" themeColor="textSecondary">
@@ -99,8 +112,8 @@ export default function HabitsScreen() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Subir ${habit.name}`}
-                      accessibilityState={{ disabled: index === 0 }}
-                      disabled={index === 0}
+                      accessibilityState={{ disabled: offline || index === 0 }}
+                      disabled={offline || index === 0}
                       hitSlop={ICON_HIT_SLOP}
                       onPress={() => void actions.moveHabit(habit.id, -1)}
                       style={styles.iconButton}
@@ -108,16 +121,16 @@ export default function HabitsScreen() {
                       <ArrowUp
                         size={16}
                         color={theme.textSecondary}
-                        opacity={index === 0 ? 0.3 : 1}
+                        opacity={offline || index === 0 ? 0.3 : 1}
                       />
                     </Pressable>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Bajar ${habit.name}`}
                       accessibilityState={{
-                        disabled: index === activeHabits.length - 1,
+                        disabled: offline || index === activeHabits.length - 1,
                       }}
-                      disabled={index === activeHabits.length - 1}
+                      disabled={offline || index === activeHabits.length - 1}
                       hitSlop={ICON_HIT_SLOP}
                       onPress={() => void actions.moveHabit(habit.id, 1)}
                       style={styles.iconButton}
@@ -125,7 +138,7 @@ export default function HabitsScreen() {
                       <ArrowDown
                         size={16}
                         color={theme.textSecondary}
-                        opacity={index === activeHabits.length - 1 ? 0.3 : 1}
+                        opacity={offline || index === activeHabits.length - 1 ? 0.3 : 1}
                       />
                     </Pressable>
                   </View>
@@ -143,8 +156,10 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Editar ${habit.name}`}
+                    accessibilityState={{ disabled: offline }}
+                    disabled={offline}
                     hitSlop={ICON_HIT_SLOP}
-                    style={styles.iconButton}
+                    style={[styles.iconButton, offline && styles.disabled]}
                     onPress={() => openEdit(habit)}
                   >
                     <Pencil size={18} color={theme.text} />
@@ -152,8 +167,10 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Archivar ${habit.name}`}
+                    accessibilityState={{ disabled: offline }}
+                    disabled={offline}
                     hitSlop={ICON_HIT_SLOP}
-                    style={styles.iconButton}
+                    style={[styles.iconButton, offline && styles.disabled]}
                     onPress={() => void archive(habit)}
                   >
                     <Archive size={18} color={theme.text} />
@@ -202,8 +219,10 @@ export default function HabitsScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Restaurar ${habit.name}`}
+                    accessibilityState={{ disabled: offline }}
+                    disabled={offline}
                     hitSlop={ICON_HIT_SLOP}
-                    style={styles.iconButton}
+                    style={[styles.iconButton, offline && styles.disabled]}
                     onPress={() => void restore(habit)}
                   >
                     <RotateCcw size={18} color={theme.tint} />
@@ -252,6 +271,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  disabled: { opacity: 0.4 },
   scrollContent: { gap: Spacing.two, paddingBottom: Spacing.six },
   sectionSpacing: { marginTop: Spacing.four },
   row: {

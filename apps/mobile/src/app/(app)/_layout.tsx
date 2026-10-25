@@ -1,4 +1,5 @@
 import type { HabitTrackerState } from "@habit-tracker/domain";
+import NetInfo from "@react-native-community/netinfo";
 import { Tabs } from "expo-router";
 import {
   BarChart3,
@@ -20,13 +21,17 @@ import { Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/lib/auth/session-provider";
 import { initialLoadErrorDetail, loadWithRetry } from "@/lib/initial-load";
+import { loadCachedState, saveCachedState } from "@/lib/offline/state-cache";
 import { PetReminderSync } from "@/lib/pet-reminder-sync";
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseHabitRepository } from "@/lib/supabase-habit-repository";
 
 export default function AppLayout() {
   const { session, loading } = useSession();
-  const [initialState, setInitialState] = useState<HabitTrackerState | null>(null);
+  const [initialState, setInitialState] = useState<{
+    state: HabitTrackerState;
+    stale: boolean;
+  } | null>(null);
   const [failure, setFailure] = useState<{ detail?: string } | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const theme = useTheme();
@@ -34,15 +39,34 @@ export default function AppLayout() {
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
-    const repository = new SupabaseHabitRepository(supabase, session.user.id);
-    loadWithRetry(() => repository.getState())
-      .then((state) => {
-        if (!cancelled) setInitialState(state);
-      })
-      .catch((reason: unknown) => {
-        if (cancelled) return;
-        console.warn("Initial habit state load failed", reason);
-        setFailure({ detail: initialLoadErrorDetail(reason) });
+    const userId = session.user.id;
+    const repository = new SupabaseHabitRepository(supabase, userId);
+    // Sin conexión (o si el servidor no responde) se abre con la última copia
+    // guardada en el dispositivo (ADR 0003); el store la sustituye al volver
+    // la red. Sin red no se espera a los reintentos: se va directo a la caché.
+    const openFromCache = async (reason: unknown) => {
+      const cached = await loadCachedState(userId);
+      if (cancelled) return;
+      if (cached) {
+        setInitialState({ state: cached, stale: true });
+        return;
+      }
+      console.warn("Initial habit state load failed", reason);
+      setFailure({ detail: initialLoadErrorDetail(reason) });
+    };
+    void NetInfo.fetch()
+      .then((network) => network.isConnected === false)
+      .catch(() => false)
+      .then(async (offline) => {
+        if (offline) return openFromCache(new Error("Sin conexión."));
+        try {
+          const state = await loadWithRetry(() => repository.getState());
+          if (cancelled) return;
+          void saveCachedState(userId, state);
+          setInitialState({ state, stale: false });
+        } catch (reason) {
+          if (!cancelled) await openFromCache(reason);
+        }
       });
     return () => {
       cancelled = true;
@@ -92,7 +116,11 @@ export default function AppLayout() {
   }
 
   return (
-    <AppProviders initialState={initialState} userId={session.user.id}>
+    <AppProviders
+      initialState={initialState.state}
+      stale={initialState.stale}
+      userId={session.user.id}
+    >
       <ThemedView style={{ flex: 1 }}>
         <ConnectionBanner />
         <PetReminderSync />

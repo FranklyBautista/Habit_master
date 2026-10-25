@@ -23,8 +23,14 @@ function renderChildren(children: RNProps["children"]) {
 
 const { store } = vi.hoisted(() => ({
   store: {
-    snapshot: { online: true, error: null as string | null, syncing: false },
-    actions: { refresh: vi.fn() },
+    snapshot: {
+      online: true,
+      error: null as string | null,
+      syncing: false,
+      pendingCount: 0,
+      notice: null as string | null,
+    },
+    actions: { refresh: vi.fn(), dismissNotice: vi.fn() },
   },
 }));
 
@@ -52,6 +58,7 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("lucide-react-native", () => ({
   CloudOff: () => null,
+  Info: () => null,
   RefreshCw: () => null,
 }));
 vi.mock("react-native-safe-area-context", () => ({
@@ -62,10 +69,18 @@ vi.mock("@/lib/habit-store", () => ({
   useHabitActions: () => store.actions,
 }));
 
+const base = {
+  online: true,
+  error: null,
+  syncing: false,
+  pendingCount: 0,
+  notice: null,
+};
+
 describe("ConnectionBanner", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    store.snapshot = { online: true, error: null, syncing: false };
+    store.snapshot = base;
   });
 
   it("renders nothing while online with no sync error", () => {
@@ -74,7 +89,7 @@ describe("ConnectionBanner", () => {
   });
 
   it("shows an offline notice without a retry action", () => {
-    store.snapshot = { online: false, error: null, syncing: false };
+    store.snapshot = { ...base, online: false };
     render(<ConnectionBanner />);
 
     expect(screen.getByRole("alert")).toHaveTextContent("Sin conexión");
@@ -82,7 +97,7 @@ describe("ConnectionBanner", () => {
   });
 
   it("shows the sync error with a working retry button", () => {
-    store.snapshot = { online: true, error: "No se pudo sincronizar.", syncing: false };
+    store.snapshot = { ...base, error: "No se pudo sincronizar." };
     render(<ConnectionBanner />);
 
     expect(screen.getByRole("alert")).toHaveTextContent("No se pudo sincronizar.");
@@ -91,11 +106,30 @@ describe("ConnectionBanner", () => {
   });
 
   it("disables the retry button while a retry is in flight", () => {
-    store.snapshot = { online: true, error: "Falló.", syncing: true };
+    store.snapshot = { ...base, error: "Falló.", syncing: true };
     render(<ConnectionBanner />);
 
     const button = screen.getByRole("button", { name: "Reintentar sincronización" });
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent("Reintentando…");
+  });
+
+  it("shows the pending offline changes without a retry action", () => {
+    store.snapshot = { ...base, online: false, pendingCount: 2 };
+    render(<ConnectionBanner />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Sin conexión · 2 cambios pendientes de sincronizar.",
+    );
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("lets the person dismiss a sync notice", () => {
+    store.snapshot = { ...base, notice: "1 marca no se pudo guardar." };
+    render(<ConnectionBanner />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("1 marca no se pudo guardar.");
+    screen.getByRole("button", { name: "Cerrar aviso" }).click();
+    expect(store.actions.dismissNotice).toHaveBeenCalledOnce();
   });
 });

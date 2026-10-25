@@ -290,10 +290,15 @@ export default function AjustesScreen() {
               </ThemedText>
             ) : null}
 
+            {snapshot.online ? null : (
+              <ThemedText type="small" themeColor="textSecondary">
+                Sin conexión no puedes guardar cambios en tu perfil.
+              </ThemedText>
+            )}
             <Button
               label={snapshot.syncing ? "Guardando…" : "Guardar cambios"}
               accessibilityLabel="Guardar cambios"
-              disabled={snapshot.syncing}
+              disabled={snapshot.syncing || !snapshot.online}
               onPress={() => void save()}
             />
           </Card>

@@ -7,6 +7,7 @@ import {
   getTodaySnapshot,
   type HabitSnapshot,
   HabitStoreProvider,
+  OFFLINE_MUTATION_ERROR,
   useHabitActions,
   useHabitStore,
 } from "./habit-store";
@@ -16,13 +17,18 @@ import {
 // fake repository so the tests drive `mutate()` / `refresh()` directly.
 type NetInfoState = { isConnected: boolean | null };
 
-const { repository, netInfo, device } = vi.hoisted(() => ({
+const { repository, netInfo, device, storage, cache } = vi.hoisted(() => ({
   repository: {
     getState: vi.fn(),
     setCheckin: vi.fn(),
+    syncCheckins: vi.fn(),
     updateSettings: vi.fn(),
     updateTimezone: vi.fn(),
+    createHabit: vi.fn(),
   },
+  // AsyncStorage (offline queue) and the encrypted state cache, in memory.
+  storage: new Map<string, string>(),
+  cache: { save: vi.fn() },
   // Zona "del teléfono"; por defecto la misma del perfil del fixture para que
   // la sincronización automática no se dispare en los demás tests.
   device: { timeZone: "America/Santo_Domingo" as string | undefined },
@@ -32,6 +38,20 @@ const { repository, netInfo, device } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/supabase/client", () => ({ supabase: {} }));
+vi.mock("@react-native-async-storage/async-storage", () => ({
+  default: {
+    getItem: async (key: string) => storage.get(key) ?? null,
+    setItem: async (key: string, value: string) => {
+      storage.set(key, value);
+    },
+    removeItem: async (key: string) => {
+      storage.delete(key);
+    },
+  },
+}));
+vi.mock("./offline/state-cache", () => ({
+  saveCachedState: cache.save,
+}));
 vi.mock("@/lib/device-timezone", () => ({
   getDeviceTimeZone: () => device.timeZone,
 }));
@@ -57,6 +77,8 @@ vi.mock("./supabase-habit-repository", () => ({
   SupabaseHabitRepository: class {
     getState = repository.getState;
     setCheckin = repository.setCheckin;
+    syncCheckins = repository.syncCheckins;
+    createHabit = repository.createHabit;
     updateSettings = repository.updateSettings;
     updateTimezone = repository.updateTimezone;
   },
@@ -113,6 +135,9 @@ describe("getTodaySnapshot", () => {
       syncing: false,
       error: null,
       online: true,
+      pendingCount: 0,
+      stale: false,
+      notice: null,
       ...parts,
     };
   }
@@ -430,5 +455,226 @@ describe("HabitStoreProvider device timezone", () => {
     await act(async () => {});
 
     expect(repository.updateTimezone).not.toHaveBeenCalled();
+  });
+});
+
+describe("HabitStoreProvider offline check-ins", () => {
+  const HABIT_ID = "22222222-2222-4222-8222-222222222222";
+  const QUEUE_KEY = `habit-tracker:checkin-queue:v1:${USER_ID}`;
+  const initialState: HabitTrackerState = {
+    version: 1,
+    settings,
+    habits: [makeHabit({ id: HABIT_ID, position: 0 })],
+    checkins: [],
+  };
+
+  function today() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date());
+  }
+
+  function serverCheckin() {
+    return {
+      id: "f1111111-1111-4111-8111-111111111111",
+      habitId: HABIT_ID,
+      checkinDate: today(),
+      completedAt: "2026-10-23T12:00:00.000Z",
+    };
+  }
+
+  function renderStore({ stale = false }: { stale?: boolean } = {}) {
+    return renderHook(
+      () => ({ snapshot: useHabitStore(), actions: useHabitActions() }),
+      {
+        wrapper: ({ children }: PropsWithChildren) => (
+          <HabitStoreProvider
+            initialState={initialState}
+            userId={USER_ID}
+            stale={stale}
+          >
+            {children}
+          </HabitStoreProvider>
+        ),
+      },
+    );
+  }
+
+  async function goOffline() {
+    await act(async () => {
+      emitNetInfo({ isConnected: false });
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    storage.clear();
+    repository.getState.mockResolvedValue(initialState);
+    repository.syncCheckins.mockResolvedValue({ applied: 1, rejected: 0 });
+  });
+
+  it("marks a habit offline at once and keeps it in the persisted queue", async () => {
+    const { result } = renderStore();
+    await goOffline();
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    expect(ok).toBe(true);
+    expect(repository.setCheckin).not.toHaveBeenCalled();
+    expect(result.current.snapshot.checkins).toHaveLength(1);
+    expect(result.current.snapshot.pendingCount).toBe(1);
+    expect(result.current.snapshot.error).toBeNull();
+    await waitFor(() =>
+      expect(JSON.parse(storage.get(QUEUE_KEY) ?? "[]")).toEqual([
+        { habitId: HABIT_ID, checkinDate: today(), completed: true },
+      ]),
+    );
+  });
+
+  it("undoing an offline mark leaves nothing to sync", async () => {
+    const { result } = renderStore();
+    await goOffline();
+
+    await act(async () => {
+      await result.current.actions.toggleToday(HABIT_ID);
+    });
+    await act(async () => {
+      await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    expect(result.current.snapshot.checkins).toEqual([]);
+    expect(result.current.snapshot.pendingCount).toBe(0);
+  });
+
+  it("sends the queue on reconnect, then re-reads the server state", async () => {
+    const { result } = renderStore();
+    await goOffline();
+    await act(async () => {
+      await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    repository.getState.mockResolvedValue({
+      ...initialState,
+      checkins: [serverCheckin()],
+    });
+    await act(async () => {
+      emitNetInfo({ isConnected: true });
+    });
+
+    await waitFor(() => expect(result.current.snapshot.pendingCount).toBe(0));
+    expect(repository.syncCheckins).toHaveBeenCalledWith([
+      { habitId: HABIT_ID, checkinDate: today(), completed: true },
+    ]);
+    expect(repository.syncCheckins.mock.invocationCallOrder[0]).toBeLessThan(
+      repository.getState.mock.invocationCallOrder[0],
+    );
+    await waitFor(() =>
+      expect(result.current.snapshot.checkins).toEqual([serverCheckin()]),
+    );
+    expect(storage.has(QUEUE_KEY)).toBe(false);
+    expect(cache.save).toHaveBeenCalled();
+  });
+
+  it("keeps the queue quietly when the sync cannot reach the server", async () => {
+    const { result } = renderStore();
+    await goOffline();
+    await act(async () => {
+      await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    repository.syncCheckins.mockRejectedValue(new TypeError("Network request failed"));
+    await act(async () => {
+      emitNetInfo({ isConnected: true });
+    });
+
+    await waitFor(() => expect(result.current.snapshot.syncing).toBe(false));
+    expect(result.current.snapshot.pendingCount).toBe(1);
+    expect(result.current.snapshot.checkins).toHaveLength(1);
+    expect(result.current.snapshot.error).toBeNull();
+    expect(repository.getState).not.toHaveBeenCalled();
+  });
+
+  it("tells the person how many queued marks the server rejected", async () => {
+    const { result } = renderStore();
+    await goOffline();
+    await act(async () => {
+      await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    repository.syncCheckins.mockResolvedValue({ applied: 0, rejected: 1 });
+    await act(async () => {
+      emitNetInfo({ isConnected: true });
+    });
+
+    await waitFor(() => expect(result.current.snapshot.notice).toContain("1 marca"));
+    expect(result.current.snapshot.pendingCount).toBe(0);
+
+    act(() => {
+      result.current.actions.dismissNotice();
+    });
+    expect(result.current.snapshot.notice).toBeNull();
+  });
+
+  it("queues the check-in when the online write never reaches the server", async () => {
+    // Weak signal: neither the write nor the follow-up batch get through.
+    repository.setCheckin.mockRejectedValue(new TypeError("Network request failed"));
+    repository.syncCheckins.mockRejectedValue(new TypeError("Network request failed"));
+    const { result } = renderStore();
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.actions.toggleToday(HABIT_ID);
+    });
+
+    expect(ok).toBe(true);
+    await waitFor(() => expect(result.current.snapshot.syncing).toBe(false));
+    expect(result.current.snapshot.error).toBeNull();
+    expect(result.current.snapshot.pendingCount).toBe(1);
+    expect(result.current.snapshot.checkins).toHaveLength(1);
+  });
+
+  it("sends a queue left by a previous session when it opens online", async () => {
+    storage.set(
+      QUEUE_KEY,
+      JSON.stringify([{ habitId: HABIT_ID, checkinDate: today(), completed: true }]),
+    );
+    repository.getState.mockResolvedValue({
+      ...initialState,
+      checkins: [serverCheckin()],
+    });
+
+    const { result } = renderStore();
+
+    await waitFor(() => expect(repository.syncCheckins).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.snapshot.pendingCount).toBe(0));
+    expect(result.current.snapshot.checkins).toEqual([serverCheckin()]);
+  });
+
+  it("re-reads a stale cached state as soon as it opens online", async () => {
+    const { result } = renderStore({ stale: true });
+    expect(result.current.snapshot.stale).toBe(true);
+
+    await waitFor(() => expect(repository.getState).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.snapshot.stale).toBe(false));
+  });
+
+  it("refuses other changes while offline without calling the server", async () => {
+    const { result } = renderStore();
+    await goOffline();
+
+    let ok = true;
+    await act(async () => {
+      ok = await result.current.actions.createHabit({
+        name: "Correr",
+        description: null,
+        color: "#0F766E",
+        icon: "footprints",
+      });
+    });
+
+    expect(ok).toBe(false);
+    expect(repository.createHabit).not.toHaveBeenCalled();
+    expect(result.current.snapshot.error).toBe(OFFLINE_MUTATION_ERROR);
   });
 });

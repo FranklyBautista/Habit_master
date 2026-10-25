@@ -13,6 +13,8 @@ import {
 } from "@habit-tracker/domain";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { CheckinOp } from "./offline/checkin-queue";
+
 // Mirrors apps/web/src/lib/supabase-habit-repository.ts (already verified in
 // Fase 6). Mobile has no local-data prototype to migrate from, so
 // `importState` is intentionally omitted here.
@@ -199,6 +201,18 @@ export class SupabaseHabitRepository {
       .eq("habit_id", habitId)
       .eq("checkin_date", checkinDate);
     if (error) throw error;
+  }
+
+  // Lote de check-ins hechos sin conexión (ADR 0003). El RPC omite los que no
+  // puede aplicar (más de 7 días, hábito borrado) en vez de abortar el lote.
+  async syncCheckins(ops: CheckinOp[]): Promise<{ applied: number; rejected: number }> {
+    const { data, error } = await this.client.rpc("sync_offline_checkins", { ops });
+    if (error) throw error;
+    const result = data as { applied?: unknown; rejected?: unknown } | null;
+    return {
+      applied: typeof result?.applied === "number" ? result.applied : 0,
+      rejected: typeof result?.rejected === "number" ? result.rejected : 0,
+    };
   }
 
   // Solo la zona: la sincronización automática no debe reescribir el resto del
