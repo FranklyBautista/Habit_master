@@ -428,7 +428,7 @@ para entonces sigue sin haber acceso.
 - [ ] Evaluar corrección de días pasados con un registro claro de cambios.
 - [ ] Evaluar hábitos por días de semana y objetivos semanales.
 - [ ] Evaluar cantidades, notas y temporizadores.
-- [ ] Evaluar sincronización offline con cola local y política explícita de conflictos.
+- [ ] Evaluar sincronización offline con cola local y política explícita de conflictos. (2026-10-23: decidido en `docs/decisions/0003-offline-checkins.md`, solo móvil y solo check-ins. Implementado: caché cifrada del estado (`apps/mobile/src/lib/offline/state-cache.ts`), cola persistida con un estado final por `(hábito, fecha)` (`offline/checkin-queue.ts`), envío en lote al reconectar por el RPC `sync_offline_checkins` (migración `20261023120000`, ventana de 7 días locales), banner con cambios pendientes y el resto de mutaciones bloqueadas sin red. Cubierto por `checkin-queue.test.ts`, `state-cache.test.ts`, `habit-store.test.tsx`, `connection-status.test.ts`, `connection-banner.test.tsx` y `supabase/tests/offline_checkins.test.sql`. Pendiente: ejecutar el pgTAP con Docker, aplicar la migración en producción y verificar en Android con un APK `preview` nuevo.)
 - [ ] Evaluar OAuth, biometría, widgets e integraciones de salud.
 - [ ] Revisar periódicamente dependencias y avisos de seguridad.
 
