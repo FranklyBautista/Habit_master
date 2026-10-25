@@ -562,6 +562,17 @@ Ritmo sugerido:
 - [x] **Falta `apps/mobile/.env.example`.** Las variables `EXPO_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` solo están documentadas en prosa en el README de mobile, no en un archivo versionado — inconsistente con el criterio de Fase 1. **Corregido (2026-09-27):** añadido `apps/mobile/.env.example` (hosts para web/emulador/teléfono y aviso de no incluir secretos) y el README de mobile lo referencia.
 - [x] **~450 KB de assets del scaffold sin usar en cada build nativo.** `assets/images/logo-glow.png`, `tutorial-web.png`, `react-logo*.png`, `expo-logo.png`, `expo-badge*.png` — sin referencias en `src/` ni `app.json`, sobras de `create-expo-app`; trivial de borrar antes del primer build real. **Corregido (2026-09-27):** borrados junto con `assets/expo.icon/` y `tabIcons/`; sin referencias en `src/` ni `app.json`, lint/typecheck/tests de móvil en verde. Cambio de assets: entra en el próximo EAS build (falta build).
 
+### Mobile — avisos de actualización (plan aprobado 2026-10-23, rama `feat/avisos-actualizacion`)
+
+Sin OTA, la versión instalada no se entera de que hay una nueva. Al abrir la app, si hay una versión publicada más nueva, un asistente explica lo nuevo, lo cambiado y lo quitado, y termina en el enlace de descarga del APK. Los APK ya instalados no traen este código: el primer build que lo incluya (1.1.0) hay que avisarlo a mano. Seguimiento en Notion.
+
+- [x] **Tabla `app_releases` + pgTAP.** Migración `20261023130000_create_app_releases.sql`: versión semver, `changes` jsonb, `download_url` https, `mandatory`, `published_at` (nulo = borrador). Solo `select` de las publicadas para `anon` y `authenticated`; se edita desde el dashboard. `app_releases.test.sql` (16 casos; 214/214 pgTAP) y tipos regenerados.
+- [x] **Comparar versiones y agrupar cambios.** `apps/mobile/src/lib/app-update/version.ts` y `releases.ts` (Zod en el límite, `fetchPendingReleases`, `summarizeReleases`); versión instalada con `Constants.expoConfig.version`, sin módulos nativos nuevos.
+- [x] **Asistente de novedades.** `components/update-wizard.tsx`: intro → novedades → cambios → quitado (los vacíos se omiten) → «Descargar versión X». «Más tarde» solo si no es obligatoria.
+- [x] **Comprobación al arrancar.** `UpdateCheck` en el `_layout.tsx` raíz (también sin sesión), al montar y al volver a primer plano; si falla la red no muestra nada.
+- [x] **Proceso de publicación y versión 1.1.0.** `app.json` a `1.1.0` y sección «Publicar una versión» en `apps/mobile/README.md`.
+- [ ] **Verificar en Android y publicar.** Falta: aplicar la migración en producción, build `preview` 1.1.0 y comprobar en el dispositivo con una fila de prueba.
+
 **Próximo paso recomendado:** verificar en Android el build `preview` de `d802b41` (recordatorios exactos y zona horaria) y continuar la beta interna; en paralelo, la fase colaborativa C5 (chat del grupo); antes de publicar grupos hay que aplicar en producción las migraciones `20261010120000` y `20261010130000`.
 
 ---

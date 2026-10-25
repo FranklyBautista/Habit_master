@@ -4,6 +4,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_releases: {
+        Row: {
+          changes: Json;
+          created_at: string;
+          download_url: string;
+          id: string;
+          mandatory: boolean;
+          platform: string;
+          published_at: string | null;
+          summary: string;
+          title: string;
+          version: string;
+        };
+        Insert: {
+          changes?: Json;
+          created_at?: string;
+          download_url: string;
+          id?: string;
+          mandatory?: boolean;
+          platform?: string;
+          published_at?: string | null;
+          summary?: string;
+          title: string;
+          version: string;
+        };
+        Update: {
+          changes?: Json;
+          created_at?: string;
+          download_url?: string;
+          id?: string;
+          mandatory?: boolean;
+          platform?: string;
+          published_at?: string | null;
+          summary?: string;
+          title?: string;
+          version?: string;
+        };
+        Relationships: [];
+      };
       group_habit_shares: {
         Row: {
           created_at: string;
