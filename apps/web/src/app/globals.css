@@ -890,11 +890,14 @@ h3 {
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
+  /* Sin `opacity`: al habilitarse (p. ej. cuando llega el código de usuario
+     en Ajustes) el botón pasa directo de la opacidad de deshabilitado a 1. Con
+     fundido, durante 180 ms un botón ya activo se veía con el texto al 45 %
+     (contraste ~3,2:1, por debajo de 4,5:1). */
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
     color 180ms ease,
-    opacity 180ms ease,
     transform 180ms ease;
 }
 .button:active:not(:disabled) {
