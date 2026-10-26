@@ -273,7 +273,7 @@ describe("HabitStoreProvider mutations", () => {
     );
   });
 
-  it("sends the full swapped list of active habits when moving one", async () => {
+  it("sends the full reordered list of active habits when moving one", async () => {
     repository.reorderHabits.mockResolvedValue(undefined);
     repository.getState.mockResolvedValue(makeState());
     const { result } = renderStore(
@@ -291,18 +291,19 @@ describe("HabitStoreProvider mutations", () => {
     );
 
     await act(async () => {
-      await result.current.actions.moveHabit(HABIT_B, -1);
+      await result.current.actions.moveHabit(HABIT_B, 0);
     });
 
     expect(repository.reorderHabits).toHaveBeenCalledWith([HABIT_B, HABIT_A]);
   });
 
-  it("does nothing when moving past either end", async () => {
+  it("does nothing when moving past either end or onto itself", async () => {
     const { result } = renderStore();
 
     await act(async () => {
       await expect(result.current.actions.moveHabit(HABIT_A, -1)).resolves.toBe(false);
-      await expect(result.current.actions.moveHabit(HABIT_B, 1)).resolves.toBe(false);
+      await expect(result.current.actions.moveHabit(HABIT_B, 2)).resolves.toBe(false);
+      await expect(result.current.actions.moveHabit(HABIT_A, 0)).resolves.toBe(false);
     });
 
     expect(repository.reorderHabits).not.toHaveBeenCalled();

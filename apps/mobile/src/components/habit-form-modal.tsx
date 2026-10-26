@@ -1,4 +1,5 @@
 import {
+  type CreateHabitInput,
   createHabitInputSchema,
   type Habit,
   habitColors,
@@ -21,19 +22,28 @@ import { habitIconComponents } from "./habit-icons";
 type HabitFormModalProps = {
   open: boolean;
   habit?: Habit | null;
+  // Valores iniciales al crear (p. ej. una de las ideas del estado vacío).
+  defaults?: CreateHabitInput | null;
   onClose: () => void;
   onSaved: (message: string) => void;
 };
 
 // Mirrors apps/web/src/components/habit-form-dialog.tsx: same schema
 // (createHabitInputSchema for both create and update), same fields.
-export function HabitFormModal({ open, habit, onClose, onSaved }: HabitFormModalProps) {
+export function HabitFormModal({
+  open,
+  habit,
+  defaults,
+  onClose,
+  onSaved,
+}: HabitFormModalProps) {
   const actions = useHabitActions();
   const theme = useTheme();
-  const [name, setName] = useState(habit?.name ?? "");
-  const [description, setDescription] = useState(habit?.description ?? "");
-  const [color, setColor] = useState(habit?.color ?? habitColors[0]);
-  const [icon, setIcon] = useState(habit?.icon ?? "sparkles");
+  const initial = habit ?? defaults;
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [color, setColor] = useState(initial?.color ?? habitColors[0]);
+  const [icon, setIcon] = useState(initial?.icon ?? "sparkles");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
