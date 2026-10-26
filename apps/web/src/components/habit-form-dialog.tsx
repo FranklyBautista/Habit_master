@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CreateHabitInput,
   createHabitInputSchema,
   type Habit,
   habitColors,
@@ -18,6 +19,8 @@ import { useHabitActions } from "@/lib/habit-store";
 type HabitFormDialogProps = {
   open: boolean;
   habit?: Habit | null;
+  // Valores iniciales al crear (p. ej. una de las ideas del estado vacío).
+  defaults?: CreateHabitInput | null;
   onClose: () => void;
   onSaved: (message: string) => void;
 };
@@ -25,12 +28,14 @@ type HabitFormDialogProps = {
 export function HabitFormDialog({
   open,
   habit,
+  defaults,
   onClose,
   onSaved,
 }: HabitFormDialogProps) {
   const fieldId = useId();
   const actions = useHabitActions();
   const [error, setError] = useState<string | null>(null);
+  const initial = habit ?? defaults;
   const nameId = `${fieldId}-name`;
   const descriptionId = `${fieldId}-description`;
 
@@ -71,7 +76,7 @@ export function HabitFormDialog({
           <input
             id={nameId}
             name="name"
-            defaultValue={habit?.name ?? ""}
+            defaultValue={initial?.name ?? ""}
             placeholder="Por ejemplo, beber agua"
             maxLength={60}
             required
@@ -86,7 +91,7 @@ export function HabitFormDialog({
           <textarea
             id={descriptionId}
             name="description"
-            defaultValue={habit?.description ?? ""}
+            defaultValue={initial?.description ?? ""}
             placeholder="Cuándo o cómo quieres hacerlo"
             rows={3}
             maxLength={160}
@@ -102,7 +107,7 @@ export function HabitFormDialog({
                   type="radio"
                   name="color"
                   value={color}
-                  defaultChecked={(habit?.color ?? habitColors[0]) === color}
+                  defaultChecked={(initial?.color ?? habitColors[0]) === color}
                   aria-label={`Color ${color}`}
                 />
                 <span aria-hidden="true" />
@@ -121,7 +126,7 @@ export function HabitFormDialog({
                     type="radio"
                     name="icon"
                     value={icon}
-                    defaultChecked={(habit?.icon ?? "sparkles") === icon}
+                    defaultChecked={(initial?.icon ?? "sparkles") === icon}
                     aria-label={`Icono ${icon}`}
                   />
                   <span aria-hidden="true">

@@ -4,5 +4,6 @@ export * from "./group-messages";
 export * from "./group-metrics";
 export * from "./group-pet";
 export * from "./groups";
+export * from "./habit-summary";
 export * from "./metrics";
 export * from "./repository";

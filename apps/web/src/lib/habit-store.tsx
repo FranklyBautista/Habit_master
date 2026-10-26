@@ -35,7 +35,9 @@ type HabitActions = {
   refresh(): Promise<boolean>;
   createHabit(input: CreateHabitInput): Promise<boolean>;
   updateHabit(id: string, input: UpdateHabitInput): Promise<boolean>;
-  moveHabit(id: string, direction: -1 | 1): Promise<boolean>;
+  // Lleva un hábito activo a `toIndex` (orden de `position`), como al soltarlo
+  // tras arrastrarlo; los demás se desplazan.
+  moveHabit(id: string, toIndex: number): Promise<boolean>;
   archiveHabit(id: string): Promise<boolean>;
   restoreHabit(id: string): Promise<boolean>;
   toggleToday(habitId: string): Promise<boolean>;
@@ -152,20 +154,22 @@ export function HabitStoreProvider({
       updateHabit(id, input) {
         return mutate(() => repository.updateHabit(id, input));
       },
-      moveHabit(id, direction) {
+      moveHabit(id, toIndex) {
         const active = snapshotRef.current.habits
           .filter((habit) => !habit.archivedAt)
           .sort((a, b) => a.position - b.position);
         const currentIndex = active.findIndex((habit) => habit.id === id);
-        const nextIndex = currentIndex + direction;
-        if (currentIndex < 0 || nextIndex < 0 || nextIndex >= active.length) {
+        if (
+          currentIndex < 0 ||
+          toIndex < 0 ||
+          toIndex >= active.length ||
+          toIndex === currentIndex
+        ) {
           return Promise.resolve(false);
         }
         const reordered = [...active];
-        [reordered[currentIndex], reordered[nextIndex]] = [
-          reordered[nextIndex],
-          reordered[currentIndex],
-        ];
+        const [moved] = reordered.splice(currentIndex, 1);
+        reordered.splice(toIndex, 0, moved);
         return mutate(() =>
           repository.reorderHabits(reordered.map((habit) => habit.id)),
         );
